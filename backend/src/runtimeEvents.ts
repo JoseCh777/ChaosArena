@@ -79,15 +79,13 @@ const effects: readonly Effect[] = [
   {
     type: 'hack', weight: 8,
     eligible: ({ base, index, powers }) => {
-      const pool = base.activePlayers.filter(p => !powers.firewall(p.id, index));
+      const pool = base.activePlayers.filter(p => !powers.shielded(p.id, index));
       return pool.length > 1 && pool.some(p => p.score !== pool[0].score);
     },
     run: ({ base, index, powers }) => {
-      const pool = base.activePlayers.filter(p => !powers.firewall(p.id, index));
+      const pool = base.activePlayers.filter(p => !powers.shielded(p.id, index));
       const a = draw(pool, base.rng);
       const b = draw(pool.filter(p => p.score !== a.score), base.rng);
-      const blocked = powers.block(a.id, index) || powers.block(b.id, index);
-      if (blocked) return { targets: ids(a, b), description: 'Un escudo bloqueó el intercambio de puntos.' };
       powers.recordLoss(a.id, a.score - b.score);
       powers.recordLoss(b.id, b.score - a.score);
       [a.score, b.score] = [b.score, a.score];

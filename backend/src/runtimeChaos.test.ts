@@ -138,5 +138,22 @@ test('Command conserva la carta cuando el rival rechaza y la consume al aceptar 
   const second = engine.runtimeView().duel!.id;
   assert.equal(engine.duelAction(ana.id, 'consent', second, true), true);
   assert.equal(engine.duelAction(beto.id, 'consent', second, true), true);
-  assert.deepEqual(engine.chaosView(ana.id)?.items, []);
+  assert.deepEqual(engine.chaosView(ana.id)?.items, ['decorator']);
+  assert.deepEqual(engine.chaosView(ana.id)?.available, []);
+});
+test('el inventario admite dos poderes y Hackeo excluye a jugadores protegidos', () => {
+  const { clock, ana, beto, powers, ctx } = fixture();
+  const dani = player({ id: 'p4', nickname: 'Dani', score: 300 });
+  ctx.base.activePlayers.push(dani);
+  assert.equal(powers.grant(ana.id, 'proxy'), true);
+  assert.equal(powers.grant(ana.id, 'memento'), true);
+  assert.equal(powers.grant(ana.id, 'adapter'), false);
+  powers.consume(ana, 'proxy', 1);
+  assert.deepEqual(powers.view(ana, 1, false, false, true).available, []);
+  clock.setRng([.8, 0, 0]);
+  const hack = rollRuntimeEvent(ctx);
+  assert.equal(hack?.type, 'hack');
+  assert.deepEqual(hack?.targets, [beto.id, dani.id]);
+  assert.deepEqual([ana.score, beto.score, dani.score], [1000, 300, 100]);
+  assert.equal(powers.block(ana.id, 1), true);
 });

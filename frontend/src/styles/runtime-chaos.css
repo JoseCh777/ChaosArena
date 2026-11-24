@@ -50,6 +50,8 @@
 .duel-stage h1 { margin: 0; font-size: clamp(1.55rem, 5vw, 3.25rem); line-height: 1.12; }
 .duel-stage .game-options { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
 
+.duel-stage div.game-option { pointer-events: none; }
+
 .duel-rivals, .duel-actions {
   display: flex;
   flex-wrap: wrap;

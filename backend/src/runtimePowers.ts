@@ -40,6 +40,7 @@ export class RuntimePowers {
   recordLoss(id: string, loss: number) { if (loss > 0) this.get(id).lastLoss = loss; }
 
   firewall(id: string, index: number) { return (this.get(id).firewallUntil ?? Number.NEGATIVE_INFINITY) >= index; }
+  shielded(id: string, index: number) { return this.get(id).proxy || this.firewall(id, index); }
   block(id: string, index: number) {
     const item = this.get(id);
     if (this.firewall(id, index)) { item.firewallUntil = undefined; return true; }
@@ -71,7 +72,7 @@ export class RuntimePowers {
     const item = this.get(player.id);
     return {
       items: [...item.items], available: this.available(player, index, duelAdapter, canCommand, regular),
-      shield: item.proxy || this.firewall(player.id, index), suppressed: item.suppressedAt === index,
+      shield: this.shielded(player.id, index), suppressed: item.suppressedAt === index,
     };
   }
 

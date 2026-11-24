@@ -1,136 +1,54 @@
 import { useEffect, useState } from 'react';
-import { DemoRoulette } from '../components/DemoRoulette';
-import { Leaderboard } from '../components/Leaderboard';
-import { QuestionCard, optionLetter } from '../components/QuestionCard';
+import type { ArenaView } from '../../../shared/live';
+import { command } from '../services/arena';
 import { RoundTimer } from '../components/RoundTimer';
-import { addDemoEvent, advanceDemoGame, demoRound, demoRoundResult, gameQuestions, readDemoGame, settleDemoRound, writeDemoGame } from '../services/demoGame';
-import { readDemoRoom } from '../services/demoRoom';
+import { Leaderboard } from '../components/Leaderboard';
+import { DemoRoulette } from '../components/DemoRoulette';
 import '../styles/game.css';
 
-export function PlayPage() {
-  const room = readDemoRoom();
-  const [game, setGame] = useState(readDemoGame);
+export function PlayPage({ view, online }: { view: ArenaView; online: boolean }) {
   const [now, setNow] = useState(Date.now);
-  const [storageError, setStorageError] = useState(false);
-  const result = game ? demoRoundResult(game) : undefined;
-
+  const [pending, setPending] = useState<number | null>(null);
+  const [error, setError] = useState('');
+  const round = view.round!;
   useEffect(() => {
-    if (!game || game.finished || game.answers.length > game.index) return;
-    const timer = window.setInterval(() => setNow(Date.now()), 200);
-    return () => window.clearInterval(timer);
-  }, [game]);
-
-  useEffect(() => {
-    if (!game || now < game.deadline) return;
-    const settled = settleDemoRound(game, null, now);
-    if (settled === game) return;
-    try {
-      writeDemoGame(settled);
-      setGame(settled);
-    } catch {
-      setStorageError(true);
-    }
-  }, [game, now]);
-
-  function answer(option: number) {
-    if (!game) return;
-    const updated = settleDemoRound(game, option, Date.now());
-    if (updated === game) return;
-    try {
-      writeDemoGame(updated);
-      setGame(updated);
-    } catch {
-      setStorageError(true);
-    }
+    if (view.phase !== 'question') return;
+    const id = setInterval(() => setNow(Date.now()), 150);
+    return () => clearInterval(id);
+  }, [view.phase]);
+  async function answer(choice: number) {
+    if (!online || pending !== null || view.choice !== null) return;
+    setPending(choice);
+    const reply = await command('answer', { roundId: round.roundId, choice });
+    if (!reply.ok) { setError(reply.error); setPending(null); }
   }
-
-  function nextRound() {
-    if (!game) return;
-    const next = advanceDemoGame(game);
-    try {
-      writeDemoGame(next);
-      setGame(next);
-      setNow(Date.now());
-      if (next.finished) window.location.assign('/results');
-    } catch {
-      setStorageError(true);
-    }
-  }
-
-  if (!room || !game) {
-    return (
-      <main className="empty-state panel">
-        <h1>Ronda de prueba</h1>
-        <p>Inicia la ronda desde la sala de espera.</p>
-        <a className="button button-primary" href="/lobby">Ir a la sala</a>
-      </main>
-    );
-  }
-
-  if (game.finished) {
-    return (
-      <main className="empty-state panel">
-        <h1>Partida terminada</h1>
-        <a className="button button-primary" href="/results">Ver resultados</a>
-      </main>
-    );
-  }
-
-  const round = demoRound(game);
-  const seconds = Math.max(0, Math.ceil((round.deadline - now) / 1000));
-  const questions = gameQuestions(game);
-  const finalRound = game.index === questions.length - 1;
-
-  return (
-    <main className="game-layout">
-      <section className="panel game-panel" aria-labelledby="game-title">
-        <div className="round-meta">
-          <span>Pregunta {game.index + 1} de {questions.length}</span>
-          {result && <span>Ronda cerrada</span>}
-        </div>
-        {result ? (
-          <>
-            <h1 className="game-prompt" id="game-title">{round.prompt}</h1>
-            <p className="answer-feedback" role="status">
-              {game.answers[game.index] === null ? 'Se acabó el tiempo.'
-                : game.answers[game.index] === result.correctIndex ? 'Respuesta correcta.' : 'Respuesta incorrecta.'}
-            </p>
-            <ol className="answer-results">
-              {round.options.map((option, index) => (
-                <li key={index} className={index === result.correctIndex ? 'correct-answer' : undefined}>
-                  <span className="option-letter">{optionLetter(index)}</span>
-                  <span>{option}{index === result.correctIndex && <strong> · Correcta</strong>}</span>
-                  <span className="answer-count">{result.counts[index]} {result.counts[index] === 1 ? 'respuesta' : 'respuestas'}</span>
-                </li>
-              ))}
-            </ol>
-            {result.explanation && <p className="answer-explanation">{result.explanation}</p>}
-            {!finalRound && (
-              <DemoRoulette event={game.events?.find(event => event.afterRound === game.index)}
-                players={room.snapshot.players} onSpin={() => {
-                  try {
-                    const updated = addDemoEvent(readDemoGame() ?? game, room.snapshot.players.length);
-                    writeDemoGame(updated);
-                    setGame(updated);
-                  } catch {
-                    setStorageError(true);
-                  }
-                }} />
-            )}
-            <button type="button" className="button button-primary" onClick={nextRound}>
-              {finalRound ? 'Ver resultados finales' : 'Siguiente pregunta'}
-            </button>
-          </>
-        ) : (
-          <>
-            <RoundTimer seconds={seconds} totalSeconds={questions[game.index].seconds} />
-            <QuestionCard round={round} disabled={seconds === 0 || storageError} onAnswer={answer} />
-          </>
-        )}
-        {storageError && <p className="form-error" role="alert">El navegador no pudo guardar la ronda. Vuelve a la sala para intentarlo de nuevo.</p>}
-        <a className="button button-text game-back" href="/lobby">Volver a la sala</a>
-      </section>
-      {result && <Leaderboard ranking={result.ranking} playerId={room.playerId} />}
-    </main>
-  );
+  const choice = view.choice ?? pending;
+  const reveal = view.solution;
+  return <main className="game-layout play-view">
+    <section className="panel game-panel" aria-labelledby="game-title">
+      <div className="round-meta"><span>Ronda {view.number} / {view.total}</span><span>{view.received} de {view.players.length} respuestas</span></div>
+      {view.phase === 'question' && <RoundTimer seconds={Math.max(0, Math.ceil((round.deadline - now) / 1000))} totalSeconds={view.seconds} />}
+      <h1 className="game-prompt" id="game-title">{round.prompt}</h1>
+      <div className="game-options" aria-label="Opciones de respuesta" role="group">
+        {round.options.map((option, i) => <button key={i} className="game-option"
+          data-picked={choice === i || undefined} data-correct={reveal?.index === i || undefined}
+          disabled={!online || choice !== null || view.phase !== 'question' || now >= round.deadline}
+          onClick={() => answer(i)}>
+          <span className="option-letter">{String.fromCharCode(65 + i)}</span>
+          <span>{option}{reveal?.index === i && <small> · Correcta</small>}</span>
+          {reveal && <span className="answer-count">{reveal.counts[i]} votos</span>}
+        </button>)}
+      </div>
+      {view.phase === 'question' && choice !== null && <p className="lock-feedback" role="status">
+        {view.choice !== null ? 'Respuesta registrada. Esperando a los demás…' : 'Enviando respuesta…'}
+      </p>}
+      {reveal && <div className="round-verdict" role="status">
+        <strong>{view.choice === null ? 'Tiempo agotado' : view.choice === reveal.index ? '¡Respuesta correcta!' : 'Respuesta incorrecta'}</strong>
+        {reveal.explanation && <p>{reveal.explanation}</p>}
+      </div>}
+      {error && view.phase === 'question' && <p role="alert">{error}</p>}
+    </section>
+    {reveal && <Leaderboard ranking={view.players} playerId={view.you} />}
+    {view.phase === 'roulette' && view.event && <DemoRoulette event={view.event} />}
+  </main>;
 }

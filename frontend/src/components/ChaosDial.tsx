@@ -5,9 +5,10 @@ import './chaos-dial.css';
 const sectors = Object.entries(eventLabels);
 const glyphs = ['◉', '×2', '✦', '⇄'];
 
-export function ChaosDial({ type, spin, onRest }: {
+export function ChaosDial({ type, spin, onRest, started }: {
   type: DemoEvent['type'];
   spin: boolean;
+  started: number;
   onRest: () => void;
 }) {
   const rotor = useRef<HTMLDivElement>(null);
@@ -24,9 +25,10 @@ export function ChaosDial({ type, spin, onRest }: {
       { transform: 'rotate(0deg)' },
       { transform: `rotate(${angle}deg)` },
     ], { duration: 2450, easing: 'cubic-bezier(.17,.68,.16,1)' });
+    motion.currentTime = Math.min(2450, Math.max(0, Date.now() - started));
     motion.onfinish = onRest;
     return () => { motion.onfinish = null; motion.cancel(); };
-  }, [angle, spin, onRest]);
+  }, [angle, spin, onRest, started]);
 
   return (
     <div className="chaos-dial" aria-hidden="true">

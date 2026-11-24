@@ -36,12 +36,13 @@ export function JoinPage() {
   return (
     <main className="entry" aria-labelledby="join-title">
       <div className="entry-intro">
-        <div className="arena-grid" aria-hidden="true" />
+        <div className="entry-art" aria-hidden="true"><i /><img src="/brand/chaos-arena-mark.png" alt="" /><b /></div>
         <h1 id="join-title">Únete a la <span>partida</span></h1>
         <p>Ingresa el PIN que ves en la pantalla del anfitrión y elige tu apodo.</p>
       </div>
 
       <form className="panel entry-form" onSubmit={submit} noValidate>
+        <h2>Acceso a la arena</h2>
         <div className="field">
           <label htmlFor="pin">PIN de la partida</label>
           <input

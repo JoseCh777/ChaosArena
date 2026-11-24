@@ -28,7 +28,10 @@ export function PlayPage({ view, online }: { view: ArenaView; online: boolean })
     <section className="panel game-panel" aria-labelledby="game-title">
       <div className="round-meta"><span>Ronda {view.number} / {view.total}</span><span>{view.received} de {view.players.length} respuestas</span></div>
       {view.phase === 'question' && <RoundTimer seconds={Math.max(0, Math.ceil((round.deadline - now) / 1000))} totalSeconds={view.seconds} />}
-      <h1 className="game-prompt" id="game-title">{round.prompt}</h1>
+      <div className="prompt-board">
+        <span className="round-digit" aria-hidden="true">{String(view.number).padStart(2, '0')}</span>
+        <h1 className="game-prompt" id="game-title">{round.prompt}</h1>
+      </div>
       <div className="game-options" aria-label="Opciones de respuesta" role="group">
         {round.options.map((option, i) => <button key={i} className="game-option"
           data-picked={choice === i || undefined} data-correct={reveal?.index === i || undefined}
@@ -36,12 +39,13 @@ export function PlayPage({ view, online }: { view: ArenaView; online: boolean })
           onClick={() => answer(i)}>
           <span className="option-letter">{String.fromCharCode(65 + i)}</span>
           <span>{option}{reveal?.index === i && <small> · Correcta</small>}</span>
-          {reveal && <span className="answer-count">{reveal.counts[i]} votos</span>}
+          {reveal && <span className="answer-count">{reveal.counts[i]} resp.</span>}
         </button>)}
       </div>
       {view.phase === 'question' && choice !== null && <p className="lock-feedback" role="status">
         {view.choice !== null ? 'Respuesta registrada. Esperando a los demás…' : 'Enviando respuesta…'}
       </p>}
+      {view.phase === 'reveal' && !reveal && <p className="lock-feedback" role="status">Tiempo agotado. Preparando la siguiente fase…</p>}
       {reveal && <div className="round-verdict" role="status">
         <strong>{view.choice === null ? 'Tiempo agotado' : view.choice === reveal.index ? '¡Respuesta correcta!' : 'Respuesta incorrecta'}</strong>
         {reveal.explanation && <p>{reveal.explanation}</p>}

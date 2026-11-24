@@ -22,8 +22,12 @@ export interface ArenaView {
   seconds: number;
   solution?: { index: number; explanation?: string; counts: number[] };
   event?: LiveEvent;
+  summary?: { id: string; correct: number }[];
 }
+export type DisplayView = Omit<ArenaView, 'you' | 'host' | 'choice' | 'correctCount' | 'summary'>;
+
 export interface ArenaCommands {
+  observe: Record<string, never>;
   join: { pin: string; nickname: string };
   resume: { token: string };
   start: { quiz?: Quiz };

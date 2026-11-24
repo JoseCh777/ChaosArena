@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Namespace } from 'socket.io';
 import type { Quiz } from '@chaos-arena/shared';
-import type { ArenaView, Reply } from '../../shared/live.js';
+import type { ArenaView, DisplayView, Reply } from '../../shared/live.js';
 import { LiveRound, type Member } from './liveRound.js';
 import { demoQuestions } from './practiceQuestions.js';
 
@@ -31,21 +31,26 @@ export function attachArena(arena: Namespace) {
       return { id: p.id, nickname: p.nickname, score: p.score, status: 'active' as const, rank };
     });
     const q = game.quiz.questions[game.index];
+    const publicView: DisplayView = {
+      phase: game.phase, serverNow: Date.now(), pin, players,
+      number: game.index + 1, total: game.quiz.questions.length,
+      received: sorted.filter(m => m.choice !== null).length, seconds: q?.seconds ?? 0,
+    };
+    if (q) publicView.round = { roundId: game.id, prompt: q.prompt, options: q.options, deadline: game.deadline };
+    if (q && game.phase === 'reveal' && publicView.received === sorted.length) publicView.solution = {
+      index: q.correctIndex, explanation: q.explanation,
+      counts: q.options.map((_, i) => sorted.filter(m => m.choice === i).length),
+    };
+    if (game.phase === 'roulette') publicView.event = game.event;
+    arena.to('display').emit('display', publicView);
     for (const [token, socketId] of connections) {
-      const p = members.get(token);
-      if (!p) continue;
+      const player = members.get(token);
+      if (!player) continue;
+      const host = token === members.keys().next().value;
       const view: ArenaView = {
-        phase: game.phase, serverNow: Date.now(), pin, you: p.id, host: token === members.keys().next().value,
-        players, number: game.index + 1, total: game.quiz.questions.length,
-        choice: p.choice, received: sorted.filter(m => m.choice !== null).length,
-        correctCount: p.correct, seconds: q?.seconds ?? 0,
+        ...publicView, you: player.id, host, choice: player.choice, correctCount: player.correct,
       };
-      if (q) view.round = { roundId: game.id, prompt: q.prompt, options: q.options, deadline: game.deadline };
-      if (q && game.phase === 'reveal' && view.received === sorted.length) view.solution = {
-        index: q.correctIndex, explanation: q.explanation,
-        counts: q.options.map((_, i) => sorted.filter(m => m.choice === i).length),
-      };
-      if (game.phase === 'roulette') view.event = game.event;
+      if (host && game.phase === 'finished') view.summary = sorted.map(p => ({ id: p.id, correct: p.correct }));
       arena.to(socketId).emit('view', view);
     }
   }
@@ -60,6 +65,13 @@ export function attachArena(arena: Namespace) {
     socket.on('command', (kind, data, ack: (r: Reply) => void) => {
       if (typeof ack !== 'function') return;
       const fail = (error: string) => ack({ ok: false, error });
+      if (kind === 'observe') {
+        Promise.resolve(socket.join('display')).then(() => {
+          ack({ ok: true });
+          publish();
+        }).catch(() => fail('No se pudo abrir el proyector.'));
+        return;
+      }
       const player = members.get(session);
       if (kind === 'join' || kind === 'resume') {
         if (session) return fail('Esta conexión ya tiene un jugador.');

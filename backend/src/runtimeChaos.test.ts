@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { GameEngine } from './game.js';
 import { Duel } from './duel.js';
 import { rollRuntimeEvent, type RuntimeEventContext } from './runtimeEvents.js';
 import { RuntimePowers } from './runtimePowers.js';
 import { scoreRound } from './scoring.js';
-import { fakeDeps, player, question } from './testing.js';
+import { fakeDeps, player, question, quiz } from './testing.js';
 
 function fixture() {
   const clock = fakeDeps();
@@ -106,4 +107,36 @@ test('duelo voluntario, Adapter privado y premio exclusivamente competitivo', ()
   assert.equal(ana.correctCount, 3);
   clock.advance(3000);
   assert.equal(advanced, 1);
+});
+test('Command conserva la carta cuando el rival rechaza y la consume al aceptar ambos', () => {
+  const clock = fakeDeps();
+  const engine = new GameEngine('123456', quiz(4), { votingEnabled: false }, clock.deps);
+  engine.enableRuntimeChaos();
+  const ana = engine.join('Ana');
+  const beto = engine.join('Beto');
+  engine.command('start');
+  const answerAll = () => {
+    const round = engine.currentRound()!;
+    for (const p of [ana, beto]) engine.answer(p.id, round.roundId, 1);
+  };
+  answerAll();
+  clock.setRng([.75, 0, .9, .99]);
+  engine.command('event');
+  assert.deepEqual(engine.chaosView(ana.id)?.items, ['command']);
+  engine.command('next');
+  assert.equal(engine.usePower(ana.id, 'command', ana.id), false);
+  assert.equal(engine.usePower(ana.id, 'command', beto.id), true);
+  answerAll();
+  engine.command('next');
+  const first = engine.runtimeView().duel!.id;
+  assert.equal(engine.duelAction(beto.id, 'consent', first, false), true);
+  assert.deepEqual(engine.chaosView(ana.id)?.items, ['command']);
+  clock.advance(3_000);
+  assert.equal(engine.usePower(ana.id, 'command', beto.id), true);
+  answerAll();
+  engine.command('next');
+  const second = engine.runtimeView().duel!.id;
+  assert.equal(engine.duelAction(ana.id, 'consent', second, true), true);
+  assert.equal(engine.duelAction(beto.id, 'consent', second, true), true);
+  assert.deepEqual(engine.chaosView(ana.id)?.items, []);
 });

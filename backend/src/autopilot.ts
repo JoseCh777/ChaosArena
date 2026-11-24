@@ -32,6 +32,7 @@ export function attachAutopilot(
   deps: Pick<EngineDeps, 'setTimer' | 'rng'> = realDeps,
 ): () => void {
   let cancel: (() => void) | undefined;
+  let rollAfterVote = false;
 
   const later = (ms: number, expectedPhase: string, fn: () => void) => {
     cancel?.();
@@ -51,16 +52,23 @@ export function attachAutopilot(
     }
   };
 
-  const afterReveal = (allAnswered: boolean) => {
+  const rollOrContinue = (allAnswered: boolean) => {
     if (allAnswered && deps.rng() < options.eventChance && run('event')) {
       later(options.rouletteMs, 'event', () => run('next'));
       return;
     }
+    run('next');
+  };
+
+  const afterReveal = (allAnswered: boolean) => {
     const active = [...engine.players.values()].filter((p) => p.status === 'active').length;
     const wantsVote = engine.votingEnabled && engine.hasNextQuestion()
       && options.voteAfter.includes(engine.questionIndex + 1) && active >= MIN_ACTIVE_TO_VOTE;
-    if (wantsVote && run('vote')) return;
-    run('next');
+    if (wantsVote && run('vote')) {
+      rollAfterVote = allAnswered;
+      return;
+    }
+    rollOrContinue(allAnswered);
   };
 
   const unsubscribe = engine.subscribe((change: EngineChange) => {
@@ -69,7 +77,9 @@ export function attachAutopilot(
       const allAnswered = answered >= engine.players.size;
       later(options.revealMs, 'results', () => afterReveal(allAnswered));
     } else if (change.kind === 'vote:result') {
-      later(0, 'voting', () => run('next'));
+      const eligible = rollAfterVote;
+      rollAfterVote = false;
+      later(0, 'voting', () => rollOrContinue(eligible));
     } else if (change.kind === 'finished') {
       cancel?.();
     }

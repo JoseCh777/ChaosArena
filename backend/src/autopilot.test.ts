@@ -87,3 +87,22 @@ test('motor: leave, configure y restart respetan la fase', () => {
   assert.equal(ana.score, 0);
   assert.equal(engine.questionIndex, -1);
 });
+test('piloto: una asamblea programada conserva el sorteo tras cerrar sus votos', () => {
+  const { engine, clock } = setup(3);
+  engine.enableRuntimeChaos();
+  const [ana, beto, caro] = ['Ana', 'Beto', 'Caro'].map(nickname => engine.join(nickname));
+  engine.command('start');
+  answerAll(engine);
+  clock.setRng([0.1, .99, 0]);
+  clock.advance(100);
+  const id = engine.voteInfo()!.voteId;
+  engine.vote(ana.id, id, caro.id);
+  engine.vote(beto.id, id, caro.id);
+  engine.vote(caro.id, id, null);
+  clock.advance(0);
+  assert.equal(engine.phase, 'event');
+  assert.equal(engine.runtimeView().chaosEvent?.type, 'respawn');
+  clock.advance(200);
+  assert.equal(caro.status, 'active');
+  assert.equal(engine.questionIndex, 1);
+});

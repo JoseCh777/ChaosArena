@@ -413,7 +413,7 @@ export class GameEngine {
   }
 
   openVote() {
-    if (this.pendingDuel || this.duel || !this.options.votingEnabled || this.interlude.voteUsed) throw new GameError('WRONG_PHASE');
+    if (this.duel || !this.options.votingEnabled || this.interlude.voteUsed) throw new GameError('WRONG_PHASE');
     const active = this.activePlayers();
     if (active.length < MIN_ACTIVE_TO_VOTE) throw new GameError('NOT_ENOUGH_PLAYERS');
     this.protectedVoters = active.filter(player => this.runtime?.firewall(player.id, this.questionIndex)).map(player => player.id);
@@ -522,12 +522,12 @@ export class GameEngine {
   advanceInterlude() {
     if (this.duel) return;
     const offer = this.pendingDuel;
-    if (!offer) {
+    this.pendingDuel = undefined;
+    if (!offer || offer.players.some(player => player.status !== 'active')) {
       if (this.hasNextQuestion()) this.openRound(this.questionIndex + 1);
       else this.finish();
       return;
     }
-    this.pendingDuel = undefined;
     this.runtimeResult = undefined;
     this.state = new InterludeState('event');
     this.duel = new Duel(offer.players, this.deps,

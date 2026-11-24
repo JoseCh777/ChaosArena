@@ -22,3 +22,29 @@
 .host-follow { justify-self: start; }
 .host-live-clip { margin: 0; }
 .host-deck button, .host-show button { max-width: 100%; white-space: normal; }
+.host-layout { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; }
+.host-title { font-size: clamp(1.25rem, 3vw, 1.8rem); margin: 0; }
+.host-podium { grid-column: 1 / -1; width: 100%; text-align: center; }
+.host-podium h2 { margin: 0 0 .65rem; }
+.host-podium ol { display: flex; flex-wrap: wrap; justify-content: center; gap: .65rem; margin: 0; padding: 0; list-style: none; }
+.host-podium li { display: grid; min-width: min(100%, 8.5rem); max-width: 100%; padding: .65rem 1rem; border: 1px solid var(--border); border-radius: .75rem; overflow-wrap: anywhere; }
+.host-podium li[data-rank="1"] { border-color: #facc15; background: #272137; }
+.host-podium li strong { color: var(--mint); }
+.host-podium li[data-rank="1"] strong { color: #facc15; }
+.host-podium small { color: var(--muted); }
+.host-show-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
+.host-show .arena-media { min-height: 10rem; align-content: center; }
+.host-show .arena-media video { max-height: min(55vh, 32rem); }
+.host-console .host-question { font-size: clamp(1.35rem, 3vw, 2.1rem); line-height: 1.25; letter-spacing: -.02em; }
+.host-answer-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem 1.75rem; padding-inline-start: 1.35rem; margin: 0 0 .4rem; }
+.host-answer-list li { padding: .45rem .15rem; overflow-wrap: anywhere; }
+.host-answer-list li::marker { color: var(--mint); font-weight: 750; }
+.host-count { display: grid; gap: .3rem; width: 100%; }
+.host-roster summary { cursor: pointer; font-weight: 700; }
+@media (max-width: 760px) {
+  .host-layout { grid-template-columns: minmax(0, 1fr); }
+  .host-answer-list { grid-template-columns: minmax(0, 1fr); }
+  .host-podium li { flex: 1 1 5rem; min-width: 0; padding: .5rem .3rem; }
+  .host-show .arena-media { min-height: 0; }
+  .host-layout .host-actions > :is(button, a) { min-height: 44px; }
+}

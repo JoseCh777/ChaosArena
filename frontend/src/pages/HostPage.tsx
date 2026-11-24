@@ -5,6 +5,7 @@ import { HostRound } from './HostRound';
 import { HostShow } from './HostShow';
 import { DisplayPage } from './DisplayPage';
 import './host-console.css';
+import { setAudioFromGesture } from '../services/mediaAudio';
 import { useState, type FormEvent } from 'react';
 import { command, forget, remember, sessionToken, useArena } from '../services/arena';
 import { decodeQuiz, DRAFT_KEY } from '../services/quizDraft';
@@ -17,11 +18,12 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
   const [hostKey, setHostKey] = useState('');
   const [error, setError] = useState('');
   const [settings, setSettings] = useState<ArenaSettings>({ roundSeconds: DEFAULT_ROUND_SECONDS, clips: { ...DEFAULT_CLIPS } });
+  const [bankSize, setBankSize] = useState<16 | 32 | 48>(16);
   const [voting, setVoting] = useState(true);
   const [confirmClose, setConfirmClose] = useState(false);
   const [busy, setBusy] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(false);
-  const toggleAudio = () => setAudioEnabled(enabled => !enabled);
+  const toggleAudio = () => setAudioFromGesture(() => setAudioEnabled(!audioEnabled));
 
   async function create(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,7 +47,7 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
     setError('');
     try {
       const quiz = draft ? decodeQuiz(localStorage.getItem(DRAFT_KEY) ?? '') : undefined;
-      const reply = await command('start', { quiz, voting, settings });
+      const reply = await command('start', { quiz, voting, settings, bankSize: draft ? undefined : bankSize });
       if (!reply.ok) setError(reply.error);
     } catch {
       setError('Guarda un cuestionario válido en el editor antes de iniciarlo.');
@@ -112,23 +114,38 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
   if (presenting) return <DisplayPage hostView={view} enabled={audioEnabled} toggleAudio={toggleAudio} close={() => setPresenting(false)} />;
   const intro = view.phase === 'lobby' && view.showFact?.kind === 'intro';
   const startable = !intro && (view.phase === 'lobby' || view.phase === 'finished');
+  const podium = view.players.filter(player => player.rank <= 3);
   return <main className="game-layout host-layout">
+    {view.phase !== 'lobby' && podium.length > 0 && <section className="panel host-podium" aria-labelledby="host-podium-title">
+      <h2 id="host-podium-title">{view.phase === 'finished' ? 'Podio final' : 'Podio en directo'}</h2>
+      <ol>{podium.map(player => <li key={player.id} data-rank={player.rank}>
+        <strong>{player.rank}.º</strong><span>{player.nickname}</span><small>{player.score} pts</small>
+      </li>)}</ol>
+    </section>}
     <section className="panel game-panel host-deck">
       <p className="round-meta">{intro ? 'Comienza la partida' : view.pausedMs !== undefined ? 'Pausa' : view.duel ? 'Duelo relámpago' : phases[view.phase]}</p>
-      <h1 className="game-prompt">Mesa del anfitrión</h1>
+      <h1 className="host-title">Mesa del anfitrión</h1>
       <p className="room-code">PIN <strong>{view.pin}</strong></p>
       <div className="host-actions">
         <button className="button button-primary" type="button" onClick={() => setPresenting(true)}>Modo presentación</button>
         <a href="/display" className="button button-text">Abrir proyector</a>
-        <a href="/lobby" className="button button-text">Mi vista de jugador</a>
-        <a href="/editor" className="button button-text">Editor</a>
+
       </div>
       {!online && <p role="status">{message}</p>}
       {error && <p className="form-error" role="alert">{error}</p>}
       {startable && !confirmClose && <HostOptions settings={settings} voting={voting} onSettings={setSettings} onVoting={setVoting} disabled={busy} />}
       {startable && !confirmClose ? <div className="host-actions">
-        <button className="button button-primary" disabled={!online || busy} onClick={() => start(false)}>Iniciar con preguntas de muestra</button>
-        <button className="button button-text" disabled={!online || busy} onClick={() => start(true)}>Iniciar mi cuestionario</button>
+        <label className="host-volume host-count">Preguntas del banco
+          <select value={bankSize} disabled={busy} onChange={event => setBankSize(Number(event.target.value) as 16 | 32 | 48)}>
+            <option value={16}>16 · Partida corta</option>
+            <option value={32}>32 · Partida extendida</option>
+            <option value={48}>48 · Banco completo</option>
+          </select>
+        </label>
+        <button className="button button-primary" disabled={!online || busy} onClick={() => start(false)}>Iniciar Patrones de Diseño</button>
+        <details className="host-personal"><summary>Cuestionario del editor</summary>
+          <button className="button button-text" disabled={!online || busy} onClick={() => start(true)}>Iniciar mi cuestionario</button>
+        </details>
       </div> : !startable && !confirmClose && <HostRound key={view.round?.roundId} view={view} online={online && !busy} />}
       {confirmClose ? <div className="host-close">
         <p>Se desconectarán los jugadores y se descartará la partida. Al crear otra sala recibirás un PIN nuevo.</p>
@@ -141,8 +158,8 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
     </section>
     <div className="host-sidebar">
       <HostShow key={view.pin} view={view} online={online && !busy} audioEnabled={audioEnabled} toggleAudio={toggleAudio} />
-      <section className="panel host-roster">
-        <h2>{view.summary ? 'Resultados de la sala' : 'Jugadores en sala'}</h2>
+      <details className="panel host-roster" open={view.phase === 'lobby' ? true : undefined}>
+        <summary>{view.summary ? 'Resultados de la sala' : `Jugadores en sala · ${view.players.length}`}</summary>
         <ul>{view.players.map(player => {
           const result = view.summary?.find(item => item.id === player.id);
           return <li key={player.id}><strong>{player.nickname}</strong>
@@ -150,7 +167,7 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
             {view.phase === 'lobby' && player.id !== view.you && <button className="button button-text" disabled={!online}
               onClick={() => removePlayer(player.id)} aria-label={`Retirar a ${player.nickname}`}>Retirar</button>}</li>;
         })}</ul>
-      </section>
+      </details>
     </div>
   </main>;
 }

@@ -35,3 +35,11 @@
   .entry-art { float: right; width: 27%; height: 92px; margin: 0; }
   .prompt-board .game-prompt { font-size: 1.4rem; }
 }
+@media (max-width: 640px) {
+  .play-view { width: calc(100% - 24px); }
+  .play-view .game-panel { padding: 14px; gap: 12px; }
+  .play-view .prompt-board { padding: 15px; }
+  .play-view .game-prompt { font-size: clamp(1.25rem, 5.4vw, 1.65rem); line-height: 1.28; }
+  .play-view .game-option { min-height: 56px; padding: .7rem .65rem; line-height: 1.35; overflow-wrap: anywhere; }
+  .play-view .round-meta { gap: .45rem; }
+}

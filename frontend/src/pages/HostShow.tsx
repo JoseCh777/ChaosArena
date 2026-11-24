@@ -1,3 +1,4 @@
+import { setAudioFromGesture } from '../services/mediaAudio';
 import { useState } from 'react';
 import type { RuntimeArenaView, ShowChange } from '../../../shared/runtime-chaos';
 import { MediaOverlay, type MediaPreview } from '../components/MediaOverlay';
@@ -37,7 +38,15 @@ export function HostShow({ view, online, audioEnabled, toggleAudio }: Props) {
     || (view.phase === 'lobby' && view.showFact?.kind !== 'intro'));
 
   return <section className="panel host-show" aria-labelledby="host-show-title">
-    <header><h2 id="host-show-title">Escenario audiovisual</h2></header>
+    <header className="host-show-head">
+      <h2 id="host-show-title">Efectos</h2>
+      {show.output === 'host' ? <button className="button button-text" type="button"
+        aria-pressed={audioEnabled} onClick={toggleAudio}>{audioEnabled ? 'Silenciar' : 'Activar sonido'}</button>
+        : <p className="host-show-hint">Audio en el proyector</p>}
+    </header>
+    <MediaOverlay view={view} output="host" enabled={audioEnabled} preview={preview} wheel />
+    <details className="host-personal">
+      <summary>Ajustes de efectos</summary>
     <label className="host-volume">Salida
       <select value={controlsState.output} disabled={disabled}
         onChange={event => change({ key: 'output', value: event.target.value === 'display' ? 'display' : 'host' })}>
@@ -57,9 +66,7 @@ export function HostShow({ view, online, audioEnabled, toggleAudio }: Props) {
         </select>
       </label>
     </div>
-    {show.output === 'host' ? <button className="button button-text host-follow" type="button"
-      aria-pressed={audioEnabled} onClick={toggleAudio}>{audioEnabled ? 'Silenciar' : 'Activar sonido'}</button>
-      : <p className="host-show-hint">Activa el sonido en la ventana del proyector.</p>}
+    </details>
     {canPreview && <details className="host-personal">
       <summary>Probar un recurso</summary>
       <div className="host-actions">
@@ -68,10 +75,12 @@ export function HostShow({ view, online, audioEnabled, toggleAudio }: Props) {
             {mediaIds.map(id => <option key={id} value={id}>{id.replaceAll('-', ' ')}</option>)}
           </select>
         </label>
-        <button className="button button-text" type="button" onClick={() => setPreview({ asset: selected, started: Date.now() })}>Probar</button>
+        <button className="button button-text" type="button" onClick={() => {
+          setAudioFromGesture(() => setPreview({ asset: selected, started: Date.now() }));
+          if (!audioEnabled && show.output === 'host') toggleAudio();
+        }}>Probar</button>
       </div>
     </details>}
-    <MediaOverlay view={view} output="host" enabled={audioEnabled} preview={preview} wheel />
     {error && <p className="form-error" role="alert">{error}</p>}
   </section>;
 }

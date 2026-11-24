@@ -48,3 +48,10 @@
   .host-options-grid { grid-template-columns: minmax(0, 1fr); }
 }
 .arena-shared-header { width: min(1440px, calc(100% - 40px)); margin: 20px auto 0; }
+@media (max-width: 640px) {
+  .projection, .arena-shared-header { width: calc(100% - 24px); }
+  .projection-brand { gap: .5rem; }
+  .projection-brand strong { font-size: 1.25rem; }
+  .projection-brand nav { max-width: 100%; }
+  .projection-brand nav .button { min-height: 44px; padding-inline: .55rem; }
+}

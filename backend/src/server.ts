@@ -4,6 +4,8 @@ import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import type { ClientToServerEvents, ServerToClientEvents } from '@chaos-arena/shared';
 
+import { attachArena } from './liveArena.js';
+
 const port = Number(process.env.PORT || 3001);
 const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 const app = express();
@@ -13,11 +15,12 @@ app.get('/health', (_request, response) => {
 });
 
 const httpServer = createServer(app);
-// Los handlers del juego se implementarán en backend según docs/PLAN-DANIEL.md.
 export const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   cors: { origin: clientOrigin },
   maxHttpBufferSize: 100_000,
 });
+
+attachArena(io.of('/arena'));
 
 httpServer.listen(port, '0.0.0.0', () => {
   console.log(`ChaosArena backend disponible en el puerto ${port}`);

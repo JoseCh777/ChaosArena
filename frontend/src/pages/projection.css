@@ -1,0 +1,29 @@
+.arena-nav { display: flex; flex-wrap: wrap; justify-content: end; gap: 0 clamp(8px, 2vw, 20px); }
+.projection { width: min(1440px, calc(100% - 40px)); margin: auto; padding-block: 20px 48px; }
+.projection-brand { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #6c5a83; padding-bottom: 14px; }
+.projection-brand strong { font-size: 1.55rem; letter-spacing: -.07em; }
+.projection-brand span { margin-left: auto; color: var(--muted); text-align: right; }
+.projection h1 { font-size: clamp(2rem, 5vw, 5.75rem); font-style: italic; line-height: 1; letter-spacing: -.06em; margin: 24px 0; overflow-wrap: anywhere; }
+.projection h1 em { color: var(--mint); }
+.projection-prompt { min-height: 75svh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 32%); align-items: center; gap: clamp(24px, 6vw, 100px); }
+.projection-pin { margin: 12px 0; color: var(--mint); font: 850 clamp(2rem, 7vw, 6rem)/1 var(--font-mono); letter-spacing: .1em; }
+.projection-qr { display: grid; gap: 12px; text-align: center; justify-items: center; overflow-wrap: anywhere; }
+.projection-qr svg { width: min(100%, 240px); height: auto; background: white; border: 12px solid white; border-radius: 8px; }
+.projection-qr small { color: var(--muted); max-width: 32ch; }
+.projection-round { padding-top: 22px; }
+.projection-options { list-style: none; margin: 0 0 24px; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0,1fr)); }
+.projection-options li { display: flex; align-items: center; gap: 16px; min-height: 64px; padding: 12px 20px; background: #171b30; border: 1px solid #544c69; border-left: 4px solid var(--primary-soft); border-radius: 4px 16px 4px 16px; font-size: clamp(1rem, 2vw, 1.75rem); overflow-wrap: anywhere; }
+.projection-options li[data-correct] { border-color: var(--mint); background: #15302e; }
+.projection-options b { color: var(--mint); }
+.projection-options strong { margin-left: auto; }
+.projection .leaderboard { margin-top: 20px; }
+.host-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.host-roster h2 { margin: 0; }
+.host-roster ul { list-style: none; margin: 16px 0 0; padding: 0; }
+.host-roster li { display: flex; align-items: baseline; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.host-roster li span { color: var(--muted); }
+@media (max-width: 640px) {
+  .projection-prompt, .projection-options { grid-template-columns: 1fr; }
+  .projection-prompt { padding-top: 28px; min-height: auto; }
+  .arena-nav .mode-label { min-height: 26px; }
+}

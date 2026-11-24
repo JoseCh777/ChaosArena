@@ -88,7 +88,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     engine.enableRuntimeChaos();
     const offView = engine.subscribe(onChange);
     const offPilot = attachAutopilot(engine, config.autopilot ?? defaultAutopilot, deps,
-      config.autopilot ? undefined : presentationDelay);
+      config.autopilot ? undefined : presentationDelay, playRoundClip);
     detach = () => {
       offView();
       offPilot();
@@ -109,10 +109,20 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     if (!show.sound) return 0;
     switch (showFact.kind) {
       case 'timeout': return ARENA_PACE.roundTimeoutMs;
-      case 'streak': return ARENA_PACE.streakMs;
+      case 'streak': return show.videos && show.reactions && showFact.title === '¡Racha ×5!' ? 0 : ARENA_PACE.streakMs;
       case 'leader': return ARENA_PACE.leaderMs;
       default: return 0;
     }
+  }
+
+  function playRoundClip() {
+    if (!show.videos || !show.reactions || !showFact) return 0;
+    const { kind, title, detail } = showFact;
+    if (kind === 'none') announce('none-clip', title, detail);
+    else if (kind === 'streak' && title === '¡Racha ×5!') announce('streak-clip', title, detail);
+    else return 0;
+    publish();
+    return ARENA_PACE.roundClipMs;
   }
 
   function announce(kind: ShowFact['kind'], title: string, detail?: string) {
@@ -134,6 +144,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
       const solution = engine.currentRound()?.question.options[correctIndex];
       if (engine.questionTimedOut) announce('timeout', '¡Tiempo agotado!', 'La ronda cerró con las respuestas registradas.');
       else if (complete && correct === 0) announce('none', '¡Nadie acertó!', solution);
+      else if (complete && streak?.streak === 5) announce('streak', '¡Racha ×5!', streak.nickname);
       else if (complete && leaderChanged) announce('leader', '¡Nuevo líder!', `${leaders[0].nickname} · ${leaders[0].score} pts`);
       else if (complete && streak) announce('streak', `¡Racha ×${streak.streak}!`, streak.nickname);
       else if (complete) announce('correct', correct === engine.expectedAnswers ? '¡Todos acertaron!' : 'Respuesta correcta', solution);

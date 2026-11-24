@@ -9,6 +9,7 @@ export const DEFAULT_CLIPS: Readonly<ProjectionClips>;
 export const ARENA_PACE: Readonly<{
   introMs: number;
   revealMs: number;
+  roundClipMs: number;
   rouletteSpinMs: number;
   rouletteResultMs: number;
   duelResultMs: number;

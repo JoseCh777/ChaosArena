@@ -43,6 +43,27 @@ test('piloto: evento sorteado muestra ruleta y luego avanza', () => {
   assert.equal(engine.phase, 'question');
 });
 
+test('piloto: la ruleta tiene prioridad sobre el clip de revelación', () => {
+  for (const [roll, expectedPhase] of [[0.1, 'event'], [0.9, 'results']] as const) {
+    const clock = fakeDeps();
+    const engine = new GameEngine('123456', quiz(2), { votingEnabled: false }, clock.deps);
+    let clipsPlayed = 0;
+    attachAutopilot(engine, pilot, clock.deps, undefined, () => {
+      clipsPlayed++;
+      return 150;
+    });
+    engine.join('Ana');
+    engine.command('start');
+    clock.setRng([roll, 0, 0]);
+    answerAll(engine);
+    clock.advance(100);
+    assert.equal(engine.phase, expectedPhase);
+    assert.equal(clipsPlayed, roll === 0.9 ? 1 : 0);
+    clock.advance(200);
+    assert.equal(engine.phase, 'question');
+  }
+});
+
 test('piloto: asamblea tras la pregunta configurada y avance al cerrar', () => {
   const { engine, clock } = setup(3);
   const [a, b, c] = ['Ana', 'Beto', 'Caro'].map((n) => engine.join(n));

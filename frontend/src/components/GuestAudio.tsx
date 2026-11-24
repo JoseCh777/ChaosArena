@@ -19,12 +19,16 @@ export function GuestAudio({ view }: { view: RuntimeArenaView }) {
   const ambient = currentAmbient(view);
   const scene = currentScene(view);
   let cue: MediaId = ambient ?? 'wii-shop';
-  if (wheel) cue = scene?.steps[settledWheel === wheel.started ? 1 : 0]?.asset ?? 'jackpot';
+  if (wheel) {
+    const step = scene?.steps[settledWheel === wheel.started ? 1 : 0];
+    cue = step?.audioFallback ?? step?.asset ?? 'jackpot';
+  }
   else if (view.phase === 'vote') cue = 'among-us-emergency';
   else if (view.phase === 'finished') cue = 'la-plata';
   else if (view.solution) cue = view.choice === view.solution.index ? 'acierto-concurso' : 'family-feud';
   const loop = cue === ambient;
-  const primary = mediaSource(cue)?.url;
+  const source = mediaSource(cue);
+  const primary = source?.video ? undefined : source?.url;
   const [missing, setMissing] = useState<string>();
   const url = primary && missing !== primary ? primary : fallbackAudio(cue).url;
   const round = view.round?.roundId;

@@ -49,8 +49,9 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
   const sourceKey = (url: string) => `${id}-${start}-${url}`;
   const primary = visible ? mediaSource(step.asset) : undefined;
   const clip = visible && show?.videos !== false ? mediaSource(undefined, step.fallback) : undefined;
-  const tone = visible && step.asset ? fallbackAudio(step.asset) : undefined;
-  const played = [primary, clip, tone].find(source => source && !failed.includes(sourceKey(source.url))
+  const audio = visible ? mediaSource(step.audioFallback) : undefined;
+  const tone = visible && step.asset ? fallbackAudio(step.audioFallback ?? step.asset) : undefined;
+  const played = [primary, clip, audio, tone].find(source => source && !failed.includes(sourceKey(source.url))
     && (source.video ? show?.videos !== false : audible));
   const mediaKey = played ? sourceKey(played.url) : '';
   const companion = clip && !played?.video && !failed.includes(sourceKey(clip.url)) ? clip : undefined;

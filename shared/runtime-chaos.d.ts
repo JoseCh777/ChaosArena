@@ -10,7 +10,7 @@ export interface ShowFact {
   id: string;
   started: number;
   kind: 'intro' | 'timeout' | 'correct' | 'none' | 'streak' | 'leader' | 'vote-open'
-    | 'vote-closed' | 'expelled' | 'final' | 'shield';
+    | 'none-clip' | 'streak-clip' | 'vote-closed' | 'expelled' | 'final' | 'shield';
   title: string;
   detail?: string;
 }

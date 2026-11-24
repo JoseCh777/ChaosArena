@@ -26,16 +26,31 @@ export interface PrivateChaos {
   hiddenOptions?: number[];
 }
 
+export interface ShowSettings {
+  sound: boolean;
+  videos: boolean;
+  reactions: boolean;
+  volume: number;
+}
+
+export type ShowChange = { key: 'volume'; value: number }
+  | { key: 'sound' | 'videos' | 'reactions'; value: boolean };
+export type HostRoundAction = 'pause' | 'resume' | 'close' | 'skipEvent' | 'skipRoulette' | 'cancelVote';
+
 export interface RuntimePublic {
+  pausedMs?: number;
+  show?: ShowSettings;
   chaosEvent?: RuntimeLiveEvent;
   duel?: DuelView;
   protectedIds?: string[];
   reaction?: { id: string; kind: Reaction; started: number };
 }
-export type RuntimeArenaView = ArenaView & RuntimePublic & { chaos?: PrivateChaos };
+export type RuntimeArenaView = ArenaView & RuntimePublic & { chaos?: PrivateChaos; canSkipEvent?: boolean };
 export type RuntimeDisplayView = ConfiguredDisplayView & RuntimePublic;
 
 export interface RuntimeCommands {
+  hostRound: { action: HostRoundAction; id: string };
+  hostShow: ShowChange;
   usePower: { power: Power; target?: string };
   duelConsent: { id: string; accepted: boolean };
   duelAnswer: { id: string; choice: number };

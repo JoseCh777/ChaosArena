@@ -1,6 +1,6 @@
 import type { Namespace } from 'socket.io';
 import type { ErrorCode, RankingEntry } from '@chaos-arena/shared';
-import type { RuntimeArenaView, RuntimeDisplayView, Reaction } from '../../shared/runtime-chaos.js';
+import type { RuntimeArenaView, RuntimeDisplayView, Reaction, ShowSettings } from '../../shared/runtime-chaos.js';
 import type { ArenaView, LiveEvent, Reply } from '../../shared/live.js';
 import { attachAutopilot, defaultAutopilot, type AutopilotOptions } from './autopilot.js';
 import { GameEngine, type EngineChange } from './game.js';
@@ -51,6 +51,8 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
   let previousPin = '';
   let detach = () => {};
   let settings = parseArenaSettings(undefined)!;
+  const initialShow: ShowSettings = { sound: true, videos: true, reactions: true, volume: 75 };
+  let show = { ...initialShow };
   let reaction: RuntimeDisplayView['reaction'];
   let lastEvent: LiveEvent | undefined;
   let lastScores = new Map<string, number>();
@@ -64,6 +66,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     reaction = undefined;
     lastScores.clear();
     settings = parseArenaSettings(undefined)!;
+    show = { ...initialShow };
     engine = new GameEngine(pin, { title: 'Patrones de diseño', questions: demoQuestions }, { votingEnabled: true }, deps);
     engine.enableRuntimeChaos();
     const offView = engine.subscribe(onChange);
@@ -79,12 +82,12 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
   }
 
   function onChange(change: EngineChange) {
-    if (change.kind === 'round:open') reaction = undefined;
+    if (change.kind === 'round:open' && reaction?.kind !== 'expulsion') reaction = undefined;
     if (change.kind === 'round:result' && change.result.counts.reduce((sum, count) => sum + count, 0) === engine.players.size) {
       const correct = change.result.counts[change.result.correctIndex];
       if (correct === 0) queueReaction('nadie-acierta');
-      else if (correct === engine.players.size) queueReaction('todos-aciertan');
       else if ([...engine.players.values()].some(p => p.streak === 5)) queueReaction('racha');
+      else if (correct === engine.players.size) queueReaction('todos-aciertan');
     }
     if (change.kind === 'vote:result' && change.result.expelledId) queueReaction('expulsion');
     if (change.kind === 'finished') {
@@ -145,7 +148,8 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     const received = round ? all.filter((p) => engine.choiceOf(p.id) !== null).length : 0;
     const view: RuntimeDisplayView = {
       ...engine.runtimeView(),
-      reaction,
+      pausedMs: engine.questionPausedMs,
+      reaction: reaction && deps.now() - reaction.started < 3000 ? reaction : undefined,
       phase,
       serverNow: Date.now(),
       pin: engine.pin,
@@ -168,7 +172,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     if (phase === 'roulette') view.event = lastEvent;
     const vote = engine.voteInfo();
     if (vote) view.voting = { id: vote.voteId, deadline: vote.deadline, received: vote.received, candidates: [...vote.candidateIds] };
-    arena.to('display').emit('display', view);
+    arena.to('display').emit('display', { ...view, show });
 
     const host = hostId();
     for (const [token, socketId] of connections) {
@@ -183,6 +187,10 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
         voted: vote?.hasVoted(player.id),
         chaos: engine.chaosView(player.id),
       };
+      if (personal.host) {
+        personal.show = show;
+        personal.canSkipEvent = engine.canSkipEvent;
+      }
       if (personal.host && phase === 'finished') personal.summary = all.map((p) => ({ id: p.id, correct: p.correctCount }));
       arena.to(socketId).emit('view', personal);
     }
@@ -282,6 +290,31 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
         case 'vote':
           engine.vote(player.id, String(data.id), data.target);
           break;
+        case 'hostRound': {
+          if (!isHost) return fail('Solo el anfitrión puede controlar la partida.');
+          const { action, id } = data;
+          let applied = false;
+          switch (action) {
+            case 'pause': case 'resume': applied = engine.setQuestionPaused(id, action === 'pause'); break;
+            case 'close': applied = engine.closeQuestion(id); break;
+            case 'skipEvent': applied = engine.skipEvent(id); break;
+            case 'skipRoulette': applied = engine.skipRoulette(id); break;
+            case 'cancelVote': applied = engine.cancelVote(id); break;
+          }
+          if (!applied) return fail('La fase ya cambió o la acción no está disponible.');
+          break;
+        }
+        case 'hostShow': {
+          if (!isHost) return fail('Solo el anfitrión puede controlar el proyector.');
+          const { key, value } = data;
+          if (key === 'volume' && typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 100) {
+            show = { ...show, volume: value };
+          } else if ((key === 'sound' || key === 'videos' || key === 'reactions') && typeof value === 'boolean') {
+            show = { ...show, [key]: value };
+          } else return fail('El ajuste del proyector no es válido.');
+          publish();
+          break;
+        }
         case 'start': {
           if (!isHost || !['lobby', 'finished'].includes(engine.phase)) return fail('Solo el anfitrión puede iniciar desde la sala.');
           const validation = validateQuiz(data.quiz ?? { title: 'Patrones de diseño', questions: demoQuestions });

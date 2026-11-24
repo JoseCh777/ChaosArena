@@ -1,8 +1,7 @@
 import { useRef, useState, type ChangeEvent } from 'react';
 import type { Question, Quiz } from '@chaos-arena/shared';
 import { QuestionForm } from '../components/QuestionForm';
-import { openDemoGame, writeDemoGame } from '../services/demoGame';
-import { readDemoRoom } from '../services/demoRoom';
+import { command, sessionToken } from '../services/arena';
 import { decodeQuiz, downloadQuiz, DRAFT_KEY, emptyQuiz, newQuestion } from '../services/quizDraft';
 import '../styles/editor.css';
 
@@ -63,14 +62,15 @@ export function EditorPage() {
     }
   }
 
-  function playDraft() {
+  async function playDraft() {
     try {
-      if (!readDemoRoom()) {
+      if (!sessionToken()) {
         setStatus({ message: 'Ingresa a la sala de prueba con tu apodo y vuelve al editor.', error: true });
         return;
       }
       const validated = decodeQuiz(JSON.stringify(quiz));
-      writeDemoGame(openDemoGame(validated));
+      const reply = await command('start', { quiz: validated });
+      if (!reply.ok) { setStatus({ message: reply.error, error: true }); return; }
       window.location.assign('/play');
     } catch {
       setStatus({ message: 'Se necesita un título, al menos una pregunta y acceso al almacenamiento para iniciar.', error: true });

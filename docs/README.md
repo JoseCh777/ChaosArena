@@ -8,6 +8,7 @@ El equipo construye un MVP académico en cinco jornadas estimadas. Este índice 
 | [Plan de Jose](PLAN-JOSE.md) | Frontend, interfaces, dependencias y aceptación |
 | [Plan de Daniel](PLAN-DANIEL.md) | Backend, motor, patrones y aceptación |
 | [Arquitectura](ARQUITECTURA.md) | Estructura, configuración y ejecución |
+| [Patrones de diseño](PATRONES.md) | Observer, Strategy y State en el backend y guía de sustentación |
 | [Contrato Socket.IO](CONTRATO-SOCKET.md) | Eventos, vistas y acuerdos pendientes |
 | [Flujo Git](FLUJO-GIT.md) | Ramas, PR e integración a main |
 | [Seguimiento](SEGUIMIENTO.md) | Hitos y lista de entrega |

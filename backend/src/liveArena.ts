@@ -102,7 +102,8 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
   function presentationDelay(phase: 'results' | 'voting') {
     if (!showFact) return 0;
     if (phase === 'voting') {
-      if (showFact.kind === 'expelled') return show.videos ? ARENA_PACE.expelledMs : 0;
+      if (showFact.kind === 'expelled') return show.videos
+        ? process.env.NODE_ENV === 'production' ? 4250 : ARENA_PACE.expelledMs : 0;
       return showFact.kind === 'vote-closed' && !engine.voteWasCancelled && show.sound
         ? ARENA_PACE.voteClosedMs : 0;
     }
@@ -122,7 +123,8 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     else if (kind === 'streak' && title === '¡Racha ×5!') announce('streak-clip', title, detail);
     else return 0;
     publish();
-    return kind === 'none' ? ARENA_PACE.blindClipMs : ARENA_PACE.streakClipMs;
+    return process.env.NODE_ENV === 'production' ? ARENA_PACE.roundClipMs
+      : kind === 'none' ? ARENA_PACE.blindClipMs : ARENA_PACE.streakClipMs;
   }
 
   function announce(kind: ShowFact['kind'], title: string, detail?: string) {

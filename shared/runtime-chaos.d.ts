@@ -49,7 +49,11 @@ export type ShowChange = { key: 'volume'; value: number }
   | { key: 'sound' | 'videos' | 'reactions'; value: boolean };
 export type HostRoundAction = 'pause' | 'resume' | 'close' | 'skipEvent' | 'skipRoulette' | 'cancelVote';
 
+export type ArenaAward = { kind: 'streak' | 'comeback' | 'accuracy'; names: string[]; amount?: number };
+
 export interface RuntimePublic {
+  roundStage?: 'regular' | 'boss';
+  awards?: ArenaAward[];
   pausedMs?: number;
   showFact?: ShowFact;
   show?: ShowSettings;

@@ -33,6 +33,18 @@ test('ruleta pondera los ocho eventos y omite el último si hay alternativas', (
   assert.equal(rollRuntimeEvent(ctx, 'black-hole')?.type, 'double-or-nothing');
 });
 
+test('desactivar los retos conserva los otros resultados de la ruleta', () => {
+  const { clock, ctx } = fixture();
+  ctx.ghosts = [];
+  let offered = 0;
+  ctx.offerDuel = () => { offered++; };
+  clock.setRng([.99]);
+  assert.equal(rollRuntimeEvent(ctx)?.type, 'duel');
+  clock.setRng([.99, 0]);
+  assert.equal(rollRuntimeEvent({ ...ctx, allowDuel: false })?.type, 'hack');
+  assert.equal(offered, 1);
+});
+
 test('Firewall caduca o se consume y Memento recupera hasta 150 del último ataque', () => {
   const { ana, ctx, powers } = fixture();
   powers.grantFirewall(ana.id, ctx.index);

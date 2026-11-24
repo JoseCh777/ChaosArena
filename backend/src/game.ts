@@ -173,6 +173,13 @@ export class GameEngine {
   private duel?: Duel;
   private cancelTimer?: () => void;
   private pausedMs?: number;
+  private rouletteEnabled = true;
+  private rouletteChallenges = true;
+
+  configureRoulette(enabled: boolean, challenges: boolean) {
+    this.rouletteEnabled = enabled;
+    this.rouletteChallenges = challenges;
+  }
   private timedOut = false;
   private cancelledVote = false;
 
@@ -413,6 +420,7 @@ export class GameEngine {
   }
 
   get canSkipEvent() {
+    if (!this.rouletteEnabled || this.round?.question.id === 'patrones-caso-final') return false;
     return this.phase === 'results' && !this.interlude.eventUsed && !this.pendingDuel
       && this.round?.submissions.size === this.players.size;
   }
@@ -447,7 +455,9 @@ export class GameEngine {
   }
 
   runEvent() {
-    if (this.interlude.eventUsed || this.pendingDuel || this.duel) throw new GameError('WRONG_PHASE');
+    if (!this.rouletteEnabled || this.round?.question.id === 'patrones-caso-final' || this.interlude.eventUsed || this.pendingDuel || this.duel) {
+      throw new GameError('WRONG_PHASE');
+    }
     const ctx: EventContext = {
       activePlayers: this.activePlayers(),
       rng: this.deps.rng,
@@ -460,7 +470,7 @@ export class GameEngine {
     if (this.runtime) {
       const ghosts = [...this.players.values()].filter(player => player.status === 'ghost');
       const result = rollRuntimeEvent({
-        base: ctx, ghosts, index: this.questionIndex, powers: this.runtime,
+        base: ctx, ghosts, index: this.questionIndex, powers: this.runtime, allowDuel: this.rouletteChallenges,
         offerDuel: players => { this.pendingDuel = { players }; },
       }, this.runtimeResult?.type ?? this.previousRuntimeEvent);
       if (!result) throw new GameError('NOT_ENOUGH_PLAYERS');
@@ -556,6 +566,7 @@ export class GameEngine {
   }
 
   private canChallenge() {
+    if (this.round?.question.id === 'patrones-caso-final') return false;
     return this.pausedMs === undefined && (this.phase === 'question' || this.phase === 'results') && !this.pendingDuel
       && !this.duel && this.activePlayers().length >= 2;
   }

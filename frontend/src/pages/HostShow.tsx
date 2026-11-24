@@ -37,14 +37,17 @@ export function HostShow({ view, online, audioEnabled, toggleAudio }: Props) {
   const canPreview = import.meta.env.DEV && (view.phase === 'finished'
     || (view.phase === 'lobby' && view.showFact?.kind !== 'intro'));
 
-  return <section className="panel host-show" aria-labelledby="host-show-title">
+  return <>
+    <div className="arena-effect-lane host-effect-lane">
+      <MediaOverlay view={view} output="host" enabled={audioEnabled} preview={preview} wheel />
+    </div>
+    <section className="panel host-show" aria-labelledby="host-show-title">
     <header className="host-show-head">
       <h2 id="host-show-title">Efectos</h2>
       {show.output === 'host' ? <button className="button button-text" type="button"
         aria-pressed={audioEnabled} onClick={toggleAudio}>{audioEnabled ? 'Silenciar' : 'Activar sonido'}</button>
         : <p className="host-show-hint">Audio en el proyector</p>}
     </header>
-    <MediaOverlay view={view} output="host" enabled={audioEnabled} preview={preview} wheel />
     <details className="host-personal">
       <summary>Ajustes de efectos</summary>
     <label className="host-volume">Salida
@@ -82,5 +85,6 @@ export function HostShow({ view, online, audioEnabled, toggleAudio }: Props) {
       </div>
     </details>}
     {error && <p className="form-error" role="alert">{error}</p>}
-  </section>;
+    </section>
+  </>;
 }

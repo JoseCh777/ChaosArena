@@ -5,9 +5,10 @@ import { JoinPage } from './pages/JoinPage';
 import { DisplayPage } from './pages/DisplayPage';
 import { HostPage } from './pages/HostPage';
 import { LiveArena } from './pages/LiveArena';
-import { sessionToken } from './services/arena';
+import { sessionToken, useArena } from './services/arena';
 
 export function App() {
+  const { view } = useArena();
   const [presenting, setPresenting] = useState(false);
   const route = window.location.pathname.replace(/\/$/, '');
 
@@ -15,7 +16,7 @@ export function App() {
 
   return (
     <div className="arena">
-      {!presenting && <ArenaHeader standard label={route === '/host' ? 'Mesa del anfitrión' : undefined}>
+      {!(route === '/host' && view?.host) && <ArenaHeader standard>
         <a className="button button-text" href="/host">Anfitrión</a>
         <a className="button button-text" href="/display">Proyector</a>
         <a className="button button-text" href={route === '/editor' ? '/join' : '/editor'}>

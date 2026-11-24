@@ -38,3 +38,15 @@
 @media (prefers-reduced-motion: reduce) {
   .arena-media { animation: none; }
 }
+.arena-effect-lane { position: relative; min-width: 0; padding: clamp(.55rem, 1.35vw, 1.25rem); }
+.arena-effect-lane:not(:has(.arena-media, .arena-media-status)) { padding: 0; }
+.arena-effect-lane .arena-media {
+  z-index: 1; border-color: #a88aff; background: linear-gradient(145deg, #30204a, #181b2d 68%);
+  box-shadow: .55rem .65rem 0 #100b1c, 0 0 2.2rem #9163ff35;
+  rotate: 2deg; border-radius: .45rem 1.25rem .45rem 1.25rem;
+}
+.arena-effect-lane .arena-media-copy strong { color: #fff0bf; }
+.arena-effect-lane .arena-media video { max-height: min(54vh, 30rem); }
+@media (max-width: 760px), (prefers-reduced-motion: reduce) {
+  .arena-effect-lane .arena-media { rotate: none; }
+}

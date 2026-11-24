@@ -8,6 +8,7 @@ import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
 import { DuelStage } from '../components/DuelStage';
 import { ArenaHeader } from '../components/ArenaHeader';
+import { ArenaPodium } from '../components/ArenaPodium';
 import { MediaOverlay } from '../components/MediaOverlay';
 import './projection.css';
 
@@ -57,9 +58,9 @@ export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayPr
   const waiting = phase === 'lobby';
   const finished = phase === 'finished';
   return <main className={'projection ' + (waiting ? 'projection-lobby' : '')}>
-    {header}
-    <MediaOverlay view={display} output={output} enabled={audioEnabled} wheel
-      onSkip={() => { if (phase === 'finished') setSkippedFinal(display.showFact?.id); }} />
+    {!waiting && <ArenaPodium players={display.players} final={finished} hideWinner={hideWinner} />}
+    <div className="projection-stage">
+      <div className="arena-stage-content">
     {waiting ? <section className="projection-prompt">
       <div><p className="round-meta">Sala de espera</p><h1>Entra a la <em>arena</em></h1>
         <p className="projection-pin">{display.pin}</p>
@@ -71,11 +72,7 @@ export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayPr
         {local && <small>Para usar el QR desde otro dispositivo, abre el proyector desde la dirección de red del equipo.</small>}
       </div>
     </section> : finished ? <>
-      <h1>Podio de la arena</h1>
-      <div className="finish-stage">{display.players.filter(p => p.rank <= 3 && (!hideWinner || p.rank > 1)).map(p =>
-        <div className="podium-place" data-rank={p.rank} key={p.id}>
-          <strong>{p.rank}</strong><span>{p.nickname}</span><small>{p.score} pts</small>
-        </div>)}</div>
+      {hideWinner && <h1>Podio de la arena</h1>}
       {!hideWinner && <Leaderboard ranking={display.players} playerId="" />}
     </> : display.duel ? <DuelStage key={display.duel.id} duel={display.duel} /> : phase === 'vote' && display.voting ? <section className="projection-round">
       <h1>Votación secreta</h1><p>{display.voting.received} de {display.voting.candidates.length} votos recibidos</p>
@@ -93,5 +90,12 @@ export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayPr
       {display.solution?.explanation && <p>{display.solution.explanation}</p>}
       {phase === 'reveal' && <Leaderboard ranking={display.players} playerId="" />}
     </section>}
+      </div>
+      <div className="arena-effect-lane">
+        <MediaOverlay view={display} output={output} enabled={audioEnabled} wheel
+          onSkip={() => { if (phase === 'finished') setSkippedFinal(display.showFact?.id); }} />
+      </div>
+    </div>
+    <footer className="projection-footer">{header}</footer>
   </main>;
 }

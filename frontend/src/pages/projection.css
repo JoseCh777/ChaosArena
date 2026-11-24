@@ -47,3 +47,4 @@
 @media (max-width: 520px) {
   .host-options-grid { grid-template-columns: minmax(0, 1fr); }
 }
+.arena-shared-header { width: min(1440px, calc(100% - 40px)); margin: 20px auto 0; }

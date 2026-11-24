@@ -25,13 +25,31 @@ type Commands = Omit<ArenaCommands, 'start'> & ArenaHostCommands & ArenaRoomLife
 };
 
 export async function command<K extends keyof Commands>(kind: K, payload: Commands[K]): Promise<Reply> {
-  if (!socket.connected) socket.connect();
   try {
+    if (!socket.connected) await waitForConnection();
     return await socket.timeout(5500).emitWithAck('command', kind, payload);
   } catch {
     return { ok: false, error: 'Sin respuesta del servidor. Comprueba la conexión e inténtalo de nuevo.' };
   }
 }
+
+function waitForConnection() {
+  return new Promise<void>((resolve, reject) => {
+    const cleanup = () => {
+      clearTimeout(timer);
+      socket.off('connect', connected);
+      socket.off('connect_error', failed);
+    };
+    const connected = () => { cleanup(); resolve(); };
+    const failed = () => { cleanup(); reject(new Error('Conexión no disponible')); };
+    const timer = setTimeout(failed, 5500);
+    socket.once('connect', connected);
+    socket.once('connect_error', failed);
+    socket.connect();
+  });
+}
+
+if (import.meta.hot) import.meta.hot.dispose(() => socket.disconnect());
 
 function alignClock(view: DisplayView & RuntimePublic) {
   const offset = Date.now() - view.serverNow;

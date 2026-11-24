@@ -11,7 +11,7 @@ import { decodeQuiz, DRAFT_KEY } from '../services/quizDraft';
 
 const phases = { lobby: 'Sala de espera', question: 'Pregunta abierta', reveal: 'Resultados de ronda', roulette: 'Ruleta de caos', vote: 'Votación secreta', finished: 'Partida terminada' };
 
-export function HostPage() {
+export function HostPage({ presenting, setPresenting }: { presenting: boolean; setPresenting: (active: boolean) => void }) {
   const { view, online, message } = useArena();
   const [nickname, setNickname] = useState('');
   const [hostKey, setHostKey] = useState('');
@@ -20,7 +20,6 @@ export function HostPage() {
   const [voting, setVoting] = useState(true);
   const [confirmClose, setConfirmClose] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [presenting, setPresenting] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const toggleAudio = () => setAudioEnabled(enabled => !enabled);
 

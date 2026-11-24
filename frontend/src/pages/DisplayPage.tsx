@@ -6,6 +6,7 @@ import { useRoundSeconds } from '../components/useRoundSeconds';
 import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
 import { DuelStage } from '../components/DuelStage';
+import { ArenaHeader } from '../components/ArenaHeader';
 import { MediaOverlay } from '../components/MediaOverlay';
 import './projection.css';
 
@@ -32,18 +33,14 @@ export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayPr
   const hideWinner = now < podiumAt && skippedFinal !== display?.showFact?.id;
   const remaining = useRoundSeconds(phase === 'question' ? display?.round?.deadline : undefined, display?.pausedMs);
 
-  const header = <header className="projection-brand">
-    <img src="/brand/chaos-arena-mark.png" alt="" width="36" height="40" />
-    <strong>ChaosArena</strong>
-    <span>{online ? (hostView ? 'Modo presentación' : 'Proyector') : message}</span>
-    <nav className="host-actions" aria-label="Salir del proyector">
-      {close ? <button className="button button-text" type="button" onClick={close}>Volver al anfitrión</button>
+  const audioControl = display?.pin && selected && <button className="button button-text" type="button" aria-pressed={audioEnabled}
+      onClick={toggleAudio ?? (() => setLocalAudio(active => !active))}>{audioEnabled ? 'Silenciar' : 'Activar sonido'}</button>;
+
+  const header = <ArenaHeader label={online ? (hostView ? 'Modo presentación' : 'Proyector') : message} actions={
+      close ? <button className="button button-text" type="button" onClick={close}>Volver al anfitrión</button>
         : <><a className="button button-text" href="/host">Volver al anfitrión</a>
-          <a className="button button-text" href="/join">Ingreso</a></>}
-    </nav>
-    {display?.pin && selected && <button className="button button-text" type="button" aria-pressed={audioEnabled}
-      onClick={toggleAudio ?? (() => setLocalAudio(active => !active))}>{audioEnabled ? 'Silenciar' : 'Activar sonido'}</button>}
-  </header>;
+          <a className="button button-text" href="/join">Ingreso</a></>
+  } extra={audioControl} />;
 
   if (!display?.pin) return <main className="projection">
     {header}

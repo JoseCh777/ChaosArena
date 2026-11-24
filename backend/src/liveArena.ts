@@ -57,7 +57,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
   let previousPin = '';
   let detach = () => {};
   let settings = parseArenaSettings(undefined)!;
-  const initialShow: ShowSettings = { output: 'host', sound: true, videos: true, reactions: true, volume: 75 };
+  const initialShow: ShowSettings = { output: 'both', sound: true, videos: true, reactions: true, volume: 75 };
   let show = { ...initialShow };
   let reaction: RuntimeDisplayView['reaction'];
   let showFact: ShowFact | undefined;
@@ -384,7 +384,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
         case 'hostShow': {
           if (!isHost) return fail('Solo el anfitrión puede controlar el proyector.');
           const { key, value } = data;
-          if (key === 'output' && (value === 'host' || value === 'display')) {
+          if (key === 'output' && (value === 'both' || value === 'host' || value === 'display')) {
             show = { ...show, output: value };
           } else if (key === 'volume' && typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 100) {
             show = { ...show, volume: value };

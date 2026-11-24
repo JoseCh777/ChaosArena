@@ -6,7 +6,7 @@ import type { RuntimeArenaView } from '../../../shared/runtime-chaos';
 
 export function GuestAudio({ view }: { view: RuntimeArenaView }) {
   const audio = useRef<HTMLAudioElement>(null);
-  const [enabled, setEnabled] = useState(false);
+  const [enabled, setEnabled] = useState(true);
   const [blocked, setBlocked] = useState(false);
   const wheel = view.phase === 'roulette' ? view.chaosEvent : undefined;
   const [settledWheel, setSettledWheel] = useState<number>();
@@ -34,22 +34,29 @@ export function GuestAudio({ view }: { view: RuntimeArenaView }) {
     let current = true;
     node.volume = loop ? .15 : .55;
     node.currentTime = 0;
-    void node.play().catch(error => {
-      if (current && error.name !== 'AbortError') { setEnabled(false); setBlocked(true); }
+    void node.play().then(() => { if (current) setBlocked(false); }).catch(error => {
+      if (current && error.name !== 'AbortError') setBlocked(true);
     });
     return () => { current = false; node.pause(); };
   }, [enabled, url, loop, round, cue]);
+  useEffect(() => {
+    if (!enabled || !blocked) return;
+    const retry = () => { void audio.current?.play().then(() => setBlocked(false), () => {}); };
+    window.addEventListener('pointerup', retry);
+    window.addEventListener('keydown', retry);
+    return () => { window.removeEventListener('pointerup', retry); window.removeEventListener('keydown', retry); };
+  }, [enabled, blocked]);
   return <>
     <audio ref={audio} src={url} loop={loop} preload="none" onError={() => {
       if (primary && primary !== url) return;
       if (primary && primary !== fallbackAudio(cue).url) setMissing(primary);
     }} />
     <button className="button button-text guest-audio" aria-pressed={enabled} onClick={() => {
-      if (enabled) { audio.current?.pause(); setEnabled(false); return; }
+      if (enabled && !blocked) { audio.current?.pause(); setEnabled(false); return; }
       const node = audio.current;
       if (!node) return;
       node.volume = loop ? .15 : .55;
       void node.play().then(() => { setEnabled(true); setBlocked(false); }, () => setBlocked(true));
-    }}>{enabled ? 'Silenciar mi teléfono' : blocked ? 'Reintentar sonido' : 'Activar sonido en mi teléfono'}</button>
+    }}>{blocked ? 'Toca para escuchar' : enabled ? 'Silenciar mi teléfono' : 'Activar sonido en mi teléfono'}</button>
   </>;
 }

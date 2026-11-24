@@ -5,7 +5,10 @@ import type { ArenaCommands, ArenaHostCommands, ArenaRoomLifecycleCommands, Disp
 
 const key = 'chaos-arena.live-session';
 export const sessionToken = () => sessionStorage.getItem(key);
-export const remember = (token: string) => sessionStorage.setItem(key, token);
+export function remember(token: string) {
+  sessionStorage.setItem(key, token);
+  update({ ...state });
+}
 export function forget() { sessionStorage.removeItem(key); }
 
 const url = import.meta.env.VITE_SOCKET_URL || window.location.origin;

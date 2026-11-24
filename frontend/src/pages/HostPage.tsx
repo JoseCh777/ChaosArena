@@ -30,7 +30,7 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
   const [confirmClose, setConfirmClose] = useState(false);
   const [busy, setBusy] = useState(false);
   const canStart = online && !busy && (!roulette || rouletteEvents.length > 0);
-  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(true);
   const toggleAudio = () => setAudioFromGesture(() => setAudioEnabled(!audioEnabled));
 
   async function create(event: FormEvent<HTMLFormElement>) {

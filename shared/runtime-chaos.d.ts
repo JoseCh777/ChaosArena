@@ -37,7 +37,7 @@ export interface PrivateChaos {
 }
 
 export interface ShowSettings {
-  output: MediaOutput;
+  output: MediaOutput | 'both';
   sound: boolean;
   videos: boolean;
   reactions: boolean;
@@ -45,7 +45,7 @@ export interface ShowSettings {
 }
 
 export type ShowChange = { key: 'volume'; value: number }
-  | { key: 'output'; value: MediaOutput }
+  | { key: 'output'; value: MediaOutput | 'both' }
   | { key: 'sound' | 'videos' | 'reactions'; value: boolean };
 export type HostRoundAction = 'pause' | 'resume' | 'close' | 'skipEvent' | 'skipRoulette' | 'cancelVote';
 

@@ -20,11 +20,11 @@ export function DisplayPage({ hostView, enabled, toggleAudio }: DisplayProps = {
   const arena = useArena();
   const display = hostView ?? arena.display;
   const { online, message } = arena;
-  const [localAudio, setLocalAudio] = useState(false);
+  const [localAudio, setLocalAudio] = useState(true);
   const [skippedFinal, setSkippedFinal] = useState<string>();
   const output = hostView ? 'host' : 'display';
   const audioEnabled = enabled ?? localAudio;
-  const selected = (display?.show?.output ?? 'host') === output;
+  const selected = display?.show?.output === 'both' || (display?.show?.output ?? 'host') === output;
   const phase = display?.phase;
   const [now, setNow] = useState(Date.now);
   const podiumAt = phase === 'finished' && display?.showFact?.kind === 'final' ? display.showFact.started + ARENA_PACE.podiumRevealMs : 0;

@@ -29,7 +29,7 @@ export function JoinPage() {
     }
 
     remember(result.token!);
-    window.location.assign('/lobby');
+
   }
 
   return (

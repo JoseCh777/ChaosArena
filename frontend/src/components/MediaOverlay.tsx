@@ -29,7 +29,7 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
   const [missingAmbient, setMissingAmbient] = useState<string>();
   const [blocked, setBlocked] = useState(false);
   const show = view.show;
-  const selected = (show?.output ?? 'host') === output;
+  const selected = show?.output === 'both' || (show?.output ?? 'host') === output;
   const audible = selected && enabled && show?.sound !== false;
   const master = (show?.volume ?? 75) / 100;
   const activePreview = preview && (view.phase === 'finished' || (view.phase === 'lobby' && view.showFact?.kind !== 'intro'));
@@ -124,8 +124,16 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
       }
     };
     window.addEventListener(audioGesture, playFromGesture);
-    return () => window.removeEventListener(audioGesture, playFromGesture);
-  }, [audible, visible]);
+    if (blocked) {
+      window.addEventListener('pointerup', playFromGesture);
+      window.addEventListener('keydown', playFromGesture);
+    }
+    return () => {
+      window.removeEventListener(audioGesture, playFromGesture);
+      window.removeEventListener('pointerup', playFromGesture);
+      window.removeEventListener('keydown', playFromGesture);
+    };
+  }, [audible, visible, blocked]);
 
   const finishPreview = activePreview ? () => setSkipped(id) : undefined;
   const track = played && !failed.includes(mediaKey) && (played.video
@@ -147,6 +155,6 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
         </div>)}
       {visible && selected && <button className="button button-text" type="button" onClick={() => { setSkipped(id); onSkip?.(); }}>Omitir efecto</button>}
     </aside>}
-    {blocked && audible && <p className="arena-media-status" role="status">Pulsa Silenciar y Activar sonido para reintentar el audio.</p>}
+    {blocked && audible && <p className="arena-media-status" role="status">Toca la pantalla para escuchar.</p>}
   </>;
 }

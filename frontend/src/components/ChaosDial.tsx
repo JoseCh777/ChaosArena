@@ -5,14 +5,14 @@ import { eventDescriptions, eventLabels, rouletteTypes } from '../services/runti
 import './chaos-dial.css';
 
 const sectors = {
-  'black-hole': ['◉', '#6636a3'],
-  'double-or-nothing': ['×2', '#126575'],
-  'error-404': ['404', '#87404b'],
-  firewall: ['⬡', '#436027'],
-  'loot-box': ['✦', '#8c551a'],
-  hack: ['⇄', '#953653'],
-  duel: ['⚔', '#315080'],
-  respawn: ['↺', '#206854'],
+  'black-hole': ['◉', '#453d59'],
+  'double-or-nothing': ['×2', '#30303e'],
+  'error-404': ['404', '#453d59'],
+  firewall: ['⬡', '#30303e'],
+  'loot-box': ['✦', '#453d59'],
+  hack: ['⇄', '#30303e'],
+  duel: ['⚔', '#453d59'],
+  respawn: ['↺', '#30303e'],
 } satisfies Record<RuntimeEvent, [string, string]>;
 
 export function ChaosDial({ type, events, spin, onRest, started }: {
@@ -48,7 +48,7 @@ export function ChaosDial({ type, events, spin, onRest, started }: {
       <div className="dial-frame">
         <div className="dial-rotor" ref={rotor} style={{
           transform: `rotate(${spin ? 0 : angle}deg)`,
-          backgroundImage: `radial-gradient(circle, transparent 14%, #08031233 63%, #ffffff19 69%, #07031199 71%), conic-gradient(from ${-step / 2}deg, ${wedges.join(', ')})`,
+          backgroundImage: `conic-gradient(from ${-step / 2}deg, ${wedges.join(', ')})`,
         }}>
           {wheel.map((id, i) => (
             <div className="dial-sector" key={id} style={{ transform: `rotate(${i * step}deg)` }}>

@@ -1,57 +1,90 @@
+
+/* Una base tinta, superficies ciruela y menta para las acciones de la partida. */
 .arena {
-  --mint: #98f8dc;
-  --ink: #10111d;
-  --track: #45405f;
-  background: radial-gradient(ellipse at 13% 23%, #43327599, transparent 53%),
-    radial-gradient(ellipse at 91% 33%, #2a174bbb, transparent 52%),
-    repeating-linear-gradient(125deg, transparent 0 68px, #cfaaff0c 69px 70px, transparent 71px 100px), #0a0d18;
+  --ink: #111016; --surface: #211f29; --surface-raised: #302d39; --paper: #f4f0f8;
+  --mint: #98f3d1; --text: var(--paper); --muted: #bbb6c5; --border: #3e3948;
+  --primary-soft: #c6bada; --secondary: var(--mint); background: var(--ink);
 }
-.arena .entry.arena-entry { gap: clamp(1.3rem, 7vw, 6rem); }
-.arena-entry .entry-intro h1 { font-weight: 950; letter-spacing: -.08em; }
-.arena-entry .entry-intro h1 span { color: #f6d07b; text-shadow: .055em .06em #715147; }
-.arena-entry .entry-form, .arena-entry .lobby-panel {
-  border: 1px solid #675887; border-left: 4px solid var(--mint);
-  background: linear-gradient(150deg, #31274b, #161c32 63%);
-  box-shadow: .7rem .8rem 0 #110e22, 0 1.4rem 3rem #05050a66;
+.arena .arena-header { background: var(--ink); border-color: var(--border); }
+.arena .button { border-radius: .55rem; }
+.arena .button-primary { background: var(--mint); color: var(--ink); box-shadow: none; }
+.arena .button-primary:hover { background: #befbe4; }
+.arena .arena-header nav [aria-current="page"] { background: var(--surface-raised); color: var(--paper); border-color: transparent; }
+.arena :is(.panel,.host-deck,.host-show,.host-main-stage,.projection-round,.power-tray,.power-card,.duel-stage,.assembly-vote,.arena-recognitions li) {
+  border: 1px solid var(--border); border-radius: .95rem; background: var(--surface); box-shadow: none;
 }
-.arena-entry .pin-input { letter-spacing: .38em; color: #d7ffee; }
-.arena-entry .lobby-heading { padding-bottom: .65rem; border-bottom: 1px solid #fff2; }
-.arena-entry .player-row { background: #171628; }
-.lobby-signal { display: flex; gap: .55rem; margin-bottom: 1.2rem; }
-.lobby-signal i {
-  width: clamp(1.5rem, 5vw, 3.3rem); height: .43rem;
-  background: var(--mint); box-shadow: 0 0 .7rem #8bf4d355; transform: skew(-25deg);
+.arena .entry-form::before,.arena .lobby-panel::before,.arena .entry-art :is(i,b),.arena .entry-art::before,.arena .entry-art::after,.arena .lobby-signal,.arena .round-digit { display: none; }
+.arena .entry-art { background: none; width: 5rem; height: 5rem; margin-bottom: 1.4rem; float: none; }
+.arena .entry-art img { height: 100%; filter: none; transform: none; }
+.arena .entry-intro h1,.arena .editor-header h1,.arena .finish-view .game-prompt { font-style: normal; letter-spacing: -.06em; line-height: .98; }
+.arena .entry-intro h1 span { color: var(--primary-soft); text-shadow: none; }
+.arena .entry-form,.arena .lobby-panel { background: var(--paper); color: var(--ink); padding: clamp(1.4rem,3vw,2.75rem); }
+.arena .entry-form h2 { font-style: normal; font-weight: 800; }
+.arena .entry-form :is(input,select) { background: #fff; border: 1px solid #bdb6c4; color: var(--ink); }
+.arena .entry-form input::placeholder { color: #70697b; }
+.arena :is(.entry-form,.lobby-panel) .button-text { color: #4e465c; }
+.arena :is(.entry-form,.lobby-panel) .button-primary { background: var(--ink); color: var(--paper); }
+.arena .lobby-heading strong,.arena .lobby-panel .you-label { color: #443657; }
+.arena .lobby-panel .player-row { background: #e6e0ed; border: 0; }
+.arena .player-avatar { transform: none; }
+.arena .prompt-board,.arena .projection-stage .projection-round,.arena .host-main-stage[data-phase="question"] {
+  background: var(--paper); color: var(--ink); border: 0; border-radius: .9rem; box-shadow: none;
 }
-.lobby-signal i:nth-child(2) { opacity: .67; }
-.lobby-signal i:nth-child(3) { opacity: .35; }
-.arena .play-view .prompt-board:not([data-boss]) { border-color: #8474aa; }
-.arena .projection-stage .projection-round[data-boss] h1 { font-size: clamp(1.4rem, 3.4vw, 3.5rem); line-height: 1.12; }
-.arena .play-view .game-option { border-radius: .25rem 1rem 1rem .25rem; }
-.arena .play-view .game-option:not(:disabled):focus-visible { outline-color: var(--rail); }
-.arena .projection-qr svg { border: 10px solid #fff; box-shadow: 0 0 0 2px var(--mint), 0 0 2.4rem #7ef4c944; }
-.arena .projection-pin { color: #ffdc8a; }
-.arena .editor .editor-header { border-color: #8072a7; }
-.arena .editor .question-list li::marker { color: #ffdc8a; }
-.arena .host-deck { border-top-color: #ffdc8a; }
-.arena .arena-podium-place { min-width: 0; }
-.arena .arena-podium-names strong { position: relative; z-index: 1; }
-.arena .arena-media[data-impact="loss"] { border-color: #ff9cae; }
-.arena .arena-media[data-impact="shield"], .arena .arena-media[data-impact="blocked"] { border-color: #9de9ff; }
-.arena .arena-media[data-impact="reward"] { border-color: #ffdc8a; }
-@media (hover: hover) {
-  .arena .button-primary:hover { background: #c0ffe9; }
-  .arena .play-view .game-option:not(:disabled):hover { border-color: var(--rail); background: #2c2543; }
+.arena .play-view .prompt-board { padding: clamp(1rem,3vw,2.3rem); }
+.arena :is(.projection-round,.host-main-stage[data-phase="question"]) :is(.round-meta,.arena-round-moment span,.host-console header p,.button-text,.host-state,.arena-round-moment strong,.round-timer,.timer-label) { color: #524961; }
+.arena :is(.projection-round,.host-main-stage) h1 { font-style: normal; }
+.arena .play-view .game-option,.arena .assembly-vote .game-option,.arena .projection-options li {
+  --rail: var(--primary-soft); background: var(--surface-raised); color: var(--paper); border: 1px solid var(--border); border-radius: .65rem;
 }
+.arena .game-option::after { display: none; }
+.arena .game-option .option-letter,.arena .projection-options b { background: transparent; color: #d2c8df; }
+.arena .play-view .game-option[data-picked] { outline: 2px solid var(--primary-soft); }
+.arena .play-view .game-option[data-correct],.arena .projection-options li[data-correct] { background: #224639; border-color: var(--mint); }
+.arena .play-view .game-option[data-wrong] { background: #4b2937; border-color: #e8abb9; }
+.arena .player-verdict,.arena .player-verdict[data-verdict] { background: var(--surface-raised); border: 0; }
+.arena .arena-podium-places { align-items: stretch; gap: .4rem; }
+.arena .arena-podium-place { background: var(--surface); border: 0; border-radius: .65rem; box-shadow: none; }
+.arena .arena-podium-place[data-rank="1"] { background: #dad1e6; color: var(--ink); box-shadow: none; }
+.arena .arena-podium-place[data-rank="1"] .arena-podium-score { color: #483b58; }
+.arena .arena-podium-medal { background: transparent; color: inherit; clip-path: none; font-size: clamp(1.5rem,4vw,3rem); letter-spacing: -.07em; }
+.arena .arena-podium-place[data-rank="1"] .arena-podium-medal { filter: none; }
+.arena .editor-header,.arena .host-console { border-color: var(--border); }
+.arena .field :is(select,textarea) { border-radius: .5rem; }
+.arena .arena-effect-lane .arena-media,.arena .chaos-modal,.arena .roulette-stage,.arena .assembly-disc {
+  background: var(--surface); border-color: var(--border); rotate: none; box-shadow: none;
+}
+.arena .assembly-disc { background: #34303e; border-color: #756982; }
+.arena .chaos-dial,.arena .dial-hub { background: var(--ink); box-shadow: none; }
+.arena .dial-frame { border-color: #6c617d; }
+.arena .dial-pointer { background: var(--paper); }
+.arena .roulette-reveal { --art-paper: #eae4f0; --art-ink: #b9aad0; color: #292333; background: var(--art-paper); border: 0; box-shadow: 0 .5rem 1.5rem #0004; border-radius: .7rem; }
+.arena .roulette-reveal strong,.arena .roulette-reveal p { color: inherit; }
+.event-art { display: block; width: min(38%, 10rem); height: clamp(3.5rem,13vh,7rem); margin: 0 auto .35rem; }
+.event-art text { font: 800 26px var(--font-mono); fill: currentColor; stroke: none; }
+.event-art g { transform-box: fill-box; transform-origin: center; }
 @media (prefers-reduced-motion: no-preference) {
-  .arena-entry .entry-intro, .play-view .prompt-board { animation: arena-stage-in 245ms var(--ease-out) both; }
-  .lobby-signal i { animation: lobby-signal 2s ease-in-out infinite alternate; }
-  .lobby-signal i:nth-child(2) { animation-delay: 160ms; }
-  .lobby-signal i:nth-child(3) { animation-delay: 320ms; }
-  @keyframes arena-stage-in { from { opacity: 0; transform: translateY(.45rem); } }
-  @keyframes lobby-signal { from { opacity: .35; } to { opacity: 1; } }
+  .event-art .orbit { animation: orbit-arrives .8s ease-out both; }
+  .event-art :is(.lift,.rise,.lid) { animation: event-lift .65s ease-out both; }
+  .event-art :is(.ward,.strike) { animation: event-strike .52s ease-out both; }
+  .event-art :is(.transfer,.glitch) { animation: event-shift .48s ease-out both; }
+  @keyframes orbit-arrives { from { transform: rotate(-60deg) scale(.8); } }
+  @keyframes event-lift { from { opacity: .3; transform: translateY(14px) rotate(-8deg); } }
+  @keyframes event-strike { from { transform: scale(.65) rotate(-18deg); } 65% { transform: scale(1.08); } }
+  @keyframes event-shift { 0%,40% { transform: translateX(-7px); } 20%,60% { transform: translateX(5px); } }
 }
-@media (max-width: 640px) {
-  .arena-entry .entry-intro h1 { font-size: clamp(2.75rem, 11vw, 4.55rem); max-width: 100%; }
-  .arena-entry .entry-form, .arena-entry .lobby-panel { box-shadow: .28rem .35rem 0 #110e22; }
-  .arena .game-options .game-option { min-height: 54px; }
+@media (max-width: 760px) {
+  .arena .entry { min-height: auto; padding-block: 1.6rem; gap: 1.4rem; }
+  .arena .entry-art { width: 3rem; height: 3rem; margin-bottom: .6rem; }
+  .arena .entry-intro h1 { font-size: clamp(2.6rem,11vw,4.4rem); max-width: 100%; }
+  .arena .entry-intro p { margin-top: .7rem; }
 }
+.arena .round-timer-fill { background: var(--mint); }
+.arena .round-timer-track[data-urgent] .round-timer-fill { background: #ed9ea9; }
+.arena :is(.host-main-stage[data-phase="question"],.projection-round) .round-timer-label,
+.arena :is(.host-main-stage[data-phase="question"],.projection-round) .round-timer-label span:last-child { color: #43394e; }
+.arena .projection-round .host-answer-list li::marker,.arena .host-answer-list li::marker { color: #554462; }
+.arena .entry-form .form-error { color: #8a233f; }
+.arena .assembly-call,.arena .assembly-disc strong { color: var(--paper); }
+.arena input:is([type="checkbox"],[type="radio"]) { accent-color: var(--mint); }
+.arena .host-options-grid { align-items: start; }
+.arena .roulette-stage em { color: var(--primary-soft); }

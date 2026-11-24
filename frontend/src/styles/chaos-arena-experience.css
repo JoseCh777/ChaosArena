@@ -39,10 +39,6 @@
 .arena .host-deck { border-top-color: #ffdc8a; }
 .arena .arena-podium-place { min-width: 0; }
 .arena .arena-podium-names strong { position: relative; z-index: 1; }
-.arena .roulette-outcome[data-impact] { border-top: 2px solid var(--mint); padding-top: .65rem; }
-.arena .roulette-outcome[data-impact="loss"] { border-color: #ff9cae; }
-.arena .roulette-outcome[data-impact="shield"], .arena .roulette-outcome[data-impact="blocked"] { border-color: #9de9ff; }
-.arena .roulette-outcome[data-impact="reward"] { border-color: #ffdc8a; }
 .arena .arena-media[data-impact="loss"] { border-color: #ff9cae; }
 .arena .arena-media[data-impact="shield"], .arena .arena-media[data-impact="blocked"] { border-color: #9de9ff; }
 .arena .arena-media[data-impact="reward"] { border-color: #ffdc8a; }

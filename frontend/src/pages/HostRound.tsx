@@ -3,7 +3,6 @@ import type { HostRoundAction, RuntimeArenaView } from '../../../shared/runtime-
 import { RoundTimer } from '../components/RoundTimer';
 import { useRoundSeconds } from '../components/useRoundSeconds';
 import { command } from '../services/arena';
-import { eventLabels } from '../services/runtimeCatalog';
 
 export function HostRound({ view, online }: { view: RuntimeArenaView; online: boolean }) {
   const [pending, setPending] = useState(false);
@@ -64,8 +63,6 @@ export function HostRound({ view, online }: { view: RuntimeArenaView; online: bo
     {view.canSkipEvent && <button className="button button-text" type="button" disabled={disabled}
       onClick={() => run('skipEvent')}>Omitir sorteo de esta ronda</button>}
     {roulette && view.chaosEvent && <div className="host-cue">
-      <strong>{eventLabels[view.chaosEvent.type]}</strong>
-      <p>{view.chaosEvent.description}</p>
       <button className="button button-text" type="button" disabled={disabled} onClick={() => run('skipRoulette')}>
         Saltar animación de ruleta
       </button>

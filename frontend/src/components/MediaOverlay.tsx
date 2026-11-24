@@ -1,6 +1,7 @@
 import { ARENA_PACE } from '@chaos-arena/shared/arena-settings.js';
 import { useEffect, useRef, useState } from 'react';
 import type { MediaOutput, RuntimeDisplayView } from '../../../shared/runtime-chaos';
+import { RouletteResult } from './RouletteResult';
 import { ChaosDial } from './ChaosDial';
 import { audioGesture } from '../services/mediaAudio';
 import { fallbackAudio, mediaSource, type MediaId } from '../services/mediaManifest';
@@ -58,6 +59,7 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
   const showText = visible && (show?.reactions !== false || view.phase === 'roulette' || scene?.id === view.showFact?.id && view.showFact?.kind === 'intro');
   const runningWheel = wheel && view.phase === 'roulette' && !view.duel && view.chaosEvent;
   const wheelEvent = runningWheel || undefined;
+  const wheelRested = wheelEvent && elapsed >= ARENA_PACE.rouletteSpinMs;
   const stepRemaining = step ? step.ms - (elapsed - start) : 0;
 
   useEffect(() => { setNow(Date.now()); }, [id, scene?.started]);
@@ -135,12 +137,14 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
   return <>
     <audio ref={ambient} src={ambientUrl} loop preload="none" data-arena-ambient onError={() => setMissingAmbient(primaryAmbient)} />
     {(showText || track || wheelEvent) && <aside className="arena-media" aria-label="Efecto de la partida"
-      data-kind={view.showFact?.kind} data-impact={elapsed >= ARENA_PACE.rouletteSpinMs ? wheelEvent?.impact : undefined}>
-      {wheelEvent && <ChaosDial type={wheelEvent.type} started={wheelEvent.started} spin={elapsed < ARENA_PACE.rouletteSpinMs} onRest={onWheelRest} />}
+      data-kind={view.showFact?.kind} data-impact={wheelRested ? wheelEvent.impact : undefined}>
+      {wheelEvent && <ChaosDial type={wheelEvent.type} events={wheelEvent.wheel} started={wheelEvent.started} spin={!wheelRested} onRest={onWheelRest} />}
       {track}
-      {showText && step && <div className="arena-media-copy" role="status">
-        <strong>{step.title}</strong>{step.detail && <p>{step.detail}</p>}
-      </div>}
+      {showText && step && (wheelRested
+        ? <div role="status"><RouletteResult event={wheelEvent} /></div>
+        : <div className="arena-media-copy" role="status">
+          <strong>{step.title}</strong>{step.detail && <p>{step.detail}</p>}
+        </div>)}
       {visible && selected && <button className="button button-text" type="button" onClick={() => { setSkipped(id); onSkip?.(); }}>Omitir efecto</button>}
     </aside>}
     {blocked && audible && <p className="arena-media-status" role="status">Pulsa Silenciar y Activar sonido para reintentar el audio.</p>}

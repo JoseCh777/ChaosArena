@@ -3,6 +3,7 @@ import type { ArenaSettings } from '../../../shared/live';
 import { HostOptions } from './HostOptions';
 import { HostRound } from './HostRound';
 import { HostShow } from './HostShow';
+import { DisplayPage } from './DisplayPage';
 import './host-console.css';
 import { useState, type FormEvent } from 'react';
 import { command, forget, remember, sessionToken, useArena } from '../services/arena';
@@ -19,6 +20,9 @@ export function HostPage() {
   const [voting, setVoting] = useState(true);
   const [confirmClose, setConfirmClose] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [presenting, setPresenting] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const toggleAudio = () => setAudioEnabled(enabled => !enabled);
 
   async function create(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -106,14 +110,17 @@ export function HostPage() {
     <a href={view ? '/lobby' : '/join'} className="button button-primary">{view ? 'Volver a la sala' : 'Ir al ingreso'}</a>
   </main>;
 
-  const startable = view.phase === 'lobby' || view.phase === 'finished';
+  if (presenting) return <DisplayPage hostView={view} enabled={audioEnabled} toggleAudio={toggleAudio} close={() => setPresenting(false)} />;
+  const intro = view.phase === 'lobby' && view.showFact?.kind === 'intro';
+  const startable = !intro && (view.phase === 'lobby' || view.phase === 'finished');
   return <main className="game-layout host-layout">
     <section className="panel game-panel host-deck">
-      <p className="round-meta">{view.pausedMs !== undefined ? 'Pausa' : view.duel ? 'Duelo relámpago' : phases[view.phase]}</p>
+      <p className="round-meta">{intro ? 'Comienza la partida' : view.pausedMs !== undefined ? 'Pausa' : view.duel ? 'Duelo relámpago' : phases[view.phase]}</p>
       <h1 className="game-prompt">Mesa del anfitrión</h1>
       <p className="room-code">PIN <strong>{view.pin}</strong></p>
       <div className="host-actions">
-        <a href="/display" target="_blank" rel="noreferrer" className="button button-primary">Abrir proyector ↗</a>
+        <button className="button button-primary" type="button" onClick={() => setPresenting(true)}>Modo presentación</button>
+        <a href="/display" target="_blank" rel="noreferrer" className="button button-text">Abrir proyector ↗</a>
         <a href="/lobby" className="button button-text">Mi vista de jugador</a>
         <a href="/editor" className="button button-text">Editor</a>
       </div>
@@ -134,7 +141,7 @@ export function HostPage() {
         onClick={() => setConfirmClose(true)}>Cerrar sala</button>}
     </section>
     <div className="host-sidebar">
-      <HostShow key={view.pin} view={view} online={online && !busy} clips={startable ? settings.clips : view.clips} />
+      <HostShow key={view.pin} view={view} online={online && !busy} audioEnabled={audioEnabled} toggleAudio={toggleAudio} />
       <section className="panel host-roster">
         <h2>{view.summary ? 'Resultados de la sala' : 'Jugadores en sala'}</h2>
         <ul>{view.players.map(player => {

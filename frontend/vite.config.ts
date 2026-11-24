@@ -2,7 +2,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-const localMedia = new URL('./public/media-local/', import.meta.url);
+const localMedia = new URL('./media-local/', import.meta.url);
 
 export default defineConfig(({ command, isPreview }) => ({
   define: {

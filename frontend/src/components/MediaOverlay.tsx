@@ -46,12 +46,15 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
   });
   const id = scene ? `${view.pin}-${scene.id}` : '';
   const visible = step && id !== skipped;
-  const primary = visible ? mediaSource(step.asset, step.fallback) : undefined;
-  const primaryKey = primary ? `${id}-${start}-${primary.url}` : '';
-  const source = primaryKey && failed.includes(primaryKey) && step?.asset
-    ? fallbackAudio(step.asset) : primary;
-  const played = source && (!source.video || show?.videos !== false) && (source.video || audible) ? source : undefined;
-  const mediaKey = played ? `${id}-${start}-${played.url}` : '';
+  const sourceKey = (url: string) => `${id}-${start}-${url}`;
+  const primary = visible ? mediaSource(step.asset) : undefined;
+  const clip = visible && show?.videos !== false ? mediaSource(undefined, step.fallback) : undefined;
+  const tone = visible && step.asset ? fallbackAudio(step.asset) : undefined;
+  const played = [primary, clip, tone].find(source => source && !failed.includes(sourceKey(source.url))
+    && (source.video ? show?.videos !== false : audible));
+  const mediaKey = played ? sourceKey(played.url) : '';
+  const companion = clip && !played?.video && !failed.includes(sourceKey(clip.url)) ? clip : undefined;
+  const markFailed = (key: string) => setFailed(previous => previous.includes(key) ? previous : [...previous, key]);
   const ambientAsset = currentAmbient(view);
   const primaryAmbient = mediaSource(ambientAsset)?.url;
   const ambientUrl = ambientAsset && missingAmbient === primaryAmbient && primaryAmbient
@@ -88,10 +91,15 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
     };
     if (node.readyState) align();
     else node.addEventListener('loadedmetadata', align, { once: true });
-    node.play().then(() => { if (active) setBlocked(false); }, error => {
+    node.play().then(() => { if (active && audible) setBlocked(false); }, error => {
       if (!active || error.name === 'AbortError') return;
-      if (error.name === 'NotAllowedError' && audible) setBlocked(true);
-      else setFailed(previous => previous.includes(mediaKey) ? previous : [...previous, mediaKey]);
+      if (error.name === 'NotAllowedError' && audible) {
+        setBlocked(true);
+        if (played?.video) {
+          node.muted = true;
+          void node.play().catch(() => {});
+        }
+      } else markFailed(mediaKey);
     });
     return () => { active = false; node.removeEventListener('loadedmetadata', align); node.pause(); };
   }, [mediaKey, audible]);
@@ -139,16 +147,18 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
   const finishPreview = activePreview ? () => setSkipped(id) : undefined;
   const track = played && !failed.includes(mediaKey) && (played.video
     ? <video key={mediaKey} ref={node => { player.current = node; }} src={played.url} muted={!audible}
-      playsInline preload="metadata" aria-hidden="true" onEnded={finishPreview} onError={() => setFailed(previous => previous.includes(mediaKey) ? previous : [...previous, mediaKey])} />
+      playsInline preload="metadata" aria-hidden="true" onEnded={finishPreview} onError={() => markFailed(mediaKey)} />
     : <audio key={mediaKey} ref={node => { player.current = node; }} src={played.url}
-      preload="metadata" onEnded={finishPreview} onError={() => setFailed(previous => previous.includes(mediaKey) ? previous : [...previous, mediaKey])} />);
+      preload="metadata" onEnded={finishPreview} onError={() => markFailed(mediaKey)} />);
 
   return <>
     <audio ref={ambient} src={ambientUrl} loop preload="none" data-arena-ambient onError={() => setMissingAmbient(primaryAmbient)} />
-    {(showText || track || wheelEvent) && <aside className="arena-media" aria-label="Efecto de la partida"
+    {(showText || track || companion || wheelEvent) && <aside className="arena-media" aria-label="Efecto de la partida"
       data-kind={view.showFact?.kind} data-impact={wheelRested ? wheelEvent.impact : undefined}>
       {wheelEvent && <ChaosDial type={wheelEvent.type} events={wheelEvent.wheel} started={wheelEvent.started} spin={!wheelRested} onRest={onWheelRest} />}
       {track}
+      {companion && <video key={sourceKey(companion.url)} src={companion.url} muted autoPlay playsInline
+        aria-hidden="true" onError={() => markFailed(sourceKey(companion.url))} />}
       {showText && step && (wheelRested
         ? <div role="status"><RouletteResult event={wheelEvent} /></div>
         : <div className="arena-media-copy" role="status">

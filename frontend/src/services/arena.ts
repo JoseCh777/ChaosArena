@@ -1,6 +1,7 @@
 import { io } from 'socket.io-client';
 import { useSyncExternalStore } from 'react';
-import type { ArenaCommands, ArenaHostCommands, ArenaRoomLifecycleCommands, ArenaView, ConfiguredDisplayView, DisplayView, Reply, ArenaSettings } from '../../../shared/live';
+import type { RuntimeArenaView, RuntimeDisplayView, RuntimeCommands, RuntimePublic } from '../../../shared/runtime-chaos';
+import type { ArenaCommands, ArenaHostCommands, ArenaRoomLifecycleCommands, DisplayView, Reply, ArenaSettings } from '../../../shared/live';
 
 const key = 'chaos-arena.live-session';
 export const sessionToken = () => sessionStorage.getItem(key);
@@ -9,7 +10,7 @@ export function forget() { sessionStorage.removeItem(key); }
 
 const url = import.meta.env.VITE_SOCKET_URL || window.location.origin;
 const socket = io(url.replace(/\/$/, '') + '/arena', { autoConnect: false });
-type State = { ended?: boolean; view?: ArenaView; display?: ConfiguredDisplayView; online: boolean; message: string };
+type State = { ended?: boolean; view?: RuntimeArenaView; display?: RuntimeDisplayView; online: boolean; message: string };
 let state: State = { online: false, message: 'Conectando con la arena…' };
 const listeners = new Set<() => void>();
 function update(next: State) { state = next; listeners.forEach(listener => listener()); }
@@ -19,7 +20,7 @@ function subscribe(listener: () => void) {
 }
 export const useArena = () => useSyncExternalStore(subscribe, () => state);
 
-type Commands = Omit<ArenaCommands, 'start'> & ArenaHostCommands & ArenaRoomLifecycleCommands & {
+type Commands = Omit<ArenaCommands, 'start'> & ArenaHostCommands & ArenaRoomLifecycleCommands & RuntimeCommands & {
   start: ArenaCommands['start'] & { settings?: ArenaSettings };
 };
 
@@ -32,17 +33,20 @@ export async function command<K extends keyof Commands>(kind: K, payload: Comman
   }
 }
 
-function alignClock(view: DisplayView) {
+function alignClock(view: DisplayView & RuntimePublic) {
   const offset = Date.now() - view.serverNow;
+  if (view.duel) view.duel.deadline += offset;
+  if (view.chaosEvent) view.chaosEvent.started += offset;
+  if (view.reaction) view.reaction.started += offset;
   if (view.round) view.round.deadline += offset;
   if (view.voting) view.voting.deadline += offset;
   if (view.event) view.event.started += offset;
 }
-socket.on('view', (view: ArenaView) => {
+socket.on('view', (view: RuntimeArenaView) => {
   alignClock(view);
   update({ ...state, view, online: true, message: '' });
 });
-socket.on('display', (display: ConfiguredDisplayView) => {
+socket.on('display', (display: RuntimeDisplayView) => {
   alignClock(display);
   update({ ...state, display, online: true, message: '' });
 });

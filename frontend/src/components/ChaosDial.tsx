@@ -1,19 +1,21 @@
 import { useLayoutEffect, useRef } from 'react';
-import { eventLabels, type DemoEvent } from '../services/demoEvents';
+import type { RuntimeEvent } from '../../../shared/runtime-chaos';
+import { eventLabels } from '../services/runtimeCatalog';
 import './chaos-dial.css';
 
 const sectors = Object.entries(eventLabels);
-const glyphs = ['◉', '×2', '✦', '⇄'];
+const glyphs = ['◉', '×2', '404', '⬡', '✦', '⇄', '⚔', '↺'];
 
 export function ChaosDial({ type, spin, onRest, started }: {
-  type: DemoEvent['type'];
+  type: RuntimeEvent;
   spin: boolean;
   started: number;
   onRest: () => void;
 }) {
   const rotor = useRef<HTMLDivElement>(null);
   const sector = sectors.findIndex(([id]) => id === type);
-  const angle = 1440 - sector * 90;
+  const step = 360 / sectors.length;
+  const angle = 1440 - sector * step;
   useLayoutEffect(() => {
     const wheel = rotor.current;
     if (!wheel || !spin) return;
@@ -35,7 +37,7 @@ export function ChaosDial({ type, spin, onRest, started }: {
       <div className="dial-frame">
         <div className="dial-rotor" ref={rotor} style={{ transform: `rotate(${angle}deg)` }}>
           {sectors.map(([id, label], i) => (
-            <div className="dial-sector" key={id} style={{ transform: `rotate(${i * 90}deg)` }}>
+            <div className="dial-sector" key={id} style={{ transform: `rotate(${i * step}deg)` }}>
               <b>{glyphs[i]}</b><span>{label}</span>
             </div>
           ))}

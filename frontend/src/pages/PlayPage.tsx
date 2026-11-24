@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import type { ArenaView } from '../../../shared/live';
+import type { RuntimeArenaView } from '../../../shared/runtime-chaos';
 import { command } from '../services/arena';
 import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
 import { VotePage } from './VotePage';
 import { DemoRoulette } from '../components/DemoRoulette';
+import { DuelStage } from '../components/DuelStage';
+import { PowerTray } from '../components/PowerTray';
 import '../styles/game.css';
 
-export function PlayPage({ view, online }: { view: ArenaView; online: boolean }) {
+export function PlayPage({ view, online }: { view: RuntimeArenaView; online: boolean }) {
   const [now, setNow] = useState(Date.now);
   const [pending, setPending] = useState<number | null>(null);
   const [error, setError] = useState('');
@@ -24,6 +26,10 @@ export function PlayPage({ view, online }: { view: ArenaView; online: boolean })
     if (!reply.ok) { setError(reply.error); setPending(null); }
   }
   if (view.phase === 'vote' && view.voting) return <VotePage view={view} online={online} />;
+  if (view.duel) return <main className="game-layout play-view">
+    <DuelStage key={view.duel.id} duel={view.duel} view={view} online={online} />
+  </main>;
+  const event = view.chaosEvent ?? view.event;
   const ghost = view.players.some(player => player.id === view.you && player.status === 'ghost');
   const choice = view.choice ?? pending;
   const reveal = view.solution;
@@ -56,7 +62,8 @@ export function PlayPage({ view, online }: { view: ArenaView; online: boolean })
       </div>}
       {error && view.phase === 'question' && <p role="alert">{error}</p>}
     </section>
+    <PowerTray view={view} online={online} />
     {reveal && <Leaderboard ranking={view.players} playerId={view.you} />}
-    {view.phase === 'roulette' && view.event && <DemoRoulette event={view.event} />}
+    {view.phase === 'roulette' && event && <DemoRoulette key={round.roundId} event={event} />}
   </main>;
 }

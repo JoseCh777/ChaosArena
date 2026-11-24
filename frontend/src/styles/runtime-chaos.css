@@ -1,0 +1,100 @@
+.power-tray, .duel-stage {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+}
+
+.power-tray {
+  border: 1px solid #9aff693b;
+  border-radius: 1rem;
+  padding: 1rem;
+  background: #101d18;
+}
+
+.power-tray h2, .power-tray p { margin: 0; }
+.power-tray h2 { font-size: 1.15rem; }
+.power-tray h2 small { margin-inline-start: .4rem; color: #b4e77a; }
+
+.power-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  border-top: 1px solid #ffffff24;
+  padding-top: .75rem;
+}
+
+.power-card div { flex: 1 1 14rem; }
+.power-card p { margin-top: .25rem; }
+.power-card :is(select, button) { min-height: 44px; }
+
+.power-card select {
+  max-width: 100%;
+  padding: .5rem;
+  border: 1px solid #abc88d;
+  border-radius: .4rem;
+  color: #f0f5eb;
+  background: #17231d;
+}
+
+.duel-stage {
+  margin: auto;
+  max-width: 62rem;
+  padding: clamp(1rem, 4vw, 2.5rem);
+  border: 1px solid #ac84ff80;
+  background: radial-gradient(ellipse at 45% 0%, #362058, #16132c 68%);
+  animation: runtime-enter 280ms ease-out both;
+}
+
+.duel-stage h1 { margin: 0; font-size: clamp(1.55rem, 5vw, 3.25rem); line-height: 1.12; }
+.duel-stage .game-options { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+
+.duel-stage div.game-option { pointer-events: none; }
+
+.duel-rivals, .duel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+
+.duel-rivals span {
+  overflow-wrap: anywhere;
+  padding: .35rem .75rem;
+  border-radius: .3rem;
+  background: #e5d5ff;
+  color: #1c0c32;
+  font-weight: 750;
+}
+.duel-rivals span:nth-child(2) { background: #beff88; }
+.duel-stage [aria-live], .duel-stage [role="status"] { overflow-wrap: anywhere; }
+
+@keyframes runtime-enter {
+  from { opacity: 0; transform: translateY(.6rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .duel-stage { animation: none; }
+}
+.projection-reaction {
+  position: fixed;
+  z-index: 5;
+  inset: auto clamp(1rem, 5vw, 6rem) clamp(1rem, 5vh, 5rem) auto;
+  max-width: calc(100% - 2rem);
+  padding: clamp(.75rem, 2vw, 1.6rem);
+  border-radius: .65rem;
+  color: #191120;
+  background: #e1c5ff;
+  box-shadow: 0 0 2rem #1e0b4e85;
+  font-size: clamp(1.2rem, 3vw, 2.55rem);
+  font-weight: 800;
+  pointer-events: none;
+  animation: runtime-enter 220ms ease-out both;
+}
+
+.projection-reaction:is([data-kind="racha"], [data-kind="todos-aciertan"]) { background: #c5ff80; }
+.projection-reaction:is([data-kind="nadie-acierta"], [data-kind="expulsion"]) { background: #ffb599; }
+
+@media (prefers-reduced-motion: reduce) {
+  .projection-reaction { animation: none; }
+}

@@ -6,6 +6,8 @@ import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
 import { DemoRoulette } from '../components/DemoRoulette';
 import { ProjectionClip } from '../components/ProjectionClip';
+import { DuelStage } from '../components/DuelStage';
+import { ProjectionReaction } from '../components/ProjectionReaction';
 import { useProjectionAudio } from './useProjectionAudio';
 import './projection.css';
 
@@ -13,7 +15,7 @@ export function DisplayPage() {
   const { display, online, message } = useArena();
   const [now, setNow] = useState(Date.now);
   const phase = display?.phase;
-  const audio = useProjectionAudio(phase === 'roulette' ? 'ruleta' : phase === 'finished' ? 'podio' : undefined);
+  const audio = useProjectionAudio(phase === 'lobby' ? 'sala' : phase === 'roulette' && !display?.duel ? 'ruleta' : phase === 'finished' ? 'podio' : undefined);
   useEffect(() => {
     if (phase !== 'question') return;
     setNow(Date.now());
@@ -48,11 +50,13 @@ export function DisplayPage() {
   const waiting = phase === 'lobby';
   const finished = phase === 'finished';
   const cue = phase === 'vote' ? 'votacion' : finished ? 'podio' : phase === 'question' && display.number === 1 ? 'inicio' : undefined;
+  const event = display.chaosEvent ?? display.event;
   const clips = display.clips ?? DEFAULT_CLIPS;
   const clip = cue && clips[cue];
   return <main className={'projection ' + (waiting ? 'projection-lobby' : '')}>
     {header}
     {clip && <ProjectionClip key={cue} cue={clip} />}
+    {display.reaction && <ProjectionReaction key={display.reaction.id} reaction={display.reaction} />}
     {audio.error && <p role="status">{audio.error}</p>}
     {waiting ? <section className="projection-prompt">
       <div><p className="round-meta">Sala de espera</p><h1>Entra a la <em>arena</em></h1>
@@ -71,7 +75,7 @@ export function DisplayPage() {
           <strong>{p.rank}</strong><span>{p.nickname}</span><small>{p.score} pts</small>
         </div>)}</div>
       <Leaderboard ranking={display.players} playerId="" />
-    </> : phase === 'vote' && display.voting ? <section className="projection-round">
+    </> : display.duel ? <DuelStage key={display.duel.id} duel={display.duel} /> : phase === 'vote' && display.voting ? <section className="projection-round">
       <h1>Votación secreta</h1><p>{display.voting.received} de {display.voting.candidates.length} votos recibidos</p>
     </section> : round && <section className="projection-round">
       <div className="round-meta"><span>Ronda {display.number} / {display.total}</span>
@@ -86,6 +90,6 @@ export function DisplayPage() {
       {display.solution?.explanation && <p>{display.solution.explanation}</p>}
       {phase === 'reveal' && <Leaderboard ranking={display.players} playerId="" />}
     </section>}
-    {phase === 'roulette' && display.event && <DemoRoulette event={display.event} preview={clips.ruleta && <ProjectionClip cue={clips.ruleta} />} />}
+    {phase === 'roulette' && event && !display.duel && <DemoRoulette event={event} preview={clips.ruleta && <ProjectionClip cue={clips.ruleta} />} />}
   </main>;
 }

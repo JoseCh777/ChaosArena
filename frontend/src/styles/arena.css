@@ -1,0 +1,76 @@
+/* The same angled track, violet floodlights and mint controls connect every screen. */
+.arena {
+  --mint: #8bf4d3;
+  --ink: #090e19;
+  --track: #323552;
+  background: radial-gradient(ellipse at 19% 34%, #32225b99, transparent 46%),
+    repeating-linear-gradient(122deg, transparent 0 76px, #9791f007 77px 79px, transparent 80px 112px), #0a0e19;
+}
+.arena-header { background: #0b101be8; border-bottom-color: #373649; }
+.brand { letter-spacing: -.06em; font-size: 1.35rem; }
+.mode-label { display: inline-flex; align-items: center; min-height: 44px; color: #d2c7ef; text-underline-offset: 5px; }
+.panel { background: linear-gradient(135deg,#20233a,#131929 70%); border-color: var(--track); border-radius: 20px 6px 20px 6px; }
+.entry-form, .lobby-panel { position: relative; border-top: 3px solid var(--mint); }
+.entry-form::before, .lobby-panel::before {
+  content: ''; position: absolute; width: 76px; height: 6px; right: 20px; top: 0;
+  background: repeating-linear-gradient(120deg, var(--mint) 0 6px,transparent 6px 10px);
+}
+.entry .entry-intro h1, .editor-header h1, .finish-view .game-prompt {
+  font-style: italic; font-weight: 900; letter-spacing: -.065em;
+}
+.entry .entry-intro h1 span { color: var(--mint); text-shadow: 3px 4px 0 #39655d; }
+.entry-intro .arena-grid {
+  inset: auto 2% 77% auto; width: clamp(74px, 10vw, 142px); aspect-ratio: 1;
+  opacity: 1; mask-image: none; transform: rotate(8deg);
+  background: url('/brand/chaos-arena-mark.png') center / 50% no-repeat,
+    repeating-radial-gradient(ellipse, transparent 0 22%, #ba9dff55 23% 24%, transparent 25% 39%);
+  filter: drop-shadow(0 6px 20px #a781ff55);
+}
+.button-primary { background: var(--mint); color: var(--ink); box-shadow: 0 3px 0 #3b776c; }
+.button-primary:hover { background: #b3ffe6; }
+.button-primary:active { box-shadow: 0 1px 0 #3b776c; }
+.field input, .field textarea, .field select { background-color: #0e1220; border-color: #50526a; }
+.field :is(input,select,textarea):focus { border-color: var(--mint); }
+.pin-input { font-weight: 800; font-size: 1.25rem; }
+.arena .room-code { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 16px; font: 700 .8rem var(--font-mono); }
+.room-code strong { color: var(--mint); letter-spacing: .14em; font-size: 1.1rem; }
+.player-row { border-left: 3px solid var(--primary-soft); background: #101523; }
+.player-avatar { transform: skew(-5deg); color: var(--mint); }
+.lobby-heading strong { font: 800 1.25rem var(--font-mono); }
+.arena-notice { margin: 0; text-align: center; padding: 8px; background: #412c35; color: #ffdeab; }
+.arena .game-panel { border-top: 3px solid var(--primary-soft); }
+.round-meta { text-transform: uppercase; font-family: var(--font-mono); letter-spacing: .06em; }
+.round-timer progress { accent-color: var(--mint); }
+.game-option { --rail: #ab98ff; position: relative; overflow: hidden; border-left: 4px solid var(--rail); }
+.game-option:nth-child(2) { --rail: #6ce2ef; }
+.game-option:nth-child(3) { --rail: #ffc776; }
+.game-option:nth-child(4) { --rail: #f995b8; }
+.game-option .option-letter { color: var(--rail); }
+.game-option:disabled { opacity: .85; }
+.game-option[data-picked], .game-option[data-correct] { opacity: 1; border-color: var(--rail); background: #302a49; }
+.game-option[data-correct] { border-color: var(--mint); }
+.game-option::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; background: linear-gradient(110deg,transparent 20%,#fff4,transparent 80%); }
+.lock-feedback, .round-verdict { margin: 0; padding: 14px 16px; border-left: 3px solid var(--mint); background: #15302e; }
+.round-verdict p { margin: 5px 0 0; }
+.score-display { color: var(--mint); font: italic 900 clamp(3.6rem,9vw,7rem)/1 var(--font-ui); letter-spacing: -.08em; }
+.score-display small { font: 700 1rem var(--font-mono); letter-spacing: .06em; }
+.leaderboard li:first-child { border-left: 3px solid var(--gold); }
+.editor-header { border-bottom: 2px solid var(--track); padding-bottom: 20px; }
+.editor .question-list li::marker { color: var(--mint); font-family: var(--font-mono); }
+.editor .question-form { border-top: 3px solid var(--secondary); }
+.roulette-outcome { min-height: 100px; box-sizing: border-box; }
+.roulette-outcome h3 { text-transform: uppercase; font-style: italic; }
+@media (prefers-reduced-motion: no-preference) {
+  .panel, .chaos-modal[open], .round-verdict { animation: arrive 240ms cubic-bezier(.2,.8,.2,1) both; }
+  .player-row { animation: arrive 180ms ease-out both; }
+  .game-option:active:not(:disabled), .button:active { transform: scale(.975); }
+  .game-option[data-picked]::after { animation: strike 450ms ease-out; }
+  .roulette-outcome h3 { animation: arrive 200ms ease-out; }
+  @keyframes arrive { from { transform: translateY(8px); opacity: 0; } }
+  @keyframes strike { from { opacity: 1; transform: translateX(-100%); } to { opacity: 0; transform: translateX(100%); } }
+}
+@media (max-width: 760px) {
+  .entry-intro .arena-grid { inset: 0 0 auto auto; width: min(24vw, 110px); }
+  .entry-intro h1 { max-width: 76%; }
+  .play-view .game-prompt { font-size: clamp(1.6rem,7vw,2.4rem); }
+}

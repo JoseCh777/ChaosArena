@@ -1,3 +1,4 @@
+import { DEFAULT_ROUND_SECONDS } from '@chaos-arena/shared/arena-settings.js';
 import type { Question, Quiz } from '@chaos-arena/shared';
 
 export const DRAFT_KEY = 'chaos-arena.quiz-draft';
@@ -11,7 +12,7 @@ export function newQuestion(): Question {
     prompt: '',
     options: ['', ''],
     correctIndex: 0,
-    seconds: 20,
+    seconds: DEFAULT_ROUND_SECONDS,
     points: 100,
   };
 }

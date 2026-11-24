@@ -65,7 +65,7 @@ export function EditorPage() {
   async function playDraft() {
     try {
       if (!sessionToken()) {
-        setStatus({ message: 'Ingresa a la sala de prueba con tu apodo y vuelve al editor.', error: true });
+        setStatus({ message: 'Crea una sala desde Anfitrión y vuelve al editor.', error: true });
         return;
       }
       const validated = decodeQuiz(JSON.stringify(quiz));

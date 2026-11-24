@@ -34,10 +34,10 @@ Los módulos de negocio se incorporarán según el plan de Daniel. Los tipos se 
 | --- | --- | --- |
 | backend/.env | PORT | Puerto HTTP y Socket.IO, por defecto 3001 |
 | backend/.env | CLIENT_ORIGIN | Origen autorizado del navegador, por defecto http://localhost:5173 |
-| backend/.env | HOST_KEY | Credencial privada para futura creación de sala |
+| backend/.env | HOST_KEY | Credencial privada para crear la sala en producción |
 | frontend/.env | VITE_SOCKET_URL | Dirección del backend accesible por el navegador |
 
-Los archivos .env se excluyen de Git y se generan desde cada .env.example. El servidor inicial carga backend/.env con Node/tsx. HOST_KEY se validará al implementar room:create. El arranque actual expone /health y el transporte Socket.IO. Las mecánicas están pendientes.
+Los archivos .env se excluyen de Git y se generan desde cada .env.example. El servidor carga backend/.env con Node/tsx. Valida HOST_KEY al crear la sala en producción y expone /health y Socket.IO.
 
 ## Arranque
 
@@ -45,8 +45,13 @@ Desde la raíz, npm ci y npm run dev. También npm run dev:backend o npm run dev
 
 ## Red local
 
-Configurar VITE_SOCKET_URL con http://IP-DEL-PORTATIL:3001 y CLIENT_ORIGIN con http://IP-DEL-PORTATIL:5173. Reiniciar ambos procesos después del cambio. Ejecutar npm run dev:backend en una terminal y npm run dev:frontend -- --host 0.0.0.0 en otra. Abrir http://IP-DEL-PORTATIL:5173 desde teléfonos en la misma red que permita comunicación entre dispositivos. Comprobar firewall de la red privada y conexión Socket.IO real.
+Dejar VITE_SOCKET_URL vacío para usar el proxy de Vite. Ejecutar `npm run dev:backend` en una terminal y `npm run dev -w frontend -- --host` en otra. Abrir `/display` usando la URL Network de Vite, crear la sala desde `/host` y escanear el QR en la misma red privada.
 
 ## Despliegue previsto
 
-Usar la raíz del monorepo para instalar con npm ci. Backend con npm run build -w backend y npm start -w backend. Frontend con npm run build -w frontend y salida frontend/dist. Acordar rewrite SPA al añadir las rutas. Configurar VITE_SOCKET_URL con HTTPS backend y CLIENT_ORIGIN con el origen frontend. Revisar cuotas y acceso de ambos autores antes de elegir planes. Esta estructura prepara el build, y el despliegue corresponde a jornada cuatro.
+Los archivos `render.yaml` y `vercel.json` parten de la raíz del repositorio y usan el lockfile común. Los servicios se crean cuando se integren los cambios de la entrega.
+
+1. En Render, crear el Web Service con el Blueprint y configurar `HOST_KEY` en el servicio. Verificar que `/health` devuelva 200. El Blueprint deja los despliegues automáticos desactivados para que se pueda elegir cuándo reiniciar la sala. [Blueprint de Render](https://render.com/docs/blueprint-spec)
+2. En Vercel, importar el repositorio y mantener la raíz en el nivel del monorepo. Configurar `VITE_SOCKET_URL` con el origen HTTPS de Render. El archivo de configuración compila el workspace frontend, publica `frontend/dist` y habilita los enlaces directos de la aplicación. [Vite en Vercel](https://vercel.com/docs/frameworks/frontend/vite#using-vite-to-make-spas)
+3. En Render, configurar `CLIENT_ORIGIN` con el origen exacto del frontend y desplegar. Después, abrir `/host` desde la URL pública, crear la sala y comprobar el QR de `/display` y la reconexión.
+4. Registrar el ensayo con teléfonos y proyector en SEGUIMIENTO.md. La contingencia es hacer la partida en red local o usar el cuestionario revisado con una hoja de registro manual de respuestas.

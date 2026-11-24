@@ -62,13 +62,18 @@ test('arena: partida con asamblea, fantasma, final y reinicio', async () => {
   assert.ok((await display.cmd('observe')).ok);
 
   const [ana, beto, caro, dani] = [client(), client(), client(), client()];
-  assert.ok((await ana.cmd('join', { pin: '482913', nickname: 'Ana' })).ok);
-  assert.equal((await beto.cmd('join', { pin: '000000', nickname: 'Beto' })).ok, false);
-  assert.ok((await beto.cmd('join', { pin: '482913', nickname: 'Beto' })).ok);
-  const dup = await caro.cmd('join', { pin: '482913', nickname: 'ana' });
+  assert.equal((await ana.cmd('join', { pin: '482913', nickname: 'Ana' })).ok, false);
+  assert.ok((await ana.cmd('create', { nickname: 'Ana', hostKey: process.env.HOST_KEY })).ok);
+  await until(() => Boolean(ana.view?.pin));
+  const pin = ana.view!.pin;
+  assert.match(pin, /^\d{6}$/);
+  assert.equal((await beto.cmd('create', { nickname: 'Beto', hostKey: process.env.HOST_KEY })).ok, false);
+  assert.equal((await beto.cmd('join', { pin: pin === '000000' ? '000001' : '000000', nickname: 'Beto' })).ok, false);
+  assert.ok((await beto.cmd('join', { pin, nickname: 'Beto' })).ok);
+  const dup = await caro.cmd('join', { pin, nickname: 'ana' });
   assert.equal(!dup.ok && dup.error, 'Ese apodo ya está en uso.');
-  assert.ok((await caro.cmd('join', { pin: '482913', nickname: 'Caro' })).ok);
-  assert.ok((await dani.cmd('join', { pin: '482913', nickname: 'Dani' })).ok);
+  assert.ok((await caro.cmd('join', { pin, nickname: 'Caro' })).ok);
+  assert.ok((await dani.cmd('join', { pin, nickname: 'Dani' })).ok);
 
   await until(() => dani.view?.players.length === 4);
   assert.equal(ana.view?.host, true);
@@ -81,8 +86,15 @@ test('arena: partida con asamblea, fantasma, final y reinicio', async () => {
 
   assert.equal((await beto.cmd('start', {})).ok, false);
   const quiz = { title: 'Prueba', questions: [question({ id: 'a', seconds: 10 }), question({ id: 'b', seconds: 10 })] };
-  assert.ok((await ana.cmd('start', { quiz })).ok);
-  await until(() => ana.view?.phase === 'question');
+  assert.equal((await ana.cmd('start', { quiz, settings: { roundSeconds: 61, clips: {} } })).ok, false);
+  assert.equal((await ana.cmd('start', { quiz, settings: { roundSeconds: 35, clips: {
+    inicio: '../ajeno', votacion: 'votacion', ruleta: 'ruleta', podio: 'podio',
+  } } })).ok, false);
+  const clips = { inicio: null, votacion: 'votacion', ruleta: 'ruleta', podio: 'inicio' };
+  assert.ok((await ana.cmd('start', { quiz, settings: { roundSeconds: 35, clips } })).ok);
+  await until(() => ana.view?.phase === 'question' && screen?.phase === 'question');
+  assert.equal(ana.view?.seconds, 35);
+  assert.deepEqual((screen as DisplayView & { clips?: object })?.clips, clips);
   assert.equal(ana.view?.round && 'correctIndex' in ana.view.round, false);
 
   const roundId = ana.view!.round!.roundId;
@@ -116,6 +128,15 @@ test('arena: partida con asamblea, fantasma, final y reinicio', async () => {
   assert.ok((await ana.cmd('start', { quiz })).ok);
   await until(() => ana.view?.phase === 'question' && ana.view.players.every((p) => p.score === 0));
 
+  assert.equal(ana.view?.seconds, 30);
+
   // Salir solo en lobby o al terminar.
   assert.equal((await beto.cmd('leave')).ok, false);
+  assert.equal((await beto.cmd('closeRoom')).ok, false);
+  assert.ok((await ana.cmd('closeRoom')).ok);
+  await until(() => beto.removed && screen?.pin === '');
+  assert.ok((await ana.cmd('create', { nickname: 'Ana', hostKey: process.env.HOST_KEY })).ok);
+  await until(() => Boolean(screen?.pin));
+  assert.notEqual(screen?.pin, pin);
+  assert.equal((await client().cmd('join', { pin, nickname: 'Otro jugador' })).ok, false);
 });

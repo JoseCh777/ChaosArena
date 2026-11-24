@@ -5,7 +5,7 @@ import { PlayPage } from './PlayPage';
 import { ResultsPage } from './ResultsPage';
 
 export function LiveArena() {
-  const { view, online, message } = useArena();
+  const { view, online, message, ended } = useArena();
   const [error, setError] = useState('');
   useEffect(() => {
     if (!view) return;
@@ -19,7 +19,7 @@ export function LiveArena() {
     else if (kind === 'leave') { forget(); location.assign('/join'); }
   }
   if (!view) return <main className="empty-state panel"><h1>Sala de espera</h1>
-    <p role="status">{sessionToken() ? message : 'Entra con tu PIN y apodo.'}</p>
+    <p role="status">{(sessionToken() || ended) ? message : 'Entra con tu PIN y apodo.'}</p>
     {!sessionToken() && <a className="button button-primary" href="/join">Ir al ingreso</a>}</main>;
   return <>
     {!online && <p className="arena-notice" role="status">{message}</p>}

@@ -1,6 +1,5 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { command, remember } from '../services/arena';
-const DEMO_PIN = '482913';
 
 export function JoinPage() {
   const pinFromUrl = new URLSearchParams(window.location.search).get('pin') ?? '';
@@ -71,16 +70,7 @@ export function JoinPage() {
         </div>
         {error && <p className="form-error" id="join-error" role="alert">{error.message}</p>}
         <button className="button button-primary" type="submit" disabled={busy}>{busy ? 'Conectando…' : 'Entrar a la partida'} <span aria-hidden="true">→</span></button>
-        <button
-          className="button button-text" type="button"
-          onClick={() => {
-            setPin(DEMO_PIN);
-            setError(undefined);
-            nicknameInput.current?.focus();
-          }}
-        >
-          Usar PIN de la arena <span>{DEMO_PIN}</span>
-        </button>
+        <a className="button button-text" href="/host">Crear una sala</a>
       </form>
     </main>
   );

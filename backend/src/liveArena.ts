@@ -1,11 +1,13 @@
 import type { Namespace } from 'socket.io';
 import type { ErrorCode, RankingEntry } from '@chaos-arena/shared';
-import type { ArenaView, DisplayView, LiveEvent, Reply } from '../../shared/live.js';
+import type { ArenaView, ConfiguredDisplayView, LiveEvent, Reply } from '../../shared/live.js';
 import { attachAutopilot, defaultAutopilot, type AutopilotOptions } from './autopilot.js';
 import { GameEngine, type EngineChange } from './game.js';
 import { GameError, realDeps, type EngineDeps } from './model.js';
 import { demoQuestions } from './practiceQuestions.js';
 import { validateQuiz } from './questions.js';
+import { generatePin, normalizeNickname, safeEqual } from './rooms.js';
+import { parseArenaSettings } from './arenaSettings.js';
 import { buildRanking } from './scoring.js';
 
 /**
@@ -14,7 +16,6 @@ import { buildRanking } from './scoring.js';
  * y traduce cada uno a vistas por rol: jugador, anfitrión y proyector.
  */
 
-const PIN = '482913';
 const RECONNECT_GRACE_MS = 30_000;
 const RATE_LIMIT = { windowMs: 1000, max: 20 };
 
@@ -46,17 +47,21 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
   /** playerId → token, para avisar retiros. */
   const tokens = new Map<string, string>();
   let engine!: GameEngine;
+  let previousPin = '';
   let detach = () => {};
+  let settings = parseArenaSettings(undefined)!;
   let lastEvent: LiveEvent | undefined;
   let lastScores = new Map<string, number>();
 
-  function boot() {
+  function boot(pin = '') {
     detach();
     engine?.dispose();
     connections.clear();
     tokens.clear();
     lastEvent = undefined;
-    engine = new GameEngine(PIN, { title: 'Patrones de diseño', questions: demoQuestions }, { votingEnabled: true }, deps);
+    lastScores.clear();
+    settings = parseArenaSettings(undefined)!;
+    engine = new GameEngine(pin, { title: 'Patrones de diseño', questions: demoQuestions }, { votingEnabled: true }, deps);
     const offView = engine.subscribe(onChange);
     const offPilot = attachAutopilot(engine, config.autopilot ?? defaultAutopilot, deps);
     detach = () => {
@@ -118,10 +123,11 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     const round = engine.currentRound();
     const q = round?.question;
     const received = round ? all.filter((p) => engine.choiceOf(p.id) !== null).length : 0;
-    const view: DisplayView = {
+    const view: ConfiguredDisplayView = {
       phase,
       serverNow: Date.now(),
-      pin: PIN,
+      pin: engine.pin,
+      clips: settings.clips,
       players,
       number: Math.max(engine.questionIndex, 0) + 1,
       total: engine.publicSnapshot().questionCount,
@@ -169,7 +175,10 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     } catch (error) {
       if (!(error instanceof GameError)) throw error;
     }
-    if (engine.players.size === 0 && engine.phase !== 'lobby') boot();
+    if (engine.players.size === 0) {
+      boot();
+      publish();
+    }
   }
 
   boot();
@@ -200,10 +209,24 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
         publish();
         return;
       }
-      if (kind === 'join' || kind === 'resume') {
+      if (kind === 'create' || kind === 'join' || kind === 'resume') {
         if (session) return fail('Esta conexión ya tiene un jugador.');
-        if (kind === 'join') {
-          if (data.pin !== PIN) return fail('PIN de sala incorrecto.');
+        if (kind !== 'resume') {
+          if (kind === 'create') {
+            if (engine.pin) return fail('Ya hay una sala abierta.');
+            const hostKey = process.env.HOST_KEY;
+            if ((hostKey && !safeEqual(data.hostKey, hostKey)) || (!hostKey && process.env.NODE_ENV === 'production')) {
+              return fail('La clave de anfitrión es incorrecta o el servidor aún no está configurado.');
+            }
+            if (!normalizeNickname(data.nickname)) return fail(MESSAGES.NICKNAME_INVALID!);
+            let pin = generatePin();
+            while (pin === previousPin) pin = generatePin();
+            previousPin = pin;
+            boot(pin);
+          } else {
+            if (!engine.pin) return fail('El anfitrión todavía no ha abierto la sala.');
+            if (data.pin !== engine.pin) return fail('PIN de sala incorrecto.');
+          }
           const player = engine.join(data.nickname);
           tokens.set(player.id, player.token);
           session = player.token;
@@ -231,8 +254,15 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
           if (!isHost || !['lobby', 'finished'].includes(engine.phase)) return fail('Solo el anfitrión puede iniciar desde la sala.');
           const validation = validateQuiz(data.quiz ?? { title: 'Patrones de diseño', questions: demoQuestions });
           if (!validation.ok) return fail(validation.error);
+          const nextSettings = parseArenaSettings(data.settings);
+          if (!nextSettings) return fail('Revisa la duración y los clips de la sala.');
+          settings = nextSettings;
           if (engine.phase === 'finished') engine.restart();
-          engine.configure(validation.quiz, { votingEnabled: data.voting !== false });
+          const quiz = settings.roundSeconds === null ? validation.quiz : {
+            ...validation.quiz,
+            questions: validation.quiz.questions.map(q => ({ ...q, seconds: settings.roundSeconds! })),
+          };
+          engine.configure(quiz, { votingEnabled: data.voting !== false });
           engine.command('start');
           break;
         }
@@ -240,6 +270,15 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
           if (engine.phase !== 'lobby' || !isHost) return fail('Solo el anfitrión puede retirar jugadores durante la espera.');
           if (typeof data.id !== 'string' || data.id === player.id || !engine.players.has(data.id)) return fail('Selecciona a otro jugador.');
           engine.kick(data.id);
+          break;
+        }
+        case 'closeRoom': {
+          if (!isHost) return fail('Solo el anfitrión puede cerrar la sala.');
+          const guests = [...connections.values()].filter(id => id !== socket.id);
+          boot();
+          session = '';
+          for (const id of guests) arena.to(id).emit('removed', 'El anfitrión cerró la sala.');
+          publish();
           break;
         }
         case 'leave':
@@ -258,9 +297,12 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
       connections.delete(session);
       const token = session;
       setTimeout(() => {
-        if (connections.has(token)) return;
+        if (connections.has(token) || !engine.playerByToken(token)) return;
         if (['lobby', 'finished'].includes(engine.phase)) leave(token);
-        else if (connections.size === 0) boot();
+        else if (connections.size === 0) {
+          boot();
+          publish();
+        }
       }, RECONNECT_GRACE_MS).unref();
     });
   });

@@ -16,7 +16,7 @@ Una sala en memoria y 15 preguntas sugeridas. Preparar ensayo con el tamaño rea
 
 ## Flujo de partida
 
-Lobby → pregunta → resultados → evento o votación opcional → siguiente pregunta → final. El anfitrión avanza manualmente y el servidor autoriza las transiciones. El tiempo objetivo de sesión es 15–20 minutos, por confirmar en ensayo. Preguntas de 15–20 segundos, hasta 30 para código. Mostrar explicaciones durante 5–8 segundos. Ritmo sugerido de ruleta cada tres preguntas y asambleas tras las preguntas cinco y diez.
+Lobby → pregunta → resultados → evento o votación opcional → siguiente pregunta → final. El servidor avanza automáticamente y el anfitrión configura la partida antes de iniciarla. El tiempo objetivo de sesión es 15–20 minutos, por confirmar en ensayo. 30 segundos por defecto, con opción de ajustar la duración en bloque o usar los tiempos del cuestionario. Mostrar explicaciones durante 5–8 segundos. Cada ronda que todos completan tiene un 30 % de probabilidad de ruleta. En las preguntas cinco y diez, si no sale ruleta y se cumplen las condiciones, puede haber asamblea.
 
 ## Reglas de evaluación
 
@@ -39,7 +39,7 @@ PIN de seis dígitos y apodo de 1–20 caracteres. Normalizar espacios y compara
 | Loot Box | Un activo aleatorio gana 150 puntos |
 | Hackeo | Dos activos intercambian puntos, requiere dos candidatos |
 
-Seleccionar uniformemente entre efectos elegibles en el servidor. Máximo un evento entre rondas y permitir omitir. Evitar combinar efectos pendientes. La ruleta muestra el resultado decidido por el servidor.
+Seleccionar uniformemente entre efectos elegibles en el servidor. Máximo un evento entre rondas. La ruleta se abre y cierra automáticamente en todas las vistas. Evitar combinar efectos pendientes. La ruleta muestra el resultado decidido por el servidor.
 
 Votación de 20 segundos entre activos. Un voto por persona a otro activo u Omitir. Gana el candidato que supere a Omitir sin empate, con tres votos válidos como mínimo. Máximo una expulsión y al menos dos activos restantes. El expulsado pasa a fantasma y conserva evaluación y puntos. Los votos individuales permanecen secretos. El anfitrión puede desactivar votaciones.
 

@@ -1,0 +1,155 @@
+{
+  "title": "Ensayo de ChaosArena · Patrones de diseño",
+  "questions": [
+    {
+      "id": "observer",
+      "type": "multiple",
+      "prompt": "¿Qué patrón permite que varios interesados reciban avisos cuando cambia un objeto?",
+      "options": ["Strategy","Observer","State","Adapter"],
+      "correctIndex": 1,
+      "explanation": "Observer mantiene una relación de suscripción entre el objeto observado y sus interesados.",
+      "seconds": 30,
+      "points": 100
+    },
+    {
+      "id": "strategy",
+      "type": "multiple",
+      "prompt": "¿Qué patrón permite cambiar el algoritmo de puntuación sin modificar quien lo usa?",
+      "options": ["Factory Method","Facade","Strategy","Singleton"],
+      "correctIndex": 2,
+      "explanation": "Strategy presenta los algoritmos intercambiables bajo un contrato común.",
+      "seconds": 30,
+      "points": 100
+    },
+    {
+      "id": "state",
+      "type": "multiple",
+      "prompt": "¿Qué patrón permite que una partida responda de forma distinta en lobby, pregunta y resultados?",
+      "options": ["State","Builder","Proxy","Adapter"],
+      "correctIndex": 0,
+      "explanation": "State delega el comportamiento según el estado actual.",
+      "seconds": 30,
+      "points": 100
+    },
+    {
+      "id": "adapter",
+      "type": "multiple",
+      "prompt": "Un servicio devuelve un formato incompatible con el esperado. ¿Qué patrón traduce esa interfaz?",
+      "options": ["Observer","Builder","Strategy","Adapter"],
+      "correctIndex": 3,
+      "explanation": "Adapter convierte una interfaz existente en otra que el cliente puede utilizar.",
+      "seconds": 30,
+      "points": 100
+    },
+    {
+      "id": "facade",
+      "type": "multiple",
+      "prompt": "¿Qué patrón ofrece una entrada sencilla a varios componentes de un subsistema?",
+      "options": ["Facade","Singleton","Observer","Prototype"],
+      "correctIndex": 0,
+      "explanation": "Facade proporciona una interfaz de alto nivel y simplifica el uso del subsistema.",
+      "seconds": 30,
+      "points": 100
+    },
+    {
+      "id": "strategy-selection",
+      "type": "multiple",
+      "prompt": "Un anfitrión puede elegir un algoritmo de puntuación al configurar la partida. ¿Qué patrón describe esa selección?",
+      "options": ["State","Strategy","Adapter","Facade"],
+      "correctIndex": 1,
+      "explanation": "Los algoritmos se pueden seleccionar por configuración sin cambiar la fase del juego.",
+      "seconds": 30,
+      "points": 100
+    },
+    {
+      "id": "observer-boolean",
+      "type": "boolean",
+      "prompt": "En Observer, nuevos observadores pueden suscribirse sin que el emisor tenga que conocer su implementación.",
+      "options": ["Verdadero","Falso"],
+      "correctIndex": 0,
+      "explanation": "El emisor notifica usando el contrato de los observadores.",
+      "seconds": 30,
+      "points": 100
+    },
+    {
+      "id": "state-boolean",
+      "type": "boolean",
+      "prompt": "En State, el comportamiento de un objeto debe permanecer igual aunque cambie su estado.",
+      "options": ["Verdadero","Falso"],
+      "correctIndex": 1,
+      "explanation": "El comportamiento puede cambiar precisamente porque depende del estado actual.",
+      "seconds": 30,
+      "points": 100
+    },
+    {
+      "id": "builder",
+      "type": "multiple",
+      "prompt": "¿Qué patrón ayuda a construir un cuestionario complejo paso a paso?",
+      "options": ["Proxy","Observer","Builder","Command"],
+      "correctIndex": 2,
+      "explanation": "Builder separa la construcción por pasos de la representación final.",
+      "seconds": 30,
+      "points": 100
+    },
+    {
+      "id": "command",
+      "type": "multiple",
+      "prompt": "¿Qué patrón permite representar «iniciar partida» como un objeto que se puede enviar o encolar?",
+      "options": ["Adapter","Command","Prototype","Facade"],
+      "correctIndex": 1,
+      "explanation": "Command encapsula una petición con la información necesaria para ejecutarla.",
+      "seconds": 30,
+      "points": 100
+    },
+    {
+      "id": "decorator",
+      "type": "multiple",
+      "prompt": "¿Qué patrón agrega comportamiento a un objeto envolviéndolo y conservando su interfaz?",
+      "options": ["Decorator","Builder","State","Prototype"],
+      "correctIndex": 0,
+      "explanation": "Decorator compone responsabilidades adicionales alrededor de un objeto compatible.",
+      "seconds": 30,
+      "points": 100
+    },
+    {
+      "id": "proxy",
+      "type": "multiple",
+      "prompt": "¿Qué patrón introduce un intermediario con la misma interfaz para controlar el acceso a un objeto?",
+      "options": ["Observer","Factory Method","Strategy","Proxy"],
+      "correctIndex": 3,
+      "explanation": "Proxy actúa en lugar del objeto real y puede controlar cuándo se usa.",
+      "seconds": 30,
+      "points": 100
+    },
+    {
+      "id": "factory-method",
+      "type": "multiple",
+      "prompt": "¿Qué patrón permite que una subclase decida qué tipo de objeto concreto instanciar?",
+      "options": ["Facade","State","Factory Method","Adapter"],
+      "correctIndex": 2,
+      "explanation": "Factory Method define una operación de creación que una subclase puede especializar.",
+      "seconds": 30,
+      "points": 100
+    },
+    {
+      "id": "phase-vs-algorithm",
+      "type": "multiple",
+      "prompt": "Una ronda cambia de fase y eso modifica cuáles acciones acepta. ¿Qué patrón describe mejor este comportamiento?",
+      "options": ["Strategy","Observer","State","Builder"],
+      "correctIndex": 2,
+      "explanation": "La fase actual determina el comportamiento. Esta es la intención de State.",
+      "seconds": 30,
+      "points": 100
+    },
+    {
+      "id": "observer-scenario",
+      "type": "multiple",
+      "prompt": "Si el proyector y los jugadores se suscriben a actualizaciones de la sala, ¿qué patrón representa esa relación?",
+      "options": ["Singleton","Observer","Adapter","Decorator"],
+      "correctIndex": 1,
+      "explanation": "El cambio en la sala puede notificarse a todos los suscriptores mediante Observer.",
+      "seconds": 30,
+      "points": 100
+    }
+  ]
+}

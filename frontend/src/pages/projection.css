@@ -27,3 +27,23 @@
   .projection-prompt { padding-top: 28px; min-height: auto; }
   .arena-nav .mode-label { min-height: 26px; }
 }
+
+.projection-brand { flex-wrap: wrap; }
+.host-close { padding-top: 12px; border-top: 1px solid var(--border); }
+.host-close p { margin: 0 0 12px; color: var(--muted); }
+.projection-clip { margin: 12px auto; width: min(100%, 510px); }
+.projection-clip video { display: block; width: 100%; height: auto; aspect-ratio: 704 / 200; border: 1px solid var(--track); border-radius: 8px; }
+.roulette-stage .projection-clip { width: min(64%, 210px); }
+@media (prefers-reduced-motion: reduce) {
+  .projection-clip { display: none; }
+}
+.host-options { padding: 12px 0; border-block: 1px solid var(--border); }
+.host-options summary { cursor: pointer; min-height: 44px; padding-block: 10px; font-weight: 750; }
+.host-options-grid { display: grid; gap: var(--space-3); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.host-options-check { display: flex; align-items: center; min-height: 44px; gap: 8px; }
+.host-options legend { padding: 0; font-weight: 700; }
+.host-options fieldset { border: 0; padding: 0; margin: var(--space-2) 0 0; min-width: 0; }
+.host-options fieldset .field { margin-top: var(--space-2); }
+@media (max-width: 520px) {
+  .host-options-grid { grid-template-columns: minmax(0, 1fr); }
+}

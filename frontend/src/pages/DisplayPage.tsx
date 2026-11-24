@@ -1,9 +1,11 @@
+import { DEFAULT_CLIPS } from '@chaos-arena/shared/arena-settings.js';
 import { useEffect, useState } from 'react';
 import QRCode from 'react-qr-code';
 import { useArena } from '../services/arena';
 import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
 import { DemoRoulette } from '../components/DemoRoulette';
+import { ProjectionClip } from '../components/ProjectionClip';
 import { useProjectionAudio } from './useProjectionAudio';
 import './projection.css';
 
@@ -19,22 +21,38 @@ export function DisplayPage() {
     return () => clearInterval(timer);
   }, [phase, display?.round?.roundId]);
 
-  if (!display) return <main className="panel empty-state"><h1>Proyector</h1><p role="status">{message}</p></main>;
+  const header = <header className="projection-brand">
+    <img src="/brand/chaos-arena-mark.png" alt="" width="36" height="40" />
+    <strong>ChaosArena</strong>
+    <span>{online ? 'Proyector' : message}</span>
+    <nav className="host-actions" aria-label="Salir del proyector">
+      <a className="button button-text" href="/host">Anfitrión</a>
+      <a className="button button-text" href="/join">Ingreso</a>
+    </nav>
+    {display?.pin && <button className="button button-text" type="button" aria-pressed={audio.enabled} onClick={audio.toggle}>
+      {audio.enabled ? 'Silenciar' : 'Activar sonido'}
+    </button>}
+  </header>;
+
+  if (!display?.pin) return <main className="projection">
+    {header}
+    <section className="panel empty-state">
+      <h1>{display ? 'Esperando sala' : 'Proyector'}</h1>
+      <p role="status">{display && online ? 'El PIN y el QR aparecerán cuando el anfitrión cree la sala.' : message}</p>
+    </section>
+  </main>;
   const link = new URL('/join', window.location.origin);
   link.searchParams.set('pin', display.pin);
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(link.hostname);
   const round = display.round;
   const waiting = phase === 'lobby';
   const finished = phase === 'finished';
+  const cue = phase === 'vote' ? 'votacion' : finished ? 'podio' : phase === 'question' && display.number === 1 ? 'inicio' : undefined;
+  const clips = display.clips ?? DEFAULT_CLIPS;
+  const clip = cue && clips[cue];
   return <main className={'projection ' + (waiting ? 'projection-lobby' : '')}>
-    <header className="projection-brand">
-      <img src="/brand/chaos-arena-mark.png" alt="" width="36" height="40" />
-      <strong>ChaosArena</strong>
-      <span>{online ? 'Proyector' : message}</span>
-      <button className="button button-text" type="button" aria-pressed={audio.enabled} onClick={audio.toggle}>
-        {audio.enabled ? 'Silenciar' : 'Activar sonido'}
-      </button>
-    </header>
+    {header}
+    {clip && <ProjectionClip key={cue} cue={clip} />}
     {audio.error && <p role="status">{audio.error}</p>}
     {waiting ? <section className="projection-prompt">
       <div><p className="round-meta">Sala de espera</p><h1>Entra a la <em>arena</em></h1>
@@ -58,7 +76,7 @@ export function DisplayPage() {
     </section> : round && <section className="projection-round">
       <div className="round-meta"><span>Ronda {display.number} / {display.total}</span>
         <span>{display.received} / {display.players.length} respuestas</span></div>
-      {phase === 'question' && <RoundTimer seconds={Math.max(0, Math.ceil((round.deadline - now) / 1000))} totalSeconds={display.seconds} />}
+      {phase === 'question' && <RoundTimer seconds={Math.max(0, (round.deadline - now) / 1000)} totalSeconds={display.seconds} />}
       <h1>{round.prompt}</h1>
       <ol className="projection-options">{round.options.map((option, i) =>
         <li key={i} data-correct={display.solution?.index === i || undefined}>
@@ -68,6 +86,6 @@ export function DisplayPage() {
       {display.solution?.explanation && <p>{display.solution.explanation}</p>}
       {phase === 'reveal' && <Leaderboard ranking={display.players} playerId="" />}
     </section>}
-    {phase === 'roulette' && display.event && <DemoRoulette event={display.event} />}
+    {phase === 'roulette' && display.event && <DemoRoulette event={display.event} preview={clips.ruleta && <ProjectionClip cue={clips.ruleta} />} />}
   </main>;
 }

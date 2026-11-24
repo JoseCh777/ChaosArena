@@ -39,3 +39,20 @@ export interface ArenaCommands {
   leave: Record<string, never>;
 }
 export type Reply = { ok: true; token?: string } | { ok: false; error: string };
+
+export interface ArenaHostCommands {
+  create: { nickname: string; hostKey?: string };
+}
+
+export interface ArenaRoomLifecycleCommands {
+  closeRoom: Record<string, never>;
+}
+
+export type ClipCue = 'inicio' | 'votacion' | 'ruleta' | 'podio';
+export type ProjectionClips = Record<ClipCue, ClipCue | null>;
+export type ConfiguredDisplayView = DisplayView & { clips?: ProjectionClips };
+
+export interface ArenaSettings {
+  roundSeconds: number | null;
+  clips: ProjectionClips;
+}

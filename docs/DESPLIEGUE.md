@@ -24,4 +24,4 @@ Render tiene el despliegue automático desactivado. Actualiza el backend entre p
 - Abre el anfitrión y el proyector en ventanas separadas si usas dos pantallas. Prueba el PIN desde dos teléfonos.
 - Activa el audio en la salida seleccionada y verifica acierto, error y ruleta. Usa una partida corta de 16 preguntas para medir el ritmo completo.
 - Llega al podio y descarga el CSV desde el anfitrión. Compara un par de filas con el resultado de cada participante.
-- El build público incluye clips existentes y señales originales de respaldo. Los recursos de la carpeta local de ensayo quedan fuera hasta contar con los permisos de publicación.
+- El build público incluye los clips y audios optimizados de `frontend/public/media-local/`, autorizados para publicación por José el 24 de noviembre de 2026.

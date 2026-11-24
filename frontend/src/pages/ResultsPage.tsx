@@ -9,13 +9,15 @@ export function ResultsPage({ view, act }: { view: RuntimeArenaView; act: (kind:
     <ArenaPodium players={view.players} final />
     <ArenaRecognitions awards={view.awards} />
     <section className="panel game-panel">
-      <p className="round-meta">Puesto {player.rank} de {view.players.length}</p>
-      <h1 className="game-prompt">Tus resultados</h1>
-      <div className="score-display">{player.score}<small> PTS</small></div>
-      <dl className="final-stats">
-        <div><dt>Aciertos</dt><dd>{view.correctCount} de {view.total}</dd></div>
-        <div><dt>Resultado académico</dt><dd>{Math.round(100 * view.correctCount / view.total)} %</dd></div>
-      </dl>
+      {player.rank > 0 ? <>
+        <p className="round-meta">Puesto {player.rank} de {view.expectedAnswers ?? view.players.length}</p>
+        <h1 className="game-prompt">Tus resultados</h1>
+        <div className="score-display">{player.score}<small> PTS</small></div>
+        <dl className="final-stats">
+          <div><dt>Aciertos</dt><dd>{view.correctCount} de {view.total}</dd></div>
+          <div><dt>Resultado académico</dt><dd>{Math.round(100 * view.correctCount / view.total)} %</dd></div>
+        </dl>
+      </> : <h1 className="game-prompt">Resultados de la partida</h1>}
       {view.host && <a href="/host" className="button button-primary">Preparar otra partida</a>}
       <button className="button button-text" onClick={() => act('leave')}>Salir de la sala</button>
     </section>

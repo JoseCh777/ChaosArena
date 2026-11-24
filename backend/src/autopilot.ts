@@ -76,7 +76,7 @@ export function attachAutopilot(
   const unsubscribe = engine.subscribe((change: EngineChange) => {
     if (change.kind === 'round:result') {
       const answered = change.result.counts.reduce((a, b) => a + b, 0);
-      const allAnswered = answered >= engine.players.size;
+      const allAnswered = answered >= engine.expectedAnswers;
       later(Math.max(options.revealMs, presentationDelay?.('results') ?? 0), 'results', () => afterReveal(allAnswered));
     } else if (change.kind === 'vote:result') {
       const eligible = rollAfterVote;

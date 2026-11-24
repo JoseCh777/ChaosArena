@@ -1,6 +1,8 @@
 import { DEFAULT_CLIPS, DEFAULT_ROUND_SECONDS } from '@chaos-arena/shared/arena-settings.js';
 import type { ArenaSettings } from '../../../shared/live';
 import { rouletteTypes } from '../services/runtimeCatalog';
+import { DuelStage } from '../components/DuelStage';
+import { PowerTray } from '../components/PowerTray';
 import { HostOptions } from './HostOptions';
 import { HostRound } from './HostRound';
 import { RoundMoment, ArenaRecognitions } from '../components/ArenaMoments';
@@ -23,6 +25,7 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
   const [error, setError] = useState('');
   const [settings, setSettings] = useState<ArenaSettings>({ roundSeconds: DEFAULT_ROUND_SECONDS, clips: { ...DEFAULT_CLIPS } });
   const [bankSize, setBankSize] = useState<16 | 32 | 48>(16);
+  const [hostAnswers, setHostAnswers] = useState(true);
   const [hostVotes, setHostVotes] = useState(true);
   const [voting, setVoting] = useState(true);
   const [roulette, setRoulette] = useState(true);
@@ -55,7 +58,7 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
     setError('');
     try {
       const quiz = draft ? decodeQuiz(localStorage.getItem(DRAFT_KEY) ?? '') : undefined;
-      const reply = await command('start', { quiz, voting, hostVotes, settings, roulette, rouletteEvents, bankSize: draft ? undefined : bankSize });
+      const reply = await command('start', { quiz, voting, hostVotes, hostAnswers, settings, roulette, rouletteEvents, bankSize: draft ? undefined : bankSize });
       if (!reply.ok) setError(reply.error);
     } catch {
       setError('Guarda un cuestionario válido en el editor antes de iniciarlo.');
@@ -128,7 +131,9 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
     {!startable && <section className="host-main-stage" data-phase={view.phase} data-boss={view.roundStage === 'boss' || undefined} aria-label="Partida en curso">
       {!intro && <RoundMoment view={view} />}
       {intro ? <h1 className="game-prompt">Comienza la partida</h1>
-        : <HostRound key={view.round?.roundId} view={view} online={online && !busy} />}
+        : view.duel ? <DuelStage key={view.duel.id} duel={view.duel} view={view} online={online && !busy} />
+        : <><HostRound key={view.round?.roundId} view={view} online={online && !busy} />
+          <PowerTray view={view} online={online && !busy} /></>}
     </section>}
     <section className="panel game-panel host-deck">
       <p className="round-meta">{phases[view.phase]}</p>
@@ -144,7 +149,7 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
       </div>
       {!online && <p role="status">{message}</p>}
       {error && <p className="form-error" role="alert">{error}</p>}
-      {startable && !confirmClose && <HostOptions hostVotes={hostVotes} onHostVotes={setHostVotes} settings={settings} voting={voting} onSettings={setSettings} onVoting={setVoting} roulette={roulette}
+      {startable && !confirmClose && <HostOptions hostAnswers={hostAnswers} onHostAnswers={setHostAnswers} hostVotes={hostVotes} onHostVotes={setHostVotes} settings={settings} voting={voting} onSettings={setSettings} onVoting={setVoting} roulette={roulette}
         rouletteEvents={rouletteEvents} onRoulette={setRoulette} onRouletteEvents={setRouletteEvents} disabled={busy} />}
       {startable && !confirmClose ? <div className="host-actions">
         <label className="host-volume host-count">Preguntas del banco

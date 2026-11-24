@@ -52,6 +52,7 @@ export type HostRoundAction = 'pause' | 'resume' | 'close' | 'skipEvent' | 'skip
 export type ArenaAward = { kind: 'streak' | 'comeback' | 'accuracy'; names: string[]; amount?: number };
 
 export interface RuntimePublic {
+  expectedAnswers?: number;
   voterCount?: number;
   roundStage?: 'regular' | 'boss';
   awards?: ArenaAward[];
@@ -63,7 +64,7 @@ export interface RuntimePublic {
   protectedIds?: string[];
   reaction?: { id: string; kind: Reaction; started: number };
 }
-export type RuntimeArenaView = ArenaView & Pick<ConfiguredDisplayView, 'clips'> & RuntimePublic & { chaos?: PrivateChaos; canVote?: boolean; canSkipEvent?: boolean };
+export type RuntimeArenaView = ArenaView & Pick<ConfiguredDisplayView, 'clips'> & RuntimePublic & { chaos?: PrivateChaos; canAnswer?: boolean; canVote?: boolean; canSkipEvent?: boolean };
 export type RuntimeDisplayView = ConfiguredDisplayView & RuntimePublic;
 
 export interface RuntimeCommands {

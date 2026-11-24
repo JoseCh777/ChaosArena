@@ -71,11 +71,11 @@ export function DisplayPage({ hostView, enabled, toggleAudio }: DisplayProps = {
       {!hideWinner && <ArenaRecognitions awards={display.awards} />}
       {!hideWinner && <Leaderboard ranking={display.players} playerId="" />}
     </> : display.duel ? <DuelStage key={display.duel.id} duel={display.duel} /> : phase === 'vote' && display.voting ? <section className="projection-round">
-      <h1 className="assembly-call">¡Atención, asamblea!</h1><AssemblyTable view={display} /><p>{display.voting.received} de {display.voterCount ?? display.voting.candidates.length} votos recibidos</p>
+      <h1 className="assembly-call">¡Atención, asamblea!</h1><AssemblyTable view={display} />
     </section> : round && <section className="projection-round" data-boss={display.roundStage === 'boss' || undefined}>
       <RoundMoment view={display} />
       <div className="round-meta"><span>Ronda {display.number} / {display.total}</span>
-        <span>{display.received} / {display.players.length} respuestas</span></div>
+        <span>{display.received} / {display.expectedAnswers ?? display.players.length} respuestas</span></div>
       {phase === 'question' && <RoundTimer seconds={remaining} totalSeconds={display.seconds} />}
       {display.pausedMs !== undefined && <p className="lock-feedback" role="status">Pregunta en pausa</p>}
       <h1>{round.prompt}</h1>

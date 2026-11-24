@@ -11,7 +11,7 @@ export function PowerTray({ view, online }: { view: RuntimeArenaView; online: bo
   const [error, setError] = useState('');
   const chaos = view.chaos;
   if (!chaos || !(chaos.items.length || chaos.shield || chaos.suppressed)) return null;
-  const targets = view.players.filter(player => player.id !== view.you && player.status === 'active');
+  const targets = view.players.filter(player => player.id !== view.you && player.status === 'active' && player.rank > 0);
   const selected = targets.some(player => player.id === target) ? target : '';
 
   async function activate(power: Power) {

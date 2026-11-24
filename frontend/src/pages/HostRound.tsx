@@ -34,7 +34,7 @@ export function HostRound({ view, online }: { view: RuntimeArenaView; online: bo
   return <section className="host-console" aria-labelledby="host-control-title">
     <header>
       <h2 id="host-control-title">{question ? 'Pregunta en juego' : 'Control de partida'}</h2>
-      <p>Ronda {view.number} de {view.total} · {view.received}/{view.players.length} respuestas</p>
+      <p>Ronda {view.number} de {view.total} · {view.received}/{view.expectedAnswers ?? view.players.length} respuestas</p>
     </header>
     {question && <>
       <RoundTimer seconds={seconds} totalSeconds={view.seconds} />
@@ -51,7 +51,7 @@ export function HostRound({ view, online }: { view: RuntimeArenaView; online: bo
           <button className="button button-text" type="button" onClick={() => setConfirmClose(false)}>Seguir con la pregunta</button>
         </> : <button className="button button-text" type="button" disabled={disabled} onClick={() => setConfirmClose(true)}>Cerrar pregunta</button>}
       </div>
-      <details className="host-personal">
+      {view.canAnswer !== false && <details className="host-personal">
         <summary>{view.choice === null ? 'Responder como jugador' : 'Tu respuesta está registrada'}</summary>
         <div className="host-actions">
           {round.options.map((option, index) => <button className="button button-text" type="button" key={option}
@@ -59,7 +59,7 @@ export function HostRound({ view, online }: { view: RuntimeArenaView; online: bo
             {String.fromCharCode(65 + index)} · {option}
           </button>)}
         </div>
-      </details>
+      </details>}
     </>}
     {view.canSkipEvent && <button className="button button-text" type="button" disabled={disabled}
       onClick={() => run('skipEvent')}>Omitir sorteo de esta ronda</button>}

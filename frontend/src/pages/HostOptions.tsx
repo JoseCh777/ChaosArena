@@ -11,7 +11,9 @@ const labels: Record<ClipCue, string> = {
   podio: 'Podio',
 };
 
-export function HostOptions({ hostVotes, onHostVotes, settings, voting, disabled, onSettings, onVoting, roulette, rouletteEvents, onRoulette, onRouletteEvents }: {
+export function HostOptions({ hostAnswers, onHostAnswers, hostVotes, onHostVotes, settings, voting, disabled, onSettings, onVoting, roulette, rouletteEvents, onRoulette, onRouletteEvents }: {
+  hostAnswers: boolean;
+  onHostAnswers: (enabled: boolean) => void;
   hostVotes: boolean;
   onHostVotes: (enabled: boolean) => void;
   settings: ArenaSettings;
@@ -40,6 +42,8 @@ export function HostOptions({ hostVotes, onHostVotes, settings, voting, disabled
         </select>
       </div>
       <div>
+        <label className="host-options-check"><input type="checkbox" checked={hostAnswers} disabled={disabled}
+          onChange={event => onHostAnswers(event.target.checked)} /> El anfitrión responde y compite</label>
         <label className="host-options-check"><input type="checkbox" checked={voting} disabled={disabled}
           aria-describedby="assembly-hint" onChange={event => onVoting(event.target.checked)} /> Activar votaciones</label>
         <label className="host-options-check"><input type="checkbox" checked={hostVotes} disabled={disabled || !voting}

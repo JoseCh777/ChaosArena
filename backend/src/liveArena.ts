@@ -125,7 +125,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
       const { counts, correctIndex, ranking } = change.result;
       awardTracker.record(ranking, engine.players);
       const correct = counts[correctIndex];
-      const complete = counts.reduce((sum, count) => sum + count, 0) === engine.players.size;
+      const complete = counts.reduce((sum, count) => sum + count, 0) === engine.expectedAnswers;
       const leaders = ranking.filter(player => player.rank === 1);
       const leaderChanged = leaders.length === 1 && previousLeader && previousLeader !== leaders[0].id;
       previousLeader = leaders.length === 1 ? leaders[0].id : undefined;
@@ -136,7 +136,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
       else if (complete && correct === 0) announce('none', '¡Nadie acertó!', solution);
       else if (complete && leaderChanged) announce('leader', '¡Nuevo líder!', `${leaders[0].nickname} · ${leaders[0].score} pts`);
       else if (complete && streak) announce('streak', `¡Racha ×${streak.streak}!`, streak.nickname);
-      else if (complete) announce('correct', correct === engine.players.size ? '¡Todos acertaron!' : 'Respuesta correcta', solution);
+      else if (complete) announce('correct', correct === engine.expectedAnswers ? '¡Todos acertaron!' : 'Respuesta correcta', solution);
     }
     if (change.kind === 'vote:open') announce('vote-open', '¡Asamblea de emergencia!', 'Votación secreta');
     if (change.kind === 'vote:result') {
@@ -145,15 +145,15 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
       else announce('vote-closed', engine.voteWasCancelled ? 'Votación cancelada' : 'Votación cerrada', 'Nadie fue expulsado.');
     }
     if (change.kind === 'finished') {
-      awards = awardTracker.finish(buildRanking([...engine.players.values()]), engine.players);
+      awards = awardTracker.finish(buildRanking(engine.roundPlayers()), engine.players);
       announce('final', 'Podio de ChaosArena');
     }
     if (change.kind === 'round:open' && reaction?.kind !== 'expulsion') reaction = undefined;
-    if (change.kind === 'round:result' && change.result.counts.reduce((sum, count) => sum + count, 0) === engine.players.size) {
+    if (change.kind === 'round:result' && change.result.counts.reduce((sum, count) => sum + count, 0) === engine.expectedAnswers) {
       const correct = change.result.counts[change.result.correctIndex];
       if (correct === 0) queueReaction('nadie-acierta');
       else if ([...engine.players.values()].some(p => p.streak === 5)) queueReaction('racha');
-      else if (correct === engine.players.size) queueReaction('todos-aciertan');
+      else if (correct === engine.expectedAnswers) queueReaction('todos-aciertan');
     }
     if (change.kind === 'vote:result' && change.result.expelledId) queueReaction('expulsion');
     if (change.kind === 'finished') {
@@ -207,7 +207,10 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
   function publish() {
     const all = [...engine.players.values()];
     lastScores = new Map(all.map((p) => [p.id, p.score]));
-    const players: RankingEntry[] = buildRanking(all);
+    const players: RankingEntry[] = buildRanking(engine.roundPlayers());
+    for (const player of all.filter(p => !engine.canAnswer(p.id))) {
+      players.push({ id: player.id, nickname: player.nickname, status: player.status, score: player.score, rank: 0 });
+    }
     const phase = arenaPhase();
     const round = engine.currentRound();
     const q = round?.question;
@@ -224,13 +227,14 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
       number: Math.max(engine.questionIndex, 0) + 1,
       total: engine.publicSnapshot().questionCount,
       received,
+      expectedAnswers: engine.expectedAnswers,
       roundStage: q?.id === 'patrones-caso-final' ? 'boss' : q?.id.startsWith('patrones-') ? 'regular' : undefined,
       awards: phase === 'finished' ? awards : undefined,
       seconds: q?.seconds ?? 0,
     };
     if (round && q) view.round = { roundId: round.roundId, prompt: q.prompt, options: [...q.options], deadline: round.deadline };
     // Mismo criterio que la versión previa: la clave solo se muestra si todos respondieron.
-    if (round?.settled && q && phase === 'reveal' && received === all.length) {
+    if (round?.settled && q && phase === 'reveal' && received === engine.expectedAnswers) {
       view.solution = {
         index: q.correctIndex,
         explanation: q.explanation,
@@ -251,6 +255,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
         ...view,
         you: player.id,
         host: player.id === host,
+        canAnswer: engine.canAnswer(player.id),
         choice: engine.choiceOf(player.id),
         correctCount: player.correctCount,
         canVote: vote && engine.eligibleVoters(vote.candidateIds).includes(player.id),
@@ -262,7 +267,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
         personal.showFact = showFact;
         personal.canSkipEvent = engine.canSkipEvent;
       }
-      if (personal.host && phase === 'finished') personal.summary = all.map((p) => ({ id: p.id, correct: p.correctCount }));
+      if (personal.host && phase === 'finished') personal.summary = engine.roundPlayers().map((p) => ({ id: p.id, correct: p.correctCount }));
       arena.to(socketId).emit('view', personal);
     }
   }
@@ -414,6 +419,8 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
           if (!rouletteEvents || (data.roulette !== false && rouletteEvents.length === 0)) {
             return fail('Selecciona al menos un evento válido o desactiva la ruleta.');
           }
+          if (data.hostAnswers !== undefined && typeof data.hostAnswers !== 'boolean') return fail('Revisa la participación del anfitrión.');
+          if (data.hostAnswers === false && engine.players.size < 2) return fail('Invita a un jugador para iniciar sin responder.');
           if (data.hostVotes !== undefined && typeof data.hostVotes !== 'boolean') return fail('Revisa el voto del anfitrión.');
           settings = nextSettings;
           if (engine.phase === 'finished') engine.restart();
@@ -428,6 +435,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
           awards = [];
           previousLeader = undefined;
           engine.configureRoulette(data.roulette !== false, data.rouletteChallenges !== false);
+          engine.configureParticipation(data.hostAnswers === false ? player.id : undefined);
           engine.configureAssembly(data.hostVotes === false ? player.id : undefined);
           engine.configureRouletteEvents(rouletteEvents);
           engine.configure(quiz, { votingEnabled: data.voting !== false });

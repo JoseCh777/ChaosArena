@@ -27,12 +27,10 @@ export function VotePage({ view, online }: { view: RuntimeArenaView; online: boo
   return <section className="assembly-vote">
       <h2 className="assembly-call">¡Atención, asamblea!</h2>
       <AssemblyTable view={view} />
-      <p className="round-meta">{voting.received} de {view.voterCount ?? voting.candidates.length} votos recibidos</p>
-      <h3>Votación secreta</h3>
       <RoundTimer seconds={remaining} totalSeconds={20} />
       {view.protectedIds?.includes(view.you) && <p role="status">Firewall te protege de la expulsión.</p>}
       {eligible && !view.voted ? <div className="game-options">
-        {view.players.filter(p => p.id !== view.you && voting.candidates.includes(p.id) && !view.protectedIds?.includes(p.id)).map(player =>
+        {view.players.filter(p => p.id !== view.you && p.rank > 0 && voting.candidates.includes(p.id) && !view.protectedIds?.includes(p.id)).map(player =>
           <button className="game-option" key={player.id} disabled={pending || !online || !remaining}
             onClick={() => vote(player.id)}>{player.nickname}</button>)}
         <button className="button button-text" disabled={pending || !online || !remaining} onClick={() => vote(null)}>Omitir</button>

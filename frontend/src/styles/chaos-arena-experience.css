@@ -1,0 +1,65 @@
+.arena {
+  --mint: #98f8dc;
+  --ink: #10111d;
+  --track: #45405f;
+  background: radial-gradient(ellipse at 13% 23%, #43327599, transparent 53%),
+    radial-gradient(ellipse at 91% 33%, #2a174bbb, transparent 52%),
+    repeating-linear-gradient(125deg, transparent 0 68px, #cfaaff0c 69px 70px, transparent 71px 100px), #0a0d18;
+}
+.arena .projection-brand {
+  border-color: #6d568d;
+  background: linear-gradient(90deg, #34244855, transparent 55%);
+}
+.arena .entry.arena-entry { gap: clamp(1.3rem, 7vw, 6rem); }
+.arena-entry .entry-intro h1 { font-weight: 950; letter-spacing: -.08em; }
+.arena-entry .entry-intro h1 span { color: #f6d07b; text-shadow: .055em .06em #715147; }
+.arena-entry .entry-form, .arena-entry .lobby-panel {
+  border: 1px solid #675887; border-left: 4px solid var(--mint);
+  background: linear-gradient(150deg, #31274b, #161c32 63%);
+  box-shadow: .7rem .8rem 0 #110e22, 0 1.4rem 3rem #05050a66;
+}
+.arena-entry .pin-input { letter-spacing: .38em; color: #d7ffee; }
+.arena-entry .lobby-heading { padding-bottom: .65rem; border-bottom: 1px solid #fff2; }
+.arena-entry .player-row { background: #171628; }
+.lobby-signal { display: flex; gap: .55rem; margin-bottom: 1.2rem; }
+.lobby-signal i {
+  width: clamp(1.5rem, 5vw, 3.3rem); height: .43rem;
+  background: var(--mint); box-shadow: 0 0 .7rem #8bf4d355; transform: skew(-25deg);
+}
+.lobby-signal i:nth-child(2) { opacity: .67; }
+.lobby-signal i:nth-child(3) { opacity: .35; }
+.arena .play-view .prompt-board:not([data-boss]) { border-color: #8474aa; }
+.arena .projection-stage .projection-round[data-boss] h1 { font-size: clamp(1.4rem, 3.4vw, 3.5rem); line-height: 1.12; }
+.arena .play-view .game-option { border-radius: .25rem 1rem 1rem .25rem; }
+.arena .play-view .game-option:not(:disabled):focus-visible { outline-color: var(--rail); }
+.arena .projection-qr svg { border: 10px solid #fff; box-shadow: 0 0 0 2px var(--mint), 0 0 2.4rem #7ef4c944; }
+.arena .projection-pin { color: #ffdc8a; }
+.arena .editor .editor-header { border-color: #8072a7; }
+.arena .editor .question-list li::marker { color: #ffdc8a; }
+.arena .host-deck { border-top-color: #ffdc8a; }
+.arena .arena-podium-place { min-width: 0; }
+.arena .arena-podium-names strong { position: relative; z-index: 1; }
+.arena .roulette-outcome[data-impact] { border-top: 2px solid var(--mint); padding-top: .65rem; }
+.arena .roulette-outcome[data-impact="loss"] { border-color: #ff9cae; }
+.arena .roulette-outcome[data-impact="shield"], .arena .roulette-outcome[data-impact="blocked"] { border-color: #9de9ff; }
+.arena .roulette-outcome[data-impact="reward"] { border-color: #ffdc8a; }
+.arena .arena-media[data-impact="loss"] { border-color: #ff9cae; }
+.arena .arena-media[data-impact="shield"], .arena .arena-media[data-impact="blocked"] { border-color: #9de9ff; }
+.arena .arena-media[data-impact="reward"] { border-color: #ffdc8a; }
+@media (hover: hover) {
+  .arena .button-primary:hover { background: #c0ffe9; }
+  .arena .play-view .game-option:not(:disabled):hover { border-color: var(--rail); background: #2c2543; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .arena-entry .entry-intro, .play-view .prompt-board { animation: arena-stage-in 245ms var(--ease-out) both; }
+  .lobby-signal i { animation: lobby-signal 2s ease-in-out infinite alternate; }
+  .lobby-signal i:nth-child(2) { animation-delay: 160ms; }
+  .lobby-signal i:nth-child(3) { animation-delay: 320ms; }
+  @keyframes arena-stage-in { from { opacity: 0; transform: translateY(.45rem); } }
+  @keyframes lobby-signal { from { opacity: .35; } to { opacity: 1; } }
+}
+@media (max-width: 640px) {
+  .arena-entry .entry-intro h1 { font-size: clamp(2.75rem, 11vw, 4.55rem); max-width: 100%; }
+  .arena-entry .entry-form, .arena-entry .lobby-panel { box-shadow: .28rem .35rem 0 #110e22; }
+  .arena .game-options .game-option { min-height: 54px; }
+}

@@ -8,12 +8,16 @@ const labels: Record<ClipCue, string> = {
   podio: 'Podio',
 };
 
-export function HostOptions({ settings, voting, disabled, onSettings, onVoting }: {
+export function HostOptions({ settings, voting, disabled, onSettings, onVoting, roulette, rouletteChallenges, onRoulette, onRouletteChallenges }: {
   settings: ArenaSettings;
   voting: boolean;
   disabled: boolean;
   onSettings: (settings: ArenaSettings) => void;
   onVoting: (enabled: boolean) => void;
+  roulette: boolean;
+  rouletteChallenges: boolean;
+  onRoulette: (enabled: boolean) => void;
+  onRouletteChallenges: (enabled: boolean) => void;
 }) {
   return <details className="host-options">
     <summary>Ajustes de partida</summary>
@@ -31,6 +35,11 @@ export function HostOptions({ settings, voting, disabled, onSettings, onVoting }
       </div>
       <label className="host-options-check"><input type="checkbox" checked={voting} disabled={disabled}
         onChange={event => onVoting(event.target.checked)} /> Activar votaciones</label>
+      <label className="host-options-check"><input type="checkbox" checked={roulette} disabled={disabled}
+        onChange={event => onRoulette(event.target.checked)} /> Activar ruleta</label>
+      <label className="host-options-check"><input type="checkbox" checked={rouletteChallenges} disabled={disabled || !roulette}
+        onChange={event => onRouletteChallenges(event.target.checked)} /> Permitir retos de la ruleta</label>
+      <p className="host-options-note">Los retos son los duelos de exhibición que puede sortear la ruleta.</p>
     </div>
     <fieldset disabled={disabled}>
       <legend>Clips de respaldo</legend>

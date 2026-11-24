@@ -12,16 +12,18 @@ export function App() {
   const [presenting, setPresenting] = useState(false);
   const route = window.location.pathname.replace(/\/$/, '');
 
+  const playerView = view && !view.host && !['/host', '/editor'].includes(route);
+
   if (route === '/display') return <div className="arena"><DisplayPage /></div>;
 
   return (
     <div className="arena">
-      {!(route === '/host' && view?.host) && <ArenaHeader standard>
-        <a className="button button-text" href="/host">Anfitrión</a>
+      {!(route === '/host' && view?.host) && <ArenaHeader standard label={playerView ? `PIN ${view.pin}` : undefined}>
+        {!playerView && <><a className="button button-text" href="/host">Anfitrión</a>
         <a className="button button-text" href="/display">Proyector</a>
         <a className="button button-text" href={route === '/editor' ? '/join' : '/editor'}>
           {route === '/editor' ? 'Ingreso' : 'Editor de preguntas'}
-        </a>
+        </a></>}
       </ArenaHeader>}
       {route === '/editor' && <EditorPage />}
       {route === '/host' && <HostPage presenting={presenting} setPresenting={setPresenting} />}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { RuntimeArenaView } from '../../../shared/runtime-chaos';
 import { command } from '../services/arena';
 import { useRoundSeconds } from '../components/useRoundSeconds';
+import { RoundMoment } from '../components/ArenaMoments';
 import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
 import { VotePage } from './VotePage';
@@ -38,7 +39,8 @@ export function PlayPage({ view, online }: { view: RuntimeArenaView; online: boo
       <div className="round-meta"><span>Ronda {view.number} / {view.total}</span><span>{view.received} de {view.players.length} respuestas</span></div>
       {view.phase === 'question' && <RoundTimer seconds={remaining} totalSeconds={view.seconds} />}
       {paused && <p className="lock-feedback" role="status">Pregunta en pausa</p>}
-      <div className="prompt-board">
+      <RoundMoment view={view} />
+      <div className="prompt-board" data-boss={view.roundStage === 'boss' || undefined}>
         <span className="round-digit" aria-hidden="true">{String(view.number).padStart(2, '0')}</span>
         <h1 className="game-prompt" id="game-title">{round.prompt}</h1>
       </div>

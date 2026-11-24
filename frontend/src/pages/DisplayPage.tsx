@@ -9,6 +9,7 @@ import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
 import { DuelStage } from '../components/DuelStage';
 import { ArenaHeader } from '../components/ArenaHeader';
+import { RoundMoment, ArenaRecognitions } from '../components/ArenaMoments';
 import { ArenaPodium } from '../components/ArenaPodium';
 import { MediaOverlay } from '../components/MediaOverlay';
 import './projection.css';
@@ -74,10 +75,12 @@ export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayPr
       </div>
     </section> : finished ? <>
       {hideWinner && <h1>Podio de la arena</h1>}
+      {!hideWinner && <ArenaRecognitions awards={display.awards} />}
       {!hideWinner && <Leaderboard ranking={display.players} playerId="" />}
     </> : display.duel ? <DuelStage key={display.duel.id} duel={display.duel} /> : phase === 'vote' && display.voting ? <section className="projection-round">
       <h1>Votación secreta</h1><p>{display.voting.received} de {display.voting.candidates.length} votos recibidos</p>
-    </section> : round && <section className="projection-round">
+    </section> : round && <section className="projection-round" data-boss={display.roundStage === 'boss' || undefined}>
+      <RoundMoment view={display} />
       <div className="round-meta"><span>Ronda {display.number} / {display.total}</span>
         <span>{display.received} / {display.players.length} respuestas</span></div>
       {phase === 'question' && <RoundTimer seconds={remaining} totalSeconds={display.seconds} />}

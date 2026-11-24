@@ -261,6 +261,15 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
           engine.kick(data.id);
           break;
         }
+        case 'closeRoom': {
+          if (!isHost) return fail('Solo el anfitrión puede cerrar la sala.');
+          const guests = [...connections.values()].filter(id => id !== socket.id);
+          boot();
+          session = '';
+          for (const id of guests) arena.to(id).emit('removed', 'El anfitrión cerró la sala.');
+          publish();
+          break;
+        }
         case 'leave':
           if (!['lobby', 'finished'].includes(engine.phase)) return fail('Acción no disponible en esta fase.');
           leave(session);
@@ -277,7 +286,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
       connections.delete(session);
       const token = session;
       setTimeout(() => {
-        if (connections.has(token)) return;
+        if (connections.has(token) || !engine.playerByToken(token)) return;
         if (['lobby', 'finished'].includes(engine.phase)) leave(token);
         else if (connections.size === 0) {
           boot();

@@ -123,4 +123,11 @@ test('arena: partida con asamblea, fantasma, final y reinicio', async () => {
 
   // Salir solo en lobby o al terminar.
   assert.equal((await beto.cmd('leave')).ok, false);
+  assert.equal((await beto.cmd('closeRoom')).ok, false);
+  assert.ok((await ana.cmd('closeRoom')).ok);
+  await until(() => beto.removed && screen?.pin === '');
+  assert.ok((await ana.cmd('create', { nickname: 'Ana', hostKey: process.env.HOST_KEY })).ok);
+  await until(() => Boolean(screen?.pin));
+  assert.notEqual(screen?.pin, pin);
+  assert.equal((await client().cmd('join', { pin, nickname: 'Otro jugador' })).ok, false);
 });

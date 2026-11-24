@@ -43,3 +43,7 @@ export type Reply = { ok: true; token?: string } | { ok: false; error: string };
 export interface ArenaHostCommands {
   create: { nickname: string; hostKey?: string };
 }
+
+export interface ArenaRoomLifecycleCommands {
+  closeRoom: Record<string, never>;
+}

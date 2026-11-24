@@ -62,13 +62,18 @@ test('arena: partida con asamblea, fantasma, final y reinicio', async () => {
   assert.ok((await display.cmd('observe')).ok);
 
   const [ana, beto, caro, dani] = [client(), client(), client(), client()];
-  assert.ok((await ana.cmd('join', { pin: '482913', nickname: 'Ana' })).ok);
-  assert.equal((await beto.cmd('join', { pin: '000000', nickname: 'Beto' })).ok, false);
-  assert.ok((await beto.cmd('join', { pin: '482913', nickname: 'Beto' })).ok);
-  const dup = await caro.cmd('join', { pin: '482913', nickname: 'ana' });
+  assert.equal((await ana.cmd('join', { pin: '482913', nickname: 'Ana' })).ok, false);
+  assert.ok((await ana.cmd('create', { nickname: 'Ana', hostKey: process.env.HOST_KEY })).ok);
+  await until(() => Boolean(ana.view?.pin));
+  const pin = ana.view!.pin;
+  assert.match(pin, /^\d{6}$/);
+  assert.equal((await beto.cmd('create', { nickname: 'Beto', hostKey: process.env.HOST_KEY })).ok, false);
+  assert.equal((await beto.cmd('join', { pin: pin === '000000' ? '000001' : '000000', nickname: 'Beto' })).ok, false);
+  assert.ok((await beto.cmd('join', { pin, nickname: 'Beto' })).ok);
+  const dup = await caro.cmd('join', { pin, nickname: 'ana' });
   assert.equal(!dup.ok && dup.error, 'Ese apodo ya está en uso.');
-  assert.ok((await caro.cmd('join', { pin: '482913', nickname: 'Caro' })).ok);
-  assert.ok((await dani.cmd('join', { pin: '482913', nickname: 'Dani' })).ok);
+  assert.ok((await caro.cmd('join', { pin, nickname: 'Caro' })).ok);
+  assert.ok((await dani.cmd('join', { pin, nickname: 'Dani' })).ok);
 
   await until(() => dani.view?.players.length === 4);
   assert.equal(ana.view?.host, true);

@@ -3,12 +3,11 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { io, type Socket } from 'socket.io-client';
 import type { ArenaCommands, ArenaView, Reply } from '../../shared/live.js';
 
-const PIN = '482913';
 const ACK_TIMEOUT_MS = 5500;
 const MATCH_TIMEOUT_MS = 120_000;
 const MAX_ANSWER_DELAY_MS = 3000;
 
-type Command = 'join' | 'start' | 'answer' | 'vote' | 'leave';
+type Command = 'create' | 'join' | 'start' | 'answer' | 'vote' | 'leave';
 type ArenaSocket = Socket<
   { view: (view: ArenaView) => void },
   { command: (kind: Command, data: ArenaCommands[Command], ack: (reply: Reply) => void) => void }
@@ -83,7 +82,7 @@ async function main() {
   const startedAt = new Date().toISOString();
   const started = performance.now();
   const metrics = {
-    join: newSamples(), start: newSamples(), answer: newSamples(), vote: newSamples(), leave: newSamples(),
+    create: newSamples(), join: newSamples(), start: newSamples(), answer: newSamples(), vote: newSamples(), leave: newSamples(),
   };
   const roundIds = new Set<string>();
   const voteIds = new Set<string>();
@@ -129,13 +128,13 @@ async function main() {
     }
   }
 
-  async function join(bot: Bot) {
+  async function join(bot: Bot, pin: string) {
     await new Promise<void>((resolve, reject) => {
       bot.socket.once('connect', resolve);
       bot.socket.once('connect_error', (error) => reject(new Error(`${bot.nickname}: ${error.message}`)));
       bot.socket.connect();
     });
-    const reply = await send(bot, 'join', { pin: PIN, nickname: bot.nickname });
+    const reply = await send(bot, 'join', { pin, nickname: bot.nickname });
     if (!reply.ok) throw new Error(`${bot.nickname} no pudo ingresar: ${reply.error}`);
     bot.joined = true;
   }
@@ -156,11 +155,13 @@ async function main() {
   let failure: string | undefined;
   try {
     const [host, ...players] = bots;
-    await join(host);
+    const created = await send(host, 'create', { nickname: host.nickname, hostKey: process.env.HOST_KEY });
+    if (!created.ok) throw new Error(created.error);
     await waitFor(() => Boolean(host.view), ACK_TIMEOUT_MS, 'El anfitrión no recibió la vista inicial.');
-    if (!host.view?.host) throw new Error('La sala debe estar vacía para que el primer bot sea anfitrión.');
+    if (!host.view?.host) throw new Error('El primer bot no recibió la vista de anfitrión.');
+    const pin = host.view.pin;
 
-    const joins = await Promise.allSettled(players.map(join));
+    const joins = await Promise.allSettled(players.map(bot => join(bot, pin)));
     const failedJoin = joins.find((result) => result.status === 'rejected');
     if (failedJoin?.status === 'rejected') throw failedJoin.reason;
 

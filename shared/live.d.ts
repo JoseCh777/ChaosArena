@@ -39,3 +39,7 @@ export interface ArenaCommands {
   leave: Record<string, never>;
 }
 export type Reply = { ok: true; token?: string } | { ok: false; error: string };
+
+export interface ArenaHostCommands {
+  create: { nickname: string; hostKey?: string };
+}

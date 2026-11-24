@@ -5,6 +5,7 @@ import type { RuntimeDisplayView } from '../../../shared/runtime-chaos';
 import QRCode from 'react-qr-code';
 import { useArena } from '../services/arena';
 import { useRoundSeconds } from '../components/useRoundSeconds';
+import { AssemblyTable } from '../components/AssemblyTable';
 import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
 import { DuelStage } from '../components/DuelStage';
@@ -70,7 +71,7 @@ export function DisplayPage({ hostView, enabled, toggleAudio }: DisplayProps = {
       {!hideWinner && <ArenaRecognitions awards={display.awards} />}
       {!hideWinner && <Leaderboard ranking={display.players} playerId="" />}
     </> : display.duel ? <DuelStage key={display.duel.id} duel={display.duel} /> : phase === 'vote' && display.voting ? <section className="projection-round">
-      <h1>Votación secreta</h1><p>{display.voting.received} de {display.voting.candidates.length} votos recibidos</p>
+      <h1 className="assembly-call">¡Atención, asamblea!</h1><AssemblyTable view={display} /><p>{display.voting.received} de {display.voterCount ?? display.voting.candidates.length} votos recibidos</p>
     </section> : round && <section className="projection-round" data-boss={display.roundStage === 'boss' || undefined}>
       <RoundMoment view={display} />
       <div className="round-meta"><span>Ronda {display.number} / {display.total}</span>

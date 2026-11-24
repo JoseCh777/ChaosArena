@@ -11,7 +11,9 @@ const labels: Record<ClipCue, string> = {
   podio: 'Podio',
 };
 
-export function HostOptions({ settings, voting, disabled, onSettings, onVoting, roulette, rouletteEvents, onRoulette, onRouletteEvents }: {
+export function HostOptions({ hostVotes, onHostVotes, settings, voting, disabled, onSettings, onVoting, roulette, rouletteEvents, onRoulette, onRouletteEvents }: {
+  hostVotes: boolean;
+  onHostVotes: (enabled: boolean) => void;
   settings: ArenaSettings;
   voting: boolean;
   disabled: boolean;
@@ -40,7 +42,9 @@ export function HostOptions({ settings, voting, disabled, onSettings, onVoting, 
       <div>
         <label className="host-options-check"><input type="checkbox" checked={voting} disabled={disabled}
           aria-describedby="assembly-hint" onChange={event => onVoting(event.target.checked)} /> Activar votaciones</label>
-        <p className="host-options-note" id="assembly-hint">Abre asambleas automáticas. Los jugadores activos votan en secreto y la persona expulsada pasa a modo fantasma.</p>
+        <label className="host-options-check"><input type="checkbox" checked={hostVotes} disabled={disabled || !voting}
+          onChange={event => onHostVotes(event.target.checked)} /> El anfitrión puede votar</label>
+        <p className="host-options-note" id="assembly-hint">Después de las preguntas 5 y 10, con al menos tres votantes activos. La persona expulsada pasa a modo fantasma.</p>
       </div>
       <label className="host-options-check"><input type="checkbox" checked={roulette} disabled={disabled}
         onChange={event => onRoulette(event.target.checked)} /> Activar ruleta</label>

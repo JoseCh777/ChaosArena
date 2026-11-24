@@ -23,6 +23,7 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
   const [error, setError] = useState('');
   const [settings, setSettings] = useState<ArenaSettings>({ roundSeconds: DEFAULT_ROUND_SECONDS, clips: { ...DEFAULT_CLIPS } });
   const [bankSize, setBankSize] = useState<16 | 32 | 48>(16);
+  const [hostVotes, setHostVotes] = useState(true);
   const [voting, setVoting] = useState(true);
   const [roulette, setRoulette] = useState(true);
   const [rouletteEvents, setRouletteEvents] = useState(rouletteTypes);
@@ -54,7 +55,7 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
     setError('');
     try {
       const quiz = draft ? decodeQuiz(localStorage.getItem(DRAFT_KEY) ?? '') : undefined;
-      const reply = await command('start', { quiz, voting, settings, roulette, rouletteEvents, bankSize: draft ? undefined : bankSize });
+      const reply = await command('start', { quiz, voting, hostVotes, settings, roulette, rouletteEvents, bankSize: draft ? undefined : bankSize });
       if (!reply.ok) setError(reply.error);
     } catch {
       setError('Guarda un cuestionario válido en el editor antes de iniciarlo.');
@@ -143,7 +144,7 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
       </div>
       {!online && <p role="status">{message}</p>}
       {error && <p className="form-error" role="alert">{error}</p>}
-      {startable && !confirmClose && <HostOptions settings={settings} voting={voting} onSettings={setSettings} onVoting={setVoting} roulette={roulette}
+      {startable && !confirmClose && <HostOptions hostVotes={hostVotes} onHostVotes={setHostVotes} settings={settings} voting={voting} onSettings={setSettings} onVoting={setVoting} roulette={roulette}
         rouletteEvents={rouletteEvents} onRoulette={setRoulette} onRouletteEvents={setRouletteEvents} disabled={busy} />}
       {startable && !confirmClose ? <div className="host-actions">
         <label className="host-volume host-count">Preguntas del banco

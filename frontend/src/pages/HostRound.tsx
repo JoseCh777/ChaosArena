@@ -1,3 +1,4 @@
+import { VotePage } from './VotePage';
 import { useState } from 'react';
 import type { HostRoundAction, RuntimeArenaView } from '../../../shared/runtime-chaos';
 import { RoundTimer } from '../components/RoundTimer';
@@ -68,7 +69,7 @@ export function HostRound({ view, online }: { view: RuntimeArenaView; online: bo
       </button>
     </div>}
     {voting && <div className="host-cue">
-      <p>{voting.received}/{voting.candidates.length} votos recibidos</p>
+      <VotePage view={view} online={online} />
       <button className="button button-text" type="button" disabled={disabled} onClick={() => run('cancelVote')}>Cancelar votación</button>
     </div>}
     {view.duel && <p className="host-state">Duelo · {view.duel.players.map(player => player.nickname).join(' y ')}</p>}

@@ -239,6 +239,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     }
     if (phase === 'roulette') view.event = lastEvent;
     const vote = engine.voteInfo();
+    if (vote) view.voterCount = engine.eligibleVoters(vote.candidateIds).length;
     if (vote) view.voting = { id: vote.voteId, deadline: vote.deadline, received: vote.received, candidates: [...vote.candidateIds] };
     arena.to('display').emit('display', { ...view, show, showFact });
 
@@ -252,6 +253,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
         host: player.id === host,
         choice: engine.choiceOf(player.id),
         correctCount: player.correctCount,
+        canVote: vote && engine.eligibleVoters(vote.candidateIds).includes(player.id),
         voted: vote?.hasVoted(player.id),
         chaos: engine.chaosView(player.id),
       };
@@ -412,6 +414,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
           if (!rouletteEvents || (data.roulette !== false && rouletteEvents.length === 0)) {
             return fail('Selecciona al menos un evento válido o desactiva la ruleta.');
           }
+          if (data.hostVotes !== undefined && typeof data.hostVotes !== 'boolean') return fail('Revisa el voto del anfitrión.');
           settings = nextSettings;
           if (engine.phase === 'finished') engine.restart();
           const questions = data.quiz === undefined && count !== undefined
@@ -425,6 +428,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
           awards = [];
           previousLeader = undefined;
           engine.configureRoulette(data.roulette !== false, data.rouletteChallenges !== false);
+          engine.configureAssembly(data.hostVotes === false ? player.id : undefined);
           engine.configureRouletteEvents(rouletteEvents);
           engine.configure(quiz, { votingEnabled: data.voting !== false });
           const introMs = config.introMs ?? ARENA_PACE.introMs;

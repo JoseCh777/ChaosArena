@@ -502,11 +502,21 @@ export class GameEngine {
     this.notify({ kind: 'snapshot' });
   }
 
+  private excludedVoter?: string;
+
+  configureAssembly(excludedVoter?: string) {
+    this.excludedVoter = excludedVoter;
+  }
+
+  eligibleVoters(ids: readonly string[]) {
+    return ids.filter(id => id !== this.excludedVoter);
+  }
+
   openVote() {
     this.cancelledVote = false;
     if (this.duel || !this.options.votingEnabled || this.interlude.voteUsed) throw new GameError('WRONG_PHASE');
     const active = this.activePlayers();
-    if (active.length < MIN_ACTIVE_TO_VOTE) throw new GameError('NOT_ENOUGH_PLAYERS');
+    if (this.eligibleVoters(active.map(player => player.id)).length < MIN_ACTIVE_TO_VOTE) throw new GameError('NOT_ENOUGH_PLAYERS');
     this.protectedVoters = active.filter(player => this.runtime?.firewall(player.id, this.questionIndex)).map(player => player.id);
     const ms = VOTE_SECONDS * 1000;
     this.voteSession = new VoteSession(this.deps.newId(), active.map((p) => p.id), this.deps.now() + ms);
@@ -523,9 +533,10 @@ export class GameEngine {
     const session = this.voteSession;
     if (!session || session.voteId !== voteId) throw new GameError('VOTE_CLOSED');
     if (target !== null && (typeof target !== 'string' || this.protectedVoters.includes(target))) throw new GameError('TARGET_INVALID');
+    if (player.id === this.excludedVoter) throw new GameError('NOT_ACTIVE');
     const error = session.cast(player.id, target, this.deps.now());
     if (error) throw new GameError(error);
-    if (session.voteCount >= session.candidateIds.length) this.settleVote();
+    if (session.voteCount >= this.eligibleVoters(session.candidateIds).length) this.settleVote();
     else this.notify({ kind: 'snapshot' });
   }
 

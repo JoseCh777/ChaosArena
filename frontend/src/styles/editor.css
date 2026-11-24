@@ -1,0 +1,50 @@
+.editor {
+  width: min(100% - 2 * var(--space-4), 1120px);
+  margin: 0 auto;
+  padding: var(--space-7) 0;
+}
+.editor-header, .editor-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.editor-header { margin-bottom: var(--space-5); }
+.editor-header h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1; letter-spacing: -.055em; }
+.editor-header p, .question-list > p { margin: var(--space-2) 0 0; color: var(--muted); }
+.editor-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); align-items: start; }
+.editor-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.editor-actions .button-text { border-color: var(--border-control); }
+.editor .button:disabled { opacity: .45; cursor: default; transform: none; }
+.editor-status { margin: 0 0 var(--space-4); }
+.editor-list-heading { margin-top: var(--space-5); }
+.editor-list-heading h2 { margin: 0; font-size: 1.15rem; }
+.editor-list-heading h2 span { color: var(--muted); }
+.question-list ol { margin: 0; padding-left: var(--space-5); }
+.question-list li { padding: var(--space-4) 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.question-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+.question-list li > span { display: block; margin: var(--space-1) 0 var(--space-2); color: var(--muted); font-size: .875rem; }
+.question-form { display: grid; gap: var(--space-4); }
+.editor-columns { display: grid; gap: var(--space-3); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.field select, .field textarea {
+  min-height: 48px;
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-sm);
+  background: var(--background);
+  color: var(--text);
+  font: inherit;
+}
+.field textarea { min-height: 80px; resize: vertical; }
+.editor-options { margin: 0; padding: 0; border: 0; min-width: 0; }
+.editor-options legend { padding: 0; font-weight: 700; font-size: .875rem; }
+.editor-option { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--space-2); margin: var(--space-2) 0; }
+.editor-option input[type=radio] { width: 20px; height: 20px; accent-color: var(--primary-soft); }
+@media (max-width: 760px) {
+  .editor-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+.arena-nav { display: grid; gap: 3px; text-align: right; }
+.editor-layout > :only-child { grid-column: 1 / -1; }

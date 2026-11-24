@@ -22,13 +22,13 @@ Todas las fuentes y los permisos de redistribución figuran como pendientes. Los
 | `vamo-a-jugar` | Bueno-vamo-a-jugar_001_720p.mp4 | 3.11 s · 1280×720 · 138000/4573 fps | 1.15 s / 1.96 s | MP4 |
 | `coffin-dance` | NEGROS-BAILANDO-CON-ATAÚDmp4.mp4 | 5.08 s · 1280×720 · 128000/5079 fps | 0.00 s / 5.08 s | MP4 |
 | `mejor-estar-ciego` | para lo qué hay que ver mejor estar ciego.mp4 | 11.78 s · 720×1280 · 731/25 fps | 0.00 s / 11.78 s | MP4 |
-| `patria-milagro` | Bienvenido a la patria milagro.mp4 | 5.80 s · 1280×720 · 41700/1727 fps | 0.00 s / 4.32 s | MP4 |
+| `patria-milagro` | Bienvenido a la patria milagro.mp4 | 5.80 s · 1280×720 · 41700/1727 fps | 0.00 s / 5.80 s | MP4 |
 | `asi-se-hace` | Asi es que se hace.mp4 | 15.72 s · 360×360 · 29919/1000 fps | 0.00 s / 15.72 s | MP4 |
 | `noticias-caracol` | Tema musical corto Noticias Caracol.mp3 | 68.50 s | 1.02 s / 18.00 s | MP3 |
 | `millonario` | Pregunta-Quién-quiere-ser-millonario-Sound-Effect_006_48k.m4a | 4.18 s | 0.45 s / 3.65 s | MP3 |
 | `trompeta-triste` | Sad-Trombone-Sound-Effect-HD_007_48k.m4a | 5.11 s | 0.45 s / 3.32 s | MP3 |
 | `redoble` | Redoble-De-Tambores-Efecto-De-Sonido_006_48k.m4a | 5.43 s | 0.40 s / 3.05 s | MP3 |
-| `la-plata` | Diomedes-Díaz-La-Plata-En-Vivo_007_48k.m4a | 276.23 s | 0.45 s / 5.40 s | MP3 |
+| `la-plata` | Diomedes-Díaz-La-Plata-En-Vivo_007_48k.m4a | 276.23 s | 0.00 s / 276.23 s | M4A |
 | `campana-boxeo` | campana-de-Box-Efecto-de-sonido_007_48k.m4a | 4.18 s | 1.00 s / 2.45 s | MP3 |
 | `wii-shop` | Wii-Shop-Channel-Main-Theme-HQ_007_48k.m4a | 128.45 s | 0.79 s / 22.00 s | MP3 |
 | `latidos` | Corazón-Latiendo-BEATING-HEART_007_48k.m4a | 9.98 s | 0.25 s / 2.39 s | MP3 |
@@ -50,5 +50,7 @@ Todas las fuentes y los permisos de redistribución figuran como pendientes. Los
 En el ensayo local se conectaron los ambientes de lobby, pregunta, duelo y votación, la introducción, los resultados colectivos, la ruleta, las pérdidas y premios, la activación y el bloqueo de escudo, la expulsión, la racha, el cambio de líder y la secuencia de podio. El duelo usa el ambiente especial porque el JSON de preguntas no tiene un indicador para preguntas especiales.
 
 La expulsión de la asamblea usa `patria-milagro`. Los resultados de ruleta `loot-box` con premio en puntos y `hack` muestran `que-bendicion` y `la-roca`, respectivamente. Una racha de cinco aciertos muestra `asi-se-hace`. Si todos responden y nadie acierta, se muestra `mejor-estar-ciego`. La ruleta y la asamblea tienen prioridad sobre estos dos clips de ronda. `coffin-dance`, `latidos` y `diomedes-respawn` siguen disponibles en la vista previa. Las votaciones sin expulsión comparten el mismo texto de veredicto y los aciertos colectivos usan el sonido disponible.
+
+En el ensayo local, `mejor-estar-ciego` dura 11.78 segundos y `patria-milagro` dura 5.80 segundos completos. La pista de Diomedes en el podio es audio M4A de 276.23 segundos; no se entregó un video de Diomedes. Para probarlos en localhost, conservar los originales con los nombres `mejor-estar-ciego.mp4`, `patria-milagro.mp4` y `la-plata.m4a` dentro de `frontend/media-local/`. En la mesa del anfitrión, **Efectos → Probar clips y audios** muestra el catálogo; el botón **Probar** solo se habilita si el archivo local existe. Los originales permanecen fuera de Git mientras sus permisos de publicación estén pendientes.
 
 Se comprobó en Edge la navegación de ida y vuelta sin abrir pestañas, el mismo PIN, la privacidad del modo presentación, la salida de audio exclusiva, el clip inicial previo al reloj, la pausa, el cierre temprano y el silencio de los jugadores. Queda el ensayo con teléfonos y proyector físicos.

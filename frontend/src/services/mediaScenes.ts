@@ -27,8 +27,8 @@ function factScene(fact: ShowFact, view: RuntimeDisplayView) {
     case 'timeout': return scene(fact.id, fact.started, { ...base, ms: ARENA_PACE.roundTimeoutMs, asset: 'tiempo-agotado' });
     case 'correct': return scene(fact.id, fact.started, { ...base, asset: 'acierto-concurso' });
     case 'none': return scene(fact.id, fact.started, { ...base, asset: 'family-feud' });
-    case 'none-clip': return scene(fact.id, fact.started, { ...base, asset: 'mejor-estar-ciego', ms: ARENA_PACE.roundClipMs });
-    case 'streak-clip': return scene(fact.id, fact.started, { ...base, asset: 'asi-se-hace', ms: ARENA_PACE.roundClipMs });
+    case 'none-clip': return scene(fact.id, fact.started, { ...base, asset: 'mejor-estar-ciego', ms: ARENA_PACE.blindClipMs });
+    case 'streak-clip': return scene(fact.id, fact.started, { ...base, asset: 'asi-se-hace', ms: ARENA_PACE.streakClipMs });
     case 'streak': return scene(fact.id, fact.started, { ...base, ms: ARENA_PACE.streakMs, asset: 'siuuu', rate: 1.2 });
     case 'leader': return scene(fact.id, fact.started, { ...base, ms: ARENA_PACE.leaderMs, asset: 'goool', rate: 1.2 });
     case 'shield': return scene(fact.id, fact.started, { ...base, ms: 2250, asset: 'shield-activated', rate: 1.2 });
@@ -36,14 +36,14 @@ function factScene(fact: ShowFact, view: RuntimeDisplayView) {
     case 'vote-closed': return scene(fact.id, fact.started, fact.title === 'Votación cancelada'
       ? base : { ...base, ms: ARENA_PACE.voteClosedMs, asset: 'caso-cerrado', rate: 1.25 });
     case 'expelled': return scene(fact.id, fact.started,
-      { title: 'Modo fantasma', detail: fact.detail, ms: ARENA_PACE.expelledMs, asset: 'patria-milagro', rate: 1.05 });
+      { title: 'Modo fantasma', detail: fact.detail, ms: ARENA_PACE.expelledMs, asset: 'patria-milagro' });
     case 'final': {
       const winners = view.players.filter(player => player.rank === 1);
       return scene(fact.id, fact.started,
         { title: 'Y el campeón de ChaosArena es…', ms: ARENA_PACE.podiumRevealMs, asset: 'redoble', rate: 1.2 },
         { title: winners.length > 1 ? 'Primer puesto compartido' : '¡Campeón de ChaosArena!',
           detail: winners.map(player => `${player.nickname} · ${player.score} pts`).join(' / '),
-          ms: ARENA_PACE.podiumWinnerMs, asset: 'la-plata', rate: 1.2, fallback: view.clips?.podio });
+          ms: ARENA_PACE.podiumWinnerMs, asset: 'la-plata', fallback: view.clips?.podio });
     }
   }
 }

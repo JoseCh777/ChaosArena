@@ -8,6 +8,8 @@ export const ARENA_PACE = Object.freeze({
   introMs: 3300,
   revealMs: 1750,
   roundClipMs: 1900,
+  blindClipMs: 12000,
+  streakClipMs: 16000,
   rouletteSpinMs: 1450,
   rouletteResultMs: 3500,
   duelResultMs: 1400,
@@ -17,6 +19,6 @@ export const ARENA_PACE = Object.freeze({
   leaderMs: 2550,
   voteOpenMs: 1550,
   voteClosedMs: 3300,
-  expelledMs: 4250,
-  podiumWinnerMs: 4700,
+  expelledMs: 6000,
+  podiumWinnerMs: 277000,
 });

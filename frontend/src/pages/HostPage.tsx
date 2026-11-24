@@ -9,6 +9,7 @@ import './host-console.css';
 import { setAudioFromGesture } from '../services/mediaAudio';
 import { useState, type FormEvent } from 'react';
 import { command, forget, remember, sessionToken, useArena } from '../services/arena';
+import { downloadResults } from '../services/downloadResults';
 import { decodeQuiz, DRAFT_KEY } from '../services/quizDraft';
 
 const phases = { lobby: 'Sala de espera', question: 'Pregunta abierta', reveal: 'Resultados de ronda', roulette: 'Ruleta de caos', vote: 'Votación secreta', finished: 'Partida terminada' };
@@ -162,6 +163,10 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
         onClick={() => setConfirmClose(true)}>Cerrar sala</button>}
     </section>
     <HostShow key={view.pin} view={view} online={online && !busy} audioEnabled={audioEnabled} toggleAudio={toggleAudio} />
+    {view.summary && <section className="panel host-export" aria-label="Informe de evaluación">
+      <div><h2>Informe de evaluación</h2><p>{view.summary.length} participantes · {view.total} preguntas</p></div>
+      <button className="button button-primary" type="button" onClick={() => downloadResults(view)}>Descargar CSV</button>
+    </section>}
     <details className="panel host-roster" open={view.phase === 'lobby' ? true : undefined}>
         <summary>{view.summary ? 'Resultados de la sala' : `Jugadores en sala · ${view.players.length}`}</summary>
         <ul>{view.players.map(player => {

@@ -59,3 +59,7 @@
   .host-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "podium" "question" "desk" "media" "roster"; }
   .host-main-stage[data-phase="question"] { min-height: 0; }
 }
+.host-layout > .arena-podium { grid-area: podium; }
+.host-export { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
+.host-export h2, .host-export p { margin: 0; }
+.host-export p { color: var(--muted); margin-top: .3rem; }

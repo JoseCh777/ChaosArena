@@ -45,6 +45,18 @@ export function mediaSource(id: MediaId | undefined, fallback?: ClipCue | null) 
 }
 
 export function fallbackAudio(id: MediaId) {
-  const channel = ['wii-shop', 'tic-tac', 'millonario', 'noticias-caracol'].includes(id) ? 'ambiente' : 'efecto';
+const cues: Partial<Record<MediaId, string>> = {
+    'wii-shop': 'ambiente',
+    'tic-tac': 'ambiente',
+    millonario: 'ambiente',
+    'noticias-caracol': 'ambiente',
+    'acierto-concurso': 'acierto',
+    'family-feud': 'fallo',
+    'tiempo-agotado': 'fallo',
+    'trompeta-triste': 'fallo',
+    'ruleta-casino': 'ruleta',
+    'la-plata': 'podio',
+  };
+  const channel = cues[id] ?? 'efecto';
   return { url: `/media/${channel}-original.wav`, video: false };
 }

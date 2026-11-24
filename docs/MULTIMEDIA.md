@@ -12,7 +12,7 @@ El servidor confirma el vencimiento, las votaciones, el podio y los datos del ev
 
 FFprobe 9.1 abrió los **28 originales** de la carpeta entregada. Hay siete videos H.264 con AAC y 21 audios AAC o MP3. El cuadro indica el punto de entrada y la duración objetivo de cada copia. Se midió la duración y se buscó silencio antes de recortar. Los originales se conservaron. FFmpeg generó MP4 H.264/AAC y MP3 con normalización, sin aumentar la resolución.
 
-Todas las fuentes y los permisos de redistribución figuran como pendientes. Los archivos optimizados están en `frontend/media-local/`, carpeta ignorada por Git y servida en desarrollo. La compilación de producción usa las tarjetas de texto y los clips de respaldo existentes. Las fuentes quedan en esta tabla hasta que el equipo registre autoría, atribución y permiso de cada recurso.
+José confirmó el 24 de noviembre de 2026 que tiene permiso para publicar los videos y audios originales en GitHub y Vercel. Los archivos optimizados están en `frontend/public/media-local/` y se incluyen en producción. La carpeta `frontend/media-local/` sigue siendo la copia local de trabajo. La autoría y la atribución de cada recurso aún deben quedar documentadas.
 
 | ID | Archivo original | Original | Entrada / duración objetivo | Copia |
 | --- | --- | --- | --- | --- |
@@ -51,6 +51,6 @@ En el ensayo local se conectaron los ambientes de lobby, pregunta, duelo y votac
 
 La expulsión de la asamblea usa `patria-milagro`. Los resultados de ruleta `loot-box` con premio en puntos y `hack` muestran `que-bendicion` y `la-roca`, respectivamente. Una racha de cinco aciertos muestra `asi-se-hace`. Si todos responden y nadie acierta, se muestra `mejor-estar-ciego`. La ruleta y la asamblea tienen prioridad sobre estos dos clips de ronda. `coffin-dance`, `latidos` y `diomedes-respawn` siguen disponibles en la vista previa. Las votaciones sin expulsión comparten el mismo texto de veredicto y los aciertos colectivos usan el sonido disponible.
 
-En el ensayo local, `mejor-estar-ciego` dura 11.78 segundos y `patria-milagro` dura 5.80 segundos completos. La pista de Diomedes en el podio es audio M4A de 276.23 segundos; no se entregó un video de Diomedes. Para probarlos en localhost, conservar los originales con los nombres `mejor-estar-ciego.mp4`, `patria-milagro.mp4` y `la-plata.m4a` dentro de `frontend/media-local/`. En la mesa del anfitrión, **Efectos → Probar clips y audios** muestra el catálogo; el botón **Probar** solo se habilita si el archivo local existe. Los originales permanecen fuera de Git mientras sus permisos de publicación estén pendientes.
+`mejor-estar-ciego` dura 11.78 segundos y `patria-milagro` dura 5.80 segundos completos. La pista de Diomedes en el podio es audio M4A de 276.23 segundos; no se entregó un video de Diomedes. En la mesa del anfitrión, **Efectos → Probar clips y audios** muestra el catálogo y permite probar los recursos publicados.
 
 Se comprobó en Edge la navegación de ida y vuelta sin abrir pestañas, el mismo PIN, la privacidad del modo presentación, la salida de audio exclusiva, el clip inicial previo al reloj, la pausa, el cierre temprano y el silencio de los jugadores. Queda el ensayo con teléfonos y proyector físicos.

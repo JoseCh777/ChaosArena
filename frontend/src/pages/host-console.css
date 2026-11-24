@@ -18,5 +18,7 @@
 .host-show-switches input { width: 1.15rem; height: 1.15rem; margin: 0; accent-color: var(--mint); }
 .host-volume select { color: inherit; background: #211e32; border: 1px solid var(--border); border-radius: .45rem; padding: .5rem; min-height: 44px; }
 .host-personal summary { width: fit-content; cursor: pointer; min-height: 44px; padding-block: .65rem; }
-.host-personal video { display: block; width: 100%; max-height: 14rem; object-fit: contain; margin-top: .5rem; border-radius: .5rem; background: #080711; }
+.host-personal video, .host-live-clip video { display: block; width: 100%; max-height: 14rem; object-fit: contain; margin-top: .5rem; border-radius: .5rem; background: #080711; }
+.host-follow { justify-self: start; }
+.host-live-clip { margin: 0; }
 .host-deck button, .host-show button { max-width: 100%; white-space: normal; }

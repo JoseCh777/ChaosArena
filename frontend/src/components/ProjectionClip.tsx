@@ -1,7 +1,7 @@
 import type { ClipCue } from '../../../shared/live';
 import { useEffect, useRef, useState } from 'react';
 
-export function ProjectionClip({ cue, enabled = true, sound = false, volume = 75 }: { cue: ClipCue; enabled?: boolean; sound?: boolean; volume?: number }) {
+export function ProjectionClip({ cue, enabled = true, sound = false, volume = 75, compact = false }: { cue: ClipCue; enabled?: boolean; sound?: boolean; volume?: number; compact?: boolean }) {
   const video = useRef<HTMLVideoElement>(null);
   const [visible, setVisible] = useState(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
@@ -16,7 +16,7 @@ export function ProjectionClip({ cue, enabled = true, sound = false, volume = 75
 
   if (!visible || !enabled) return null;
   return (
-    <aside className="projection-clip" aria-hidden="true">
+    <aside className={compact ? 'host-live-clip' : 'projection-clip'} aria-hidden="true">
       <video ref={video} src={`/media/${cue}.webm`} autoPlay muted={!sound} playsInline disablePictureInPicture
         onEnded={() => setVisible(false)} onError={() => setVisible(false)} />
     </aside>

@@ -134,17 +134,17 @@ export function HostPage() {
         onClick={() => setConfirmClose(true)}>Cerrar sala</button>}
     </section>
     <div className="host-sidebar">
-    <HostShow key={view.pin} view={view} online={online && !busy} clips={startable ? settings.clips : view.clips} />
-    <section className="panel host-roster">
-      <h2>{view.summary ? 'Resultados de la sala' : 'Jugadores en sala'}</h2>
-      <ul>{view.players.map(player => {
-        const result = view.summary?.find(item => item.id === player.id);
-        return <li key={player.id}><strong>{player.nickname}</strong>
-          <span>{result ? `${result.correct} de ${view.total} aciertos · ${player.score} pts` : `${player.score} pts`}</span>
-          {view.phase === 'lobby' && player.id !== view.you && <button className="button button-text" disabled={!online}
-            onClick={() => removePlayer(player.id)} aria-label={`Retirar a ${player.nickname}`}>Retirar</button>}</li>;
-      })}</ul>
-    </section>
+      <HostShow key={view.pin} view={view} online={online && !busy} clips={startable ? settings.clips : view.clips} />
+      <section className="panel host-roster">
+        <h2>{view.summary ? 'Resultados de la sala' : 'Jugadores en sala'}</h2>
+        <ul>{view.players.map(player => {
+          const result = view.summary?.find(item => item.id === player.id);
+          return <li key={player.id}><strong>{player.nickname}</strong>
+            <span>{result ? `${result.correct} de ${view.total} aciertos · ${player.score} pts` : `${player.score} pts`}</span>
+            {view.phase === 'lobby' && player.id !== view.you && <button className="button button-text" disabled={!online}
+              onClick={() => removePlayer(player.id)} aria-label={`Retirar a ${player.nickname}`}>Retirar</button>}</li>;
+        })}</ul>
+      </section>
     </div>
   </main>;
 }

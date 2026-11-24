@@ -276,6 +276,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
 
       switch (kind) {
         case 'answer':
+          if (engine.questionPausedMs !== undefined) return fail('La pregunta está en pausa.');
           engine.answer(player.id, String(data.roundId), data.choice);
           break;
         case 'usePower':

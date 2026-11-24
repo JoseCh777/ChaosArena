@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ClipCue, ProjectionClips } from '../../../shared/live';
 import type { RuntimeArenaView, ShowChange } from '../../../shared/runtime-chaos';
+import { ProjectionClip } from '../components/ProjectionClip';
 import { command } from '../services/arena';
 import { clipNames, presentation } from '../services/presentation';
 import { reactions } from '../services/runtimeCatalog';
@@ -19,8 +20,9 @@ export function HostShow({ view, online, clips }: { view: RuntimeArenaView; onli
   const [recent, setRecent] = useState(true);
   const show = view.show;
   const reaction = view.reaction;
-  const audio = useProjectionAudio(undefined, show?.volume);
   const current = presentation(view);
+  const volume = show?.sound === false ? 0 : (show?.volume ?? 75);
+  const audio = useProjectionAudio(current.audio, volume);
   const availableClips = [...new Set(Object.values(clips ?? {}).filter(clip => clip !== null))];
 
   useEffect(() => {
@@ -39,13 +41,14 @@ export function HostShow({ view, online, clips }: { view: RuntimeArenaView; onli
   }
 
   if (!show) return null;
+  const following = audio.enabled;
   return <section className="panel host-show" aria-labelledby="host-show-title">
     <header>
       <h2 id="host-show-title">Proyector en vivo</h2>
       <p className="host-show-cue" role="status">
         {recent && show.reactions && reaction ? reactions[reaction.kind]
           : show.videos && current.clip ? `Clip · ${clipNames[current.clip]}`
-          : show.sound && show.volume > 0 && current.audio ? cues[current.audio] : 'Sin efecto activo'}
+          : show.sound && show.volume > 0 && current.audio ? cues[current.audio] : 'Sin señal para esta fase'}
       </p>
     </header>
     <div className="host-show-switches" aria-label="Efectos del proyector">
@@ -63,6 +66,11 @@ export function HostShow({ view, online, clips }: { view: RuntimeArenaView; onli
       </label>
     </div>
     <p className="host-show-hint">En la ventana del proyector, pulsa Activar sonido una vez.</p>
+    <button className="button button-text host-follow" type="button" aria-pressed={following} onClick={audio.toggle}>
+      {following ? 'Dejar de seguir efectos aquí' : 'Seguir efectos aquí'}
+    </button>
+    {current.clip && <ProjectionClip key={view.phase} cue={current.clip} compact
+      enabled={following && show.videos} sound={following && volume > 0} volume={volume} />}
     <details className="host-personal">
       <summary>Vista previa local</summary>
       <div className="host-actions">

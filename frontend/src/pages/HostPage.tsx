@@ -120,7 +120,7 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
   const startable = !intro && (view.phase === 'lobby' || view.phase === 'finished');
   return <main className="game-layout host-layout">
     {view.phase !== 'lobby' && <ArenaPodium players={view.players} final={view.phase === 'finished'} />}
-    {!startable && <section className="host-main-stage" aria-label="Partida en curso">
+    {!startable && <section className="host-main-stage" data-phase={view.phase} aria-label="Partida en curso">
       {intro ? <h1 className="game-prompt">Comienza la partida</h1>
         : <HostRound key={view.round?.roundId} view={view} online={online && !busy} />}
     </section>}

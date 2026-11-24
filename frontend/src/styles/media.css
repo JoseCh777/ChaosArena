@@ -9,7 +9,7 @@
   background: #151b2b;
   color: #f8fafc;
   isolation: isolate;
-  animation: arena-media-appear 230ms ease-out both;
+  animation: arena-media-appear 160ms cubic-bezier(.23, 1, .32, 1) both;
 }
 
 .arena-media video {

@@ -10,6 +10,8 @@ export const ARENA_PACE: Readonly<{
   introMs: number;
   revealMs: number;
   roundClipMs: number;
+  blindClipMs: number;
+  streakClipMs: number;
   rouletteSpinMs: number;
   rouletteResultMs: number;
   duelResultMs: number;

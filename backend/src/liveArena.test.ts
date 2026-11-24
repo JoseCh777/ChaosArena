@@ -86,8 +86,15 @@ test('arena: partida con asamblea, fantasma, final y reinicio', async () => {
 
   assert.equal((await beto.cmd('start', {})).ok, false);
   const quiz = { title: 'Prueba', questions: [question({ id: 'a', seconds: 10 }), question({ id: 'b', seconds: 10 })] };
-  assert.ok((await ana.cmd('start', { quiz })).ok);
-  await until(() => ana.view?.phase === 'question');
+  assert.equal((await ana.cmd('start', { quiz, settings: { roundSeconds: 61, clips: {} } })).ok, false);
+  assert.equal((await ana.cmd('start', { quiz, settings: { roundSeconds: 35, clips: {
+    inicio: '../ajeno', votacion: 'votacion', ruleta: 'ruleta', podio: 'podio',
+  } } })).ok, false);
+  const clips = { inicio: null, votacion: 'votacion', ruleta: 'ruleta', podio: 'inicio' };
+  assert.ok((await ana.cmd('start', { quiz, settings: { roundSeconds: 35, clips } })).ok);
+  await until(() => ana.view?.phase === 'question' && screen?.phase === 'question');
+  assert.equal(ana.view?.seconds, 35);
+  assert.deepEqual((screen as DisplayView & { clips?: object })?.clips, clips);
   assert.equal(ana.view?.round && 'correctIndex' in ana.view.round, false);
 
   const roundId = ana.view!.round!.roundId;
@@ -120,6 +127,8 @@ test('arena: partida con asamblea, fantasma, final y reinicio', async () => {
   assert.equal(!bad.ok && bad.error, 'Tu sesión terminó. Vuelve a ingresar.');
   assert.ok((await ana.cmd('start', { quiz })).ok);
   await until(() => ana.view?.phase === 'question' && ana.view.players.every((p) => p.score === 0));
+
+  assert.equal(ana.view?.seconds, 30);
 
   // Salir solo en lobby o al terminar.
   assert.equal((await beto.cmd('leave')).ok, false);

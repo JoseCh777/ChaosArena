@@ -31,7 +31,7 @@ export function PlayPage({ view, online }: { view: ArenaView; online: boolean })
     <section className="panel game-panel" aria-labelledby="game-title">
       {ghost && <p className="lock-feedback">Modo fantasma · Tus respuestas siguen contando para la evaluación.</p>}
       <div className="round-meta"><span>Ronda {view.number} / {view.total}</span><span>{view.received} de {view.players.length} respuestas</span></div>
-      {view.phase === 'question' && <RoundTimer seconds={Math.max(0, Math.ceil((round.deadline - now) / 1000))} totalSeconds={view.seconds} />}
+      {view.phase === 'question' && <RoundTimer seconds={Math.max(0, (round.deadline - now) / 1000)} totalSeconds={view.seconds} />}
       <div className="prompt-board">
         <span className="round-digit" aria-hidden="true">{String(view.number).padStart(2, '0')}</span>
         <h1 className="game-prompt" id="game-title">{round.prompt}</h1>

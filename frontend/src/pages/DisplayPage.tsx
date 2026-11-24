@@ -70,7 +70,7 @@ export function DisplayPage() {
     </section> : round && <section className="projection-round">
       <div className="round-meta"><span>Ronda {display.number} / {display.total}</span>
         <span>{display.received} / {display.players.length} respuestas</span></div>
-      {phase === 'question' && <RoundTimer seconds={Math.max(0, Math.ceil((round.deadline - now) / 1000))} totalSeconds={display.seconds} />}
+      {phase === 'question' && <RoundTimer seconds={Math.max(0, (round.deadline - now) / 1000)} totalSeconds={display.seconds} />}
       <h1>{round.prompt}</h1>
       <ol className="projection-options">{round.options.map((option, i) =>
         <li key={i} data-correct={display.solution?.index === i || undefined}>

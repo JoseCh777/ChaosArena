@@ -9,7 +9,7 @@ export function VotePage({ view, online }: { view: ArenaView; online: boolean })
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const eligible = voting.candidates.includes(view.you);
-  const remaining = Math.max(0, Math.ceil((voting.deadline - now) / 1000));
+  const remaining = Math.max(0, (voting.deadline - now) / 1000);
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 200);
     return () => clearInterval(timer);

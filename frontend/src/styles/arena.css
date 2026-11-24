@@ -40,7 +40,6 @@
 .arena-notice { margin: 0; text-align: center; padding: 8px; background: #412c35; color: #ffdeab; }
 .arena .game-panel { border-top: 3px solid var(--primary-soft); }
 .round-meta { text-transform: uppercase; font-family: var(--font-mono); letter-spacing: .06em; }
-.round-timer progress { accent-color: var(--mint); }
 .game-option { --rail: #ab98ff; position: relative; overflow: hidden; border-left: 4px solid var(--rail); }
 .game-option:nth-child(2) { --rail: #6ce2ef; }
 .game-option:nth-child(3) { --rail: #ffc776; }

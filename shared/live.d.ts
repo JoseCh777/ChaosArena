@@ -35,6 +35,7 @@ export interface ArenaCommands {
   start: { quiz?: Quiz; voting?: boolean };
   vote: { id: string; target: string | null };
   answer: { roundId: string; choice: number };
+  removePlayer: { id: string };
   leave: Record<string, never>;
 }
 export type Reply = { ok: true; token?: string } | { ok: false; error: string };

@@ -24,6 +24,12 @@ export function HostPage() {
     }
   }
 
+  async function removePlayer(id: string) {
+    setError('');
+    const reply = await command('removePlayer', { id });
+    if (!reply.ok) setError(reply.error);
+  }
+
   if (!view?.host) return <main className="panel empty-state"><h1>Anfitrión</h1>
     <p role="status">{view ? 'El panel está reservado a quien abrió la sala.' : sessionToken() ? message : 'Entra primero a la sala con tu apodo.'}</p>
     <a href={view ? '/lobby' : '/join'} className="button button-primary">{view ? 'Volver a la sala' : 'Ir al ingreso'}</a>
@@ -53,7 +59,9 @@ export function HostPage() {
       <ul>{view.players.map(player => {
         const result = view.summary?.find(item => item.id === player.id);
         return <li key={player.id}><strong>{player.nickname}</strong>
-          <span>{result ? `${result.correct} de ${view.total} aciertos · ${player.score} pts` : `${player.score} pts`}</span></li>;
+          <span>{result ? `${result.correct} de ${view.total} aciertos · ${player.score} pts` : `${player.score} pts`}</span>
+          {view.phase === 'lobby' && player.id !== view.you && <button className="button button-text" disabled={!online}
+            onClick={() => removePlayer(player.id)} aria-label={`Retirar a ${player.nickname}`}>Retirar</button>}</li>;
       })}</ul>
     </section>
   </main>;

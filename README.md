@@ -29,6 +29,12 @@ npm start -w backend
 
 El lockfile y la instalación se gestionan desde la raíz. Para teléfonos en red local consultar docs/ARQUITECTURA.md.
 
+### Ensayo en el aula
+
+Entra primero a la sala y abre `/host` para iniciar la partida y consultar los resultados del grupo. Abre `/display` en la pantalla que vas a proyectar. El QR utiliza el origen desde el que abriste el proyector.
+
+Para probar con teléfonos en la misma red, arranca el backend con `npm run dev:backend` y el frontend en otra terminal con `npm run dev -w frontend -- --host`. Abre `/display` usando la URL Network que muestra Vite. Si usas una URL localhost, el QR solo sirve en el mismo equipo. Mantén el backend y el frontend encendidos durante el ensayo.
+
 ## Organización
 
 - frontend/src/components, pages y services para Jose. Recursos locales en frontend/public/brand y media.

@@ -42,6 +42,10 @@ socket.on('display', (display: DisplayView) => {
   alignClock(display);
   update({ ...state, display, online: true, message: '' });
 });
+socket.on('removed', () => {
+  forget();
+  update({ online: false, message: 'El anfitrión te retiró de la sala.' });
+});
 socket.on('disconnect', () => update({ ...state, online: false, message: 'Reconectando con la arena…' }));
 socket.on('connect_error', () => update({ ...state, online: false, message: 'Esperando al servidor…' }));
 socket.on('connect', async () => {

@@ -103,6 +103,13 @@ export function attachArena(arena: Namespace) {
         const quiz = data?.quiz ?? { title: 'Patrones de diseño', questions: demoQuestions };
         if (!validQuiz(quiz)) return fail('Revisa los campos del cuestionario.');
         game.start(quiz, data?.voting !== false);
+      } else if (kind === 'removePlayer') {
+        if (game.phase !== 'lobby' || session !== members.keys().next().value) return fail('Solo el anfitrión puede retirar jugadores durante la espera.');
+        const target = [...members].find(([, member]) => member.id === data?.id);
+        if (!target || target[0] === session) return fail('Selecciona a otro jugador.');
+        const socketId = connections.get(target[0]);
+        if (socketId) arena.to(socketId).emit('removed');
+        remove(target[0]);
       } else if (kind === 'leave' && ['lobby','finished'].includes(game.phase)) {
         remove(session); session = '';
       } else return fail('Acción no disponible en esta fase.');

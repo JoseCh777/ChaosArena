@@ -1,6 +1,7 @@
 import type { Namespace } from 'socket.io';
 import type { ErrorCode, RankingEntry } from '@chaos-arena/shared';
-import type { ArenaView, ConfiguredDisplayView, LiveEvent, Reply } from '../../shared/live.js';
+import type { RuntimeArenaView, RuntimeDisplayView, Reaction } from '../../shared/runtime-chaos.js';
+import type { ArenaView, LiveEvent, Reply } from '../../shared/live.js';
 import { attachAutopilot, defaultAutopilot, type AutopilotOptions } from './autopilot.js';
 import { GameEngine, type EngineChange } from './game.js';
 import { GameError, realDeps, type EngineDeps } from './model.js';
@@ -50,6 +51,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
   let previousPin = '';
   let detach = () => {};
   let settings = parseArenaSettings(undefined)!;
+  let reaction: RuntimeDisplayView['reaction'];
   let lastEvent: LiveEvent | undefined;
   let lastScores = new Map<string, number>();
 
@@ -59,9 +61,11 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     connections.clear();
     tokens.clear();
     lastEvent = undefined;
+    reaction = undefined;
     lastScores.clear();
     settings = parseArenaSettings(undefined)!;
     engine = new GameEngine(pin, { title: 'Patrones de diseño', questions: demoQuestions }, { votingEnabled: true }, deps);
+    engine.enableRuntimeChaos();
     const offView = engine.subscribe(onChange);
     const offPilot = attachAutopilot(engine, config.autopilot ?? defaultAutopilot, deps);
     detach = () => {
@@ -70,7 +74,23 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     };
   }
 
+  function queueReaction(kind: Reaction) {
+    reaction = { id: deps.newId(), kind, started: deps.now() };
+  }
+
   function onChange(change: EngineChange) {
+    if (change.kind === 'round:open') reaction = undefined;
+    if (change.kind === 'round:result') {
+      const correct = change.result.counts[change.result.correctIndex];
+      if (correct === 0) queueReaction('nadie-acierta');
+      else if (correct === engine.players.size) queueReaction('todos-aciertan');
+      else if ([...engine.players.values()].some(p => p.streak === 5)) queueReaction('racha');
+    }
+    if (change.kind === 'vote:result' && change.result.expelledId) queueReaction('expulsion');
+    if (change.kind === 'finished') {
+      reaction = undefined;
+      if (buildRanking([...engine.players.values()]).filter(p => p.rank === 1).length > 1) queueReaction('empate');
+    }
     if (change.kind === 'event:result') lastEvent = describeEvent(change.result.type, change.result.targets);
     if (change.kind === 'player:kicked') {
       const token = tokens.get(change.playerId);
@@ -123,7 +143,9 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     const round = engine.currentRound();
     const q = round?.question;
     const received = round ? all.filter((p) => engine.choiceOf(p.id) !== null).length : 0;
-    const view: ConfiguredDisplayView = {
+    const view: RuntimeDisplayView = {
+      ...engine.runtimeView(),
+      reaction,
       phase,
       serverNow: Date.now(),
       pin: engine.pin,
@@ -152,13 +174,14 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     for (const [token, socketId] of connections) {
       const player = engine.playerByToken(token);
       if (!player) continue;
-      const personal: ArenaView = {
+      const personal: RuntimeArenaView = {
         ...view,
         you: player.id,
         host: player.id === host,
         choice: engine.choiceOf(player.id),
         correctCount: player.correctCount,
         voted: vote?.hasVoted(player.id),
+        chaos: engine.chaosView(player.id),
       };
       if (personal.host && phase === 'finished') personal.summary = all.map((p) => ({ id: p.id, correct: p.correctCount }));
       arena.to(socketId).emit('view', personal);
@@ -246,6 +269,15 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
       switch (kind) {
         case 'answer':
           engine.answer(player.id, String(data.roundId), data.choice);
+          break;
+        case 'usePower':
+          if (!engine.usePower(player.id, data.power, data.target)) return fail('Ese poder no está disponible ahora.');
+          break;
+        case 'duelConsent':
+          if (!engine.duelAction(player.id, 'consent', data.id, data.accepted)) return fail('Esta invitación ya no está disponible.');
+          break;
+        case 'duelAnswer':
+          if (!engine.duelAction(player.id, 'answer', data.id, data.choice)) return fail('El duelo ya no acepta esa respuesta.');
           break;
         case 'vote':
           engine.vote(player.id, String(data.id), data.target);

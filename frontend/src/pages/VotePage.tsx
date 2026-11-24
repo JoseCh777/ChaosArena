@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import type { ArenaView } from '../../../shared/live';
+import type { RuntimeArenaView } from '../../../shared/runtime-chaos';
 import { RoundTimer } from '../components/RoundTimer';
 import { command } from '../services/arena';
 
-export function VotePage({ view, online }: { view: ArenaView; online: boolean }) {
+export function VotePage({ view, online }: { view: RuntimeArenaView; online: boolean }) {
   const voting = view.voting!;
   const [now, setNow] = useState(Date.now);
   const [pending, setPending] = useState(false);
@@ -28,8 +28,9 @@ export function VotePage({ view, online }: { view: ArenaView; online: boolean })
       <p className="round-meta">{voting.received} de {voting.candidates.length} votos recibidos</p>
       <h1 className="game-prompt">Votación secreta</h1>
       <RoundTimer seconds={remaining} totalSeconds={20} />
+      {view.protectedIds?.includes(view.you) && <p role="status">Firewall te protege de la expulsión.</p>}
       {eligible && !view.voted ? <div className="game-options">
-        {view.players.filter(p => p.id !== view.you && voting.candidates.includes(p.id)).map(player =>
+        {view.players.filter(p => p.id !== view.you && voting.candidates.includes(p.id) && !view.protectedIds?.includes(p.id)).map(player =>
           <button className="game-option" key={player.id} disabled={pending || !online || !remaining}
             onClick={() => vote(player.id)}>{player.nickname}</button>)}
         <button className="button button-text" disabled={pending || !online || !remaining} onClick={() => vote(null)}>Omitir</button>

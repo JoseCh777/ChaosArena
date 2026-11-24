@@ -6,6 +6,7 @@ import '../styles/roulette.css';
 
 export function DemoRoulette({ event, preview }: { event: RuntimeLiveEvent; preview?: ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const [started] = useState(event.started);
   const [rest, setRest] = useState(() => Date.now() >= event.started + 2450);
   const reveal = useCallback(() => setRest(true), []);
   useLayoutEffect(() => {
@@ -18,7 +19,7 @@ export function DemoRoulette({ event, preview }: { event: RuntimeLiveEvent; prev
     <div className="roulette-stage">
       <h2 id="roulette-title">Ruleta de <em>caos</em></h2>
       {preview}
-      <ChaosDial type={event.type} started={event.started} spin={!rest} onRest={reveal} />
+      <ChaosDial type={event.type} started={started} spin={!rest} onRest={reveal} />
     </div>
     <div className="roulette-outcome" role="status">
       <h3>{rest ? eventLabels[event.type] : 'Girando…'}</h3>

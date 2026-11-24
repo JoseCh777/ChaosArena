@@ -1,6 +1,7 @@
+import type { ClipCue } from '../../../shared/live';
 import { useEffect, useState } from 'react';
 
-export function ProjectionClip({ cue }: { cue: 'inicio' | 'votacion' | 'ruleta' | 'podio' }) {
+export function ProjectionClip({ cue }: { cue: ClipCue }) {
   const [visible, setVisible] = useState(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   useEffect(() => {

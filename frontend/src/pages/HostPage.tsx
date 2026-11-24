@@ -1,3 +1,6 @@
+import { DEFAULT_CLIPS, DEFAULT_ROUND_SECONDS } from '@chaos-arena/shared/arena-settings.js';
+import type { ArenaSettings } from '../../../shared/live';
+import { HostOptions } from './HostOptions';
 import { useState, type FormEvent } from 'react';
 import { command, forget, remember, sessionToken, useArena } from '../services/arena';
 import { decodeQuiz, DRAFT_KEY } from '../services/quizDraft';
@@ -9,6 +12,7 @@ export function HostPage() {
   const [nickname, setNickname] = useState('');
   const [hostKey, setHostKey] = useState('');
   const [error, setError] = useState('');
+  const [settings, setSettings] = useState<ArenaSettings>({ roundSeconds: DEFAULT_ROUND_SECONDS, clips: { ...DEFAULT_CLIPS } });
   const [voting, setVoting] = useState(true);
   const [confirmClose, setConfirmClose] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -35,7 +39,7 @@ export function HostPage() {
     setError('');
     try {
       const quiz = draft ? decodeQuiz(localStorage.getItem(DRAFT_KEY) ?? '') : undefined;
-      const reply = await command('start', { quiz, voting });
+      const reply = await command('start', { quiz, voting, settings });
       if (!reply.ok) setError(reply.error);
     } catch {
       setError('Guarda un cuestionario válido en el editor antes de iniciarlo.');
@@ -112,7 +116,7 @@ export function HostPage() {
       </div>
       {!online && <p role="status">{message}</p>}
       {error && <p className="form-error" role="alert">{error}</p>}
-      {startable && !confirmClose && <label><input type="checkbox" checked={voting} onChange={event => setVoting(event.target.checked)} /> Activar votaciones</label>}
+      {startable && !confirmClose && <HostOptions settings={settings} voting={voting} onSettings={setSettings} onVoting={setVoting} disabled={busy} />}
       {startable && !confirmClose ? <div className="host-actions">
         <button className="button button-primary" disabled={!online || busy} onClick={() => start(false)}>Iniciar con preguntas de muestra</button>
         <button className="button button-text" disabled={!online || busy} onClick={() => start(true)}>Iniciar mi cuestionario</button>

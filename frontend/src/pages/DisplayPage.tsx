@@ -1,3 +1,4 @@
+import { DEFAULT_CLIPS } from '@chaos-arena/shared/arena-settings.js';
 import { useEffect, useState } from 'react';
 import QRCode from 'react-qr-code';
 import { useArena } from '../services/arena';
@@ -46,10 +47,12 @@ export function DisplayPage() {
   const round = display.round;
   const waiting = phase === 'lobby';
   const finished = phase === 'finished';
-  const clip = phase === 'vote' ? 'votacion' : finished ? 'podio' : phase === 'question' && display.number === 1 ? 'inicio' : undefined;
+  const cue = phase === 'vote' ? 'votacion' : finished ? 'podio' : phase === 'question' && display.number === 1 ? 'inicio' : undefined;
+  const clips = display.clips ?? DEFAULT_CLIPS;
+  const clip = cue && clips[cue];
   return <main className={'projection ' + (waiting ? 'projection-lobby' : '')}>
     {header}
-    {clip && <ProjectionClip key={clip} cue={clip} />}
+    {clip && <ProjectionClip key={cue} cue={clip} />}
     {audio.error && <p role="status">{audio.error}</p>}
     {waiting ? <section className="projection-prompt">
       <div><p className="round-meta">Sala de espera</p><h1>Entra a la <em>arena</em></h1>
@@ -83,6 +86,6 @@ export function DisplayPage() {
       {display.solution?.explanation && <p>{display.solution.explanation}</p>}
       {phase === 'reveal' && <Leaderboard ranking={display.players} playerId="" />}
     </section>}
-    {phase === 'roulette' && display.event && <DemoRoulette event={display.event} preview={<ProjectionClip cue="ruleta" />} />}
+    {phase === 'roulette' && display.event && <DemoRoulette event={display.event} preview={clips.ruleta && <ProjectionClip cue={clips.ruleta} />} />}
   </main>;
 }

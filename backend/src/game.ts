@@ -48,6 +48,15 @@ abstract class PhaseState {
   kick(_engine: GameEngine, _playerId: string): void {
     throw new GameError('WRONG_PHASE');
   }
+  leave(_engine: GameEngine, _playerId: string): void {
+    throw new GameError('WRONG_PHASE');
+  }
+  configure(_engine: GameEngine, _quiz: Quiz, _options: RoomOptions): void {
+    throw new GameError('WRONG_PHASE');
+  }
+  restart(_engine: GameEngine): void {
+    throw new GameError('WRONG_PHASE');
+  }
   answer(_engine: GameEngine, _player: PlayerState, _roundId: string, _optionIndex: unknown): void {
     throw new GameError('ROUND_CLOSED');
   }
@@ -64,6 +73,12 @@ class LobbyState extends PhaseState {
   }
   override kick(engine: GameEngine, playerId: string) {
     engine.removePlayer(playerId);
+  }
+  override leave(engine: GameEngine, playerId: string) {
+    engine.removePlayer(playerId);
+  }
+  override configure(engine: GameEngine, quiz: Quiz, options: RoomOptions) {
+    engine.applyConfig(quiz, options);
   }
   override command(engine: GameEngine, command: GameCommand) {
     if (command !== 'start') throw new GameError('WRONG_PHASE');
@@ -127,6 +142,12 @@ class VotingState extends PhaseState {
 
 class FinishedState extends PhaseState {
   readonly phase = 'finished' as const;
+  override leave(engine: GameEngine, playerId: string) {
+    engine.removePlayer(playerId);
+  }
+  override restart(engine: GameEngine) {
+    engine.resetToLobby();
+  }
 }
 
 export class GameEngine {
@@ -144,8 +165,8 @@ export class GameEngine {
 
   constructor(
     readonly pin: string,
-    private readonly quiz: Quiz,
-    readonly options: RoomOptions,
+    private quiz: Quiz,
+    private options: RoomOptions,
     private readonly deps: EngineDeps = realDeps,
   ) {}
 
@@ -187,6 +208,18 @@ export class GameEngine {
   vote(playerId: string, voteId: string, target: unknown) {
     this.state.vote(this, this.requirePlayer(playerId), voteId, target);
   }
+  /** El jugador sale por su cuenta. Solo en lobby o al terminar. */
+  leave(playerId: string) {
+    this.state.leave(this, playerId);
+  }
+  /** Cambia cuestionario y opciones. Solo en lobby. */
+  configure(quiz: Quiz, options: RoomOptions) {
+    this.state.configure(this, quiz, options);
+  }
+  /** Vuelve al lobby conservando a los jugadores. Solo al terminar. */
+  restart() {
+    this.state.restart(this);
+  }
 
   playerByToken(token: unknown): PlayerState | undefined {
     if (typeof token !== 'string') return undefined;
@@ -220,6 +253,24 @@ export class GameEngine {
     this.players.set(player.id, player);
     this.notify({ kind: 'snapshot' });
     return player;
+  }
+
+  applyConfig(quiz: Quiz, options: RoomOptions) {
+    this.quiz = quiz;
+    this.options = options;
+  }
+
+  resetToLobby() {
+    this.clearTimer();
+    for (const p of this.players.values()) Object.assign(p, { status: 'active', score: 0, correctCount: 0, streak: 0 });
+    this.round = undefined;
+    this.voteSession = undefined;
+    this.pendingModifier = undefined;
+    this.questionIndex = -1;
+    this.closedRounds = 0;
+    this.lastOutcomes.clear();
+    this.state = new LobbyState();
+    this.notify({ kind: 'snapshot' });
   }
 
   removePlayer(playerId: string) {
@@ -342,6 +393,7 @@ export class GameEngine {
     const error = session.cast(player.id, target, this.deps.now());
     if (error) throw new GameError(error);
     if (session.voteCount >= session.candidateIds.length) this.settleVote();
+    else this.notify({ kind: 'snapshot' });
   }
 
   /** Idempotente. */
@@ -406,6 +458,26 @@ export class GameEngine {
       answeredRoundId: open?.submissions.has(playerId) ? open.roundId : undefined,
       lastRound: last ? { roundId: last.roundId, correct: last.correct, pointsDelta: last.pointsDelta } : undefined,
     };
+  }
+
+  /** Ronda actual o última, con clave. Solo para adaptadores del servidor, nunca enviar tal cual. */
+  currentRound(): Readonly<Pick<RoundState, 'roundId' | 'deadline' | 'question' | 'settled'>> | undefined {
+    return this.round;
+  }
+
+  /** Opción elegida por el jugador en la ronda actual o la última cerrada. */
+  choiceOf(playerId: string): number | null {
+    return this.round?.submissions.get(playerId)?.optionIndex ?? null;
+  }
+
+  /** Votación abierta, sin votos individuales. */
+  voteInfo() {
+    const s = this.voteSession;
+    return s && { voteId: s.voteId, deadline: s.deadline, received: s.voteCount, candidateIds: s.candidateIds, hasVoted: (id: string) => s.hasVoted(id) };
+  }
+
+  get votingEnabled() {
+    return this.options.votingEnabled;
   }
 
   roundProgress(): RoundProgress | undefined {

@@ -38,6 +38,10 @@ export class VoteSession {
     return null;
   }
 
+  hasVoted(voterId: string): boolean {
+    return this.#votes.has(voterId);
+  }
+
   get voteCount(): number {
     return this.#votes.size;
   }

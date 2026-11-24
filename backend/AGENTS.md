@@ -17,8 +17,9 @@ Backend autoritativo de ChaosArena: Node + Express + Socket.IO, sala única en m
 | Archivo | Dueño | Estado |
 | --- | --- | --- |
 | model.ts, game.ts, rooms.ts, publisher.ts, server.ts, testing.ts | Claude (Daniel) | Implementado |
-| questions.ts, scoring.ts | Tarea A | Stub con TODO(codex) |
-| events.ts, voting.ts | Tarea B | Stub con TODO(agente B) |
+| autopilot.ts, liveArena.ts | Claude (Daniel) | Protocolo /arena del frontend sobre GameEngine |
+| questions.ts, scoring.ts | Tarea A | Implementado |
+| events.ts, voting.ts | Tarea B | Implementado |
 
 ## Reglas acordadas (fuente de verdad para tests)
 

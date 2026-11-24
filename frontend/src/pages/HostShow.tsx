@@ -1,9 +1,9 @@
 import { setAudioFromGesture } from '../services/mediaAudio';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { RuntimeArenaView, ShowChange } from '../../../shared/runtime-chaos';
 import { MediaOverlay, type MediaPreview } from '../components/MediaOverlay';
 import { command } from '../services/arena';
-import { mediaIds, type MediaId } from '../services/mediaManifest';
+import { mediaIds, mediaSource, type MediaId } from '../services/mediaManifest';
 
 const labels = { sound: 'Sonido de sala', videos: 'Videos', reactions: 'Reacciones' } as const;
 const controls = ['sound', 'videos', 'reactions'] as const;
@@ -23,6 +23,8 @@ export function HostShow({ view, online, audioEnabled, toggleAudio }: Props) {
   const [preview, setPreview] = useState<MediaPreview>();
   const show = view.show;
 
+  useEffect(() => { setPreview(undefined); }, [view.phase, view.round?.roundId, view.showFact?.id]);
+
   async function change(update: ShowChange) {
     setPending(update);
     setError('');
@@ -34,8 +36,7 @@ export function HostShow({ view, online, audioEnabled, toggleAudio }: Props) {
   if (!show) return null;
   const controlsState = pending ? { ...show, [pending.key]: pending.value } : show;
   const disabled = !online || !!pending;
-  const canPreview = import.meta.env.DEV && (view.phase === 'finished'
-    || (view.phase === 'lobby' && view.showFact?.kind !== 'intro'));
+  const resourceAvailable = mediaSource(selected)?.url.startsWith('/media-local/');
 
   return <>
     <div className="arena-effect-lane host-effect-lane">
@@ -70,20 +71,21 @@ export function HostShow({ view, online, audioEnabled, toggleAudio }: Props) {
       </label>
     </div>
     </details>
-    {canPreview && <details className="host-personal">
-      <summary>Probar un recurso</summary>
+    <details className="host-personal">
+      <summary>Probar clips y audios</summary>
       <div className="host-actions">
         <label className="host-volume">Recurso
           <select value={selected} onChange={event => setSelected(event.target.value as MediaId)}>
             {mediaIds.map(id => <option key={id} value={id}>{id.replaceAll('-', ' ')}</option>)}
           </select>
         </label>
-        <button className="button button-text" type="button" onClick={() => {
+        <button className="button button-text" type="button" disabled={!resourceAvailable} onClick={() => {
           setAudioFromGesture(() => setPreview({ asset: selected, started: Date.now() }));
-          if (!audioEnabled && show.output !== 'display') toggleAudio();
+          if (!audioEnabled) toggleAudio();
         }}>Probar</button>
       </div>
-    </details>}
+      {!resourceAvailable && <p className="host-show-hint">Este recurso solo está disponible en la instalación local con los archivos originales.</p>}
+    </details>
     {error && <p className="form-error" role="alert">{error}</p>}
     </section>
   </>;

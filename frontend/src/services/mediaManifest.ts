@@ -13,7 +13,7 @@ export const mediaFiles = {
   'millonario': 'mp3',
   'trompeta-triste': 'mp3',
   'redoble': 'mp3',
-  'la-plata': 'mp3',
+  'la-plata': 'm4a',
   'campana-boxeo': 'mp3',
   'wii-shop': 'mp3',
   'latidos': 'mp3',

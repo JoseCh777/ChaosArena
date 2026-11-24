@@ -7,7 +7,7 @@ const localMedia = new URL('./media-local/', import.meta.url);
 export default defineConfig(({ command, isPreview }) => ({
   define: {
     __LOCAL_MEDIA_FILES__: JSON.stringify(command === 'serve' && !isPreview && existsSync(localMedia)
-      ? readdirSync(localMedia).filter(file => /\.(mp3|mp4)$/.test(file)).map(file => `media-local/${file}`)
+      ? readdirSync(localMedia).filter(file => /\.(mp3|mp4|m4a)$/.test(file)).map(file => `media-local/${file}`)
       : []),
   },
   plugins: [react()],

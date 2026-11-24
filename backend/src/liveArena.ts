@@ -122,7 +122,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     else if (kind === 'streak' && title === '¡Racha ×5!') announce('streak-clip', title, detail);
     else return 0;
     publish();
-    return ARENA_PACE.roundClipMs;
+    return kind === 'none' ? ARENA_PACE.blindClipMs : ARENA_PACE.streakClipMs;
   }
 
   function announce(kind: ShowFact['kind'], title: string, detail?: string) {

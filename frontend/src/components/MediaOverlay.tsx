@@ -29,13 +29,14 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
   const [missingAmbient, setMissingAmbient] = useState<string>();
   const [blocked, setBlocked] = useState(false);
   const show = view.show;
-  const selected = show?.output === 'both' || (show?.output ?? 'host') === output;
-  const audible = selected && enabled && show?.sound !== false;
+  const activePreview = preview;
+  const selected = !!activePreview || show?.output === 'both' || (show?.output ?? 'host') === output;
+  const audible = selected && enabled && (!!activePreview || show?.sound !== false);
   const master = (show?.volume ?? 75) / 100;
-  const activePreview = preview && (view.phase === 'finished' || (view.phase === 'lobby' && view.showFact?.kind !== 'intro'));
   const scene: MediaScene | undefined = activePreview ? {
     id: `preview-${preview.started}`, started: preview.started,
-    steps: [{ asset: preview.asset, title: 'Vista previa local', detail: preview.asset.replaceAll('-', ' '), ms: 20_000 }],
+    steps: [{ asset: preview.asset, title: 'Vista previa local', detail: preview.asset.replaceAll('-', ' '),
+      ms: preview.asset === 'la-plata' ? ARENA_PACE.podiumWinnerMs : 20_000 }],
   } : currentScene(view);
   const elapsed = Math.max(0, now - (scene?.started ?? now));
   let start = 0;
@@ -48,11 +49,11 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
   const visible = step && id !== skipped;
   const sourceKey = (url: string) => `${id}-${start}-${url}`;
   const primary = visible ? mediaSource(step.asset) : undefined;
-  const clip = visible && show?.videos !== false ? mediaSource(undefined, step.fallback) : undefined;
+  const clip = visible && (activePreview || show?.videos !== false) ? mediaSource(undefined, step.fallback) : undefined;
   const audio = visible ? mediaSource(step.audioFallback) : undefined;
   const tone = visible && step.asset ? fallbackAudio(step.audioFallback ?? step.asset) : undefined;
   const played = [primary, clip, audio, tone].find(source => source && !failed.includes(sourceKey(source.url))
-    && (source.video ? show?.videos !== false : audible));
+    && (source.video ? activePreview || show?.videos !== false : audible));
   const mediaKey = played ? sourceKey(played.url) : '';
   const companion = clip && !played?.video && !failed.includes(sourceKey(clip.url)) ? clip : undefined;
   const markFailed = (key: string) => setFailed(previous => previous.includes(key) ? previous : [...previous, key]);
@@ -60,11 +61,13 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
   const primaryAmbient = mediaSource(ambientAsset)?.url;
   const ambientUrl = ambientAsset && missingAmbient === primaryAmbient && primaryAmbient
     ? fallbackAudio(ambientAsset).url : primaryAmbient;
-  const showText = visible && (show?.reactions !== false || view.phase === 'roulette' || scene?.id === view.showFact?.id && view.showFact?.kind === 'intro');
+  const showText = visible && (!!activePreview || show?.reactions !== false || view.phase === 'roulette' || scene?.id === view.showFact?.id && view.showFact?.kind === 'intro');
   const runningWheel = wheel && view.phase === 'roulette' && !view.duel && view.chaosEvent;
   const wheelEvent = runningWheel || undefined;
   const wheelRested = wheelEvent && elapsed >= ARENA_PACE.rouletteSpinMs;
   const stepRemaining = step ? step.ms - (elapsed - start) : 0;
+  const hasVideo = !!(played?.video || companion);
+  const detachedNotice = hasVideo && showText && !!step;
 
   useEffect(() => { setNow(Date.now()); }, [id, scene?.started]);
 
@@ -155,18 +158,24 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
   return <>
     <audio ref={ambient} src={ambientUrl} loop preload="none" data-arena-ambient onError={() => setMissingAmbient(primaryAmbient)} />
     {(showText || track || companion || wheelEvent) && <aside className="arena-media" aria-label="Efecto de la partida"
+      data-video={hasVideo || undefined}
       data-kind={view.showFact?.kind} data-impact={wheelRested ? wheelEvent.impact : undefined}>
       {wheelEvent && <ChaosDial type={wheelEvent.type} events={wheelEvent.wheel} started={wheelEvent.started} spin={!wheelRested} onRest={onWheelRest} />}
       {track}
       {companion && <video key={sourceKey(companion.url)} src={companion.url} muted autoPlay playsInline
         aria-hidden="true" onError={() => markFailed(sourceKey(companion.url))} />}
-      {showText && step && (wheelRested
+      {showText && step && !detachedNotice && (wheelRested
         ? <div role="status"><RouletteResult event={wheelEvent} /></div>
         : <div className="arena-media-copy" role="status">
           <strong>{step.title}</strong>{step.detail && <p>{step.detail}</p>}
         </div>)}
       {visible && selected && <button className="button button-text" type="button" onClick={() => { setSkipped(id); onSkip?.(); }}>Omitir efecto</button>}
     </aside>}
+    {detachedNotice && <div className="arena-media-notice" role="status">
+      {wheelRested ? <RouletteResult event={wheelEvent} /> : <div className="arena-media-copy">
+        <strong>{step.title}</strong>{step.detail && <p>{step.detail}</p>}
+      </div>}
+    </div>}
     {blocked && audible && <button type="button" className="button button-primary arena-media-unlock" onClick={() => {
       window.dispatchEvent(new Event(audioGesture));
     }}>Toca para escuchar</button>}

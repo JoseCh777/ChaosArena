@@ -45,7 +45,7 @@ export interface RuntimePublic {
   protectedIds?: string[];
   reaction?: { id: string; kind: Reaction; started: number };
 }
-export type RuntimeArenaView = ArenaView & RuntimePublic & { chaos?: PrivateChaos; canSkipEvent?: boolean };
+export type RuntimeArenaView = ArenaView & Pick<ConfiguredDisplayView, 'clips'> & RuntimePublic & { chaos?: PrivateChaos; canSkipEvent?: boolean };
 export type RuntimeDisplayView = ConfiguredDisplayView & RuntimePublic;
 
 export interface RuntimeCommands {

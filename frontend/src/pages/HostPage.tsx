@@ -1,6 +1,9 @@
 import { DEFAULT_CLIPS, DEFAULT_ROUND_SECONDS } from '@chaos-arena/shared/arena-settings.js';
 import type { ArenaSettings } from '../../../shared/live';
 import { HostOptions } from './HostOptions';
+import { HostRound } from './HostRound';
+import { HostShow } from './HostShow';
+import './host-console.css';
 import { useState, type FormEvent } from 'react';
 import { command, forget, remember, sessionToken, useArena } from '../services/arena';
 import { decodeQuiz, DRAFT_KEY } from '../services/quizDraft';
@@ -105,8 +108,8 @@ export function HostPage() {
 
   const startable = view.phase === 'lobby' || view.phase === 'finished';
   return <main className="game-layout host-layout">
-    <section className="panel game-panel">
-      <p className="round-meta">{view.duel ? 'Duelo relámpago' : phases[view.phase]}</p>
+    <section className="panel game-panel host-deck">
+      <p className="round-meta">{view.pausedMs !== undefined ? 'Pausa' : view.duel ? 'Duelo relámpago' : phases[view.phase]}</p>
       <h1 className="game-prompt">Mesa del anfitrión</h1>
       <p className="room-code">PIN <strong>{view.pin}</strong></p>
       <div className="host-actions">
@@ -120,7 +123,7 @@ export function HostPage() {
       {startable && !confirmClose ? <div className="host-actions">
         <button className="button button-primary" disabled={!online || busy} onClick={() => start(false)}>Iniciar con preguntas de muestra</button>
         <button className="button button-text" disabled={!online || busy} onClick={() => start(true)}>Iniciar mi cuestionario</button>
-      </div> : !startable && <p role="status">Ronda {view.number} de {view.total} · {view.received} de {view.players.length} respuestas</p>}
+      </div> : !startable && !confirmClose && <HostRound key={view.round?.roundId} view={view} online={online && !busy} />}
       {confirmClose ? <div className="host-close">
         <p>Se desconectarán los jugadores y se descartará la partida. Al crear otra sala recibirás un PIN nuevo.</p>
         <div className="host-actions">
@@ -130,6 +133,8 @@ export function HostPage() {
       </div> : <button type="button" className="button button-text" disabled={!online || busy}
         onClick={() => setConfirmClose(true)}>Cerrar sala</button>}
     </section>
+    <div className="host-sidebar">
+    <HostShow key={view.pin} view={view} online={online && !busy} clips={startable ? settings.clips : view.clips} />
     <section className="panel host-roster">
       <h2>{view.summary ? 'Resultados de la sala' : 'Jugadores en sala'}</h2>
       <ul>{view.players.map(player => {
@@ -140,5 +145,6 @@ export function HostPage() {
             onClick={() => removePlayer(player.id)} aria-label={`Retirar a ${player.nickname}`}>Retirar</button>}</li>;
       })}</ul>
     </section>
+    </div>
   </main>;
 }

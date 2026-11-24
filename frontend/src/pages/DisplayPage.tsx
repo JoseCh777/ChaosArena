@@ -4,12 +4,14 @@ import { useArena } from '../services/arena';
 import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
 import { DemoRoulette } from '../components/DemoRoulette';
+import { useProjectionAudio } from './useProjectionAudio';
 import './projection.css';
 
 export function DisplayPage() {
   const { display, online, message } = useArena();
   const [now, setNow] = useState(Date.now);
   const phase = display?.phase;
+  const audio = useProjectionAudio(phase === 'roulette' ? 'ruleta' : phase === 'finished' ? 'podio' : undefined);
   useEffect(() => {
     if (phase !== 'question') return;
     setNow(Date.now());
@@ -29,7 +31,11 @@ export function DisplayPage() {
       <img src="/brand/chaos-arena-mark.png" alt="" width="36" height="40" />
       <strong>ChaosArena</strong>
       <span>{online ? 'Proyector' : message}</span>
+      <button className="button button-text" type="button" aria-pressed={audio.enabled} onClick={audio.toggle}>
+        {audio.enabled ? 'Silenciar' : 'Activar sonido'}
+      </button>
     </header>
+    {audio.error && <p role="status">{audio.error}</p>}
     {waiting ? <section className="projection-prompt">
       <div><p className="round-meta">Sala de espera</p><h1>Entra a la <em>arena</em></h1>
         <p className="projection-pin">{display.pin}</p>

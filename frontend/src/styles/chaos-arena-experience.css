@@ -45,16 +45,23 @@
 .arena .player-verdict,.arena .player-verdict[data-verdict] { background: var(--surface-raised); border: 0; }
 .arena .arena-podium-places { align-items: stretch; gap: .4rem; }
 .arena .arena-podium-place { background: var(--surface); border: 0; border-radius: .65rem; box-shadow: none; }
-.arena .arena-podium-place[data-rank="1"] { background: #e1d3f3; color: var(--ink); box-shadow: none; }
-.arena .arena-podium-place[data-rank="1"] .arena-podium-score { color: #483b58; }
+.arena :is(.arena-podium-place,.leaderboard li)[data-rank] {
+  --medal-surface: #eceaf0; --medal-ink: #4e495a;
+  background: var(--medal-surface); color: var(--medal-ink);
+}
+.arena :is(.arena-podium-place,.leaderboard li)[data-rank="1"] { --medal-surface: #f9df95; --medal-ink: #55380a; }
+.arena :is(.arena-podium-place,.leaderboard li)[data-rank="2"] { --medal-surface: #e0e7ef; --medal-ink: #354555; }
+.arena :is(.arena-podium-place,.leaderboard li)[data-rank="3"] { --medal-surface: #f3cfb5; --medal-ink: #63361e; }
+.arena .leaderboard li[data-rank] { border: 0; }
+.arena .arena-podium-place :is(.arena-podium-score,.arena-podium-names span) { color: var(--medal-ink); }
 .arena .arena-podium-medal { background: transparent; color: inherit; clip-path: none; font-size: clamp(1.5rem,4vw,3rem); letter-spacing: -.07em; }
 .arena .arena-podium-place[data-rank="1"] .arena-podium-medal { filter: none; }
 .arena .editor-header,.arena .host-console { border-color: var(--border); }
 .arena .field :is(select,textarea) { border-radius: .5rem; }
-.arena .arena-effect-lane .arena-media,.arena .chaos-modal,.arena .roulette-stage,.arena .assembly-disc {
+.arena .arena-effect-lane .arena-media,.arena .chaos-modal,.arena .roulette-stage {
   background: var(--surface); color: var(--ink); border-color: var(--border); rotate: none; box-shadow: 0 .6rem 1.6rem #38254f15;
 }
-.arena .assembly-disc { background: #cceddf; border-color: #8dbfae; }
+
 .arena .chaos-dial,.arena .dial-hub { background: var(--ink); box-shadow: none; }
 .arena .dial-frame { border-color: #6c617d; }
 .arena .dial-pointer { background: var(--paper); }
@@ -85,7 +92,7 @@
 .arena :is(.host-main-stage[data-phase="question"],.projection-round) .round-timer-label span:last-child { color: #43394e; }
 .arena .projection-round .host-answer-list li::marker,.arena .host-answer-list li::marker { color: #554462; }
 .arena .entry-form .form-error { color: #8a233f; }
-.arena .assembly-call,.arena .assembly-disc strong { color: var(--ink); }
+.arena .assembly-call { color: var(--ink); }
 .arena input:is([type="checkbox"],[type="radio"]) { accent-color: var(--mint); }
 .arena .host-options-grid { align-items: start; }
 .arena .roulette-stage em { color: var(--primary-soft); }
@@ -109,14 +116,14 @@
 .arena :is(.room-code strong,.score-display,.host-state,.round-timer-label span:last-child) { color: var(--secondary); }
 .arena .round-timer-track { background: #dcd1e9; }
 .arena .round-timer-fill { background: #348074; }
-.arena .arena-podium h2,.arena .arena-podium-score,.arena .arena-podium-names span { color: var(--primary-soft); }
+.arena .arena-podium h2 { color: var(--primary-soft); }
 .arena .arena-recognitions li > span { color: var(--primary-soft); }
 .arena .roulette-event-option:has(input:checked) { background: #ddf3e9; border-color: #97bfae; }
 .arena .roulette-event-help { color: var(--primary-soft); }
 .arena .roulette-event-tip { background: var(--ink); color: var(--paper); }
 .arena .roulette-progress,.arena .arena-effect-lane .arena-media-copy strong { color: var(--primary-soft); }
 .arena .chaos-modal::backdrop { background: #33224e88; }
-.arena .assembly-seat small { color: var(--paper); }
+
 .arena .player-verdict strong { color: #286052; }
 .arena .player-verdict[data-verdict="incorrect"] strong { color: #8a314e; }
 .arena .player-verdict[data-verdict="unanswered"] strong { color: #6e4d72; }
@@ -127,3 +134,17 @@
   background: #eee4f8; border-radius: 55% 0 0 45% / 50%;
 }
 .arena :is(select,input,textarea) { color-scheme: light; }
+/* Los estados de lectura conservan contraste aunque se bloquee la interacción. */
+.arena :is(.play-view,.duel-stage,.assembly-vote) .game-option:disabled { opacity: 1; color: var(--ink); }
+.arena .play-view .game-option[data-picked] { background: #e0d4f4; color: var(--ink); }
+.arena .play-view .game-option[data-picked][data-correct] { background: #c7efdf; }
+.arena .play-view .game-option[data-picked][data-wrong] { background: #f5d9e1; }
+.arena .player-verdict .verdict-mark { background: #d5eee4; color: #244f43; }
+.arena .player-verdict[data-verdict="incorrect"] .verdict-mark { background: #f4d4df; color: #752541; }
+.arena .player-verdict[data-verdict="unanswered"] .verdict-mark { background: #ebdbee; color: #53365a; }
+.arena :is(.power-tray h2 small,.host-show-cue) { color: #265d50; }
+.arena .power-card { padding: .8rem; }
+.arena :is(.lock-feedback,.round-verdict,.ghost-state) { background: #e4daef; color: #39264d; border-color: #776293; }
+.arena .projection-pin { color: #4c3174; }
+.arena .arena-media-status { color: var(--muted); }
+.arena .form-error,.arena .host-console [role="alert"] { color: #8a233f; }

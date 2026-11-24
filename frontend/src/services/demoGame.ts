@@ -2,9 +2,11 @@ import type { PersonalResult, PublicRound, Quiz, RankingEntry, ServerToClientEve
 import { demoQuestions } from './demoQuestions';
 import { GAME_KEY, readDemoRoom } from './demoRoom';
 import { decodeQuiz } from './quizDraft';
+import { applyDemoEvent, drawDemoEvent, validDemoEvents, type DemoEvent } from './demoEvents';
 
 export interface DemoGame {
   quiz?: Quiz;
+  events?: DemoEvent[];
   index: number;
   deadline: number;
   answers: (number | null)[];
@@ -41,6 +43,7 @@ export function readDemoGame(): DemoGame | undefined {
       || game.index < 0 || game.index >= questions.length || !Number.isFinite(game.deadline)
       || !Array.isArray(game.answers) || typeof game.finished !== 'boolean'
       || game.answers.length < game.index || game.answers.length > game.index + 1
+      || (game.events !== undefined && !validDemoEvents(game.events, game.answers.length - 1, questions.length))
       || (game.finished && game.answers.length !== questions.length)
       || !game.answers.every((answer, index) => answer === null
         || (Number.isInteger(answer) && answer >= 0 && answer < questions[index].options.length))) {
@@ -87,28 +90,44 @@ function mockAnswers(game: DemoGame, playerIndex: number) {
     : (question.correctIndex + 1) % question.options.length);
 }
 
-function scoreAnswers(game: DemoGame, answers: readonly (number | null)[], count: number) {
+export function addDemoEvent(game: DemoGame, count: number): DemoGame {
+  const events = game.events ?? [];
+  if (game.finished || game.answers.length <= game.index || game.index + 1 >= gameQuestions(game).length
+    || events.some(event => event.afterRound === game.index) || count !== 3) return game;
+  return { ...game, events: [...events, drawDemoEvent(game.index, count)] };
+}
+
+function scorePlayers(game: DemoGame) {
+  const room = readDemoRoom();
+  if (!room) return [];
+  const players = room.snapshot.players.map((player, index) => ({
+    ...player,
+    answers: player.id === room.playerId ? game.answers : mockAnswers(game, index),
+    correctCount: 0,
+  }));
   const questions = gameQuestions(game);
-  let score = 0;
-  let correctCount = 0;
-  for (let index = 0; index < count; index++) {
+  const events = new Map(game.events?.map(event => [event.afterRound, event]));
+  for (let index = 0; index < game.answers.length; index++) {
     const question = questions[index];
-    if (answers[index] === question.correctIndex) {
-      score += question.points;
-      correctCount++;
+    const previous = events.get(index - 1);
+    for (const [playerIndex, player] of players.entries()) {
+      const answer = player.answers[index];
+      const doubled = previous?.type === 'double-or-nothing' && previous.targets.includes(playerIndex);
+      if (answer === question.correctIndex) {
+        player.score += question.points * (doubled ? 2 : 1);
+        player.correctCount++;
+      } else if (doubled && answer !== null) {
+        player.score = Math.max(0, player.score - 50);
+      }
     }
+    const event = events.get(index);
+    if (event) applyDemoEvent(event, players);
   }
-  return { score, correctCount };
+  return players.map(({ answers, ...player }) => player);
 }
 
 export function demoRanking(game: DemoGame): RankingEntry[] {
-  const room = readDemoRoom();
-  if (!room) return [];
-
-  const players = room.snapshot.players.map((player, index) => ({
-    ...player,
-    ...scoreAnswers(game, player.id === room.playerId ? game.answers : mockAnswers(game, index), game.answers.length),
-  }));
+  const players = scorePlayers(game);
   players.sort((a, b) => b.score - a.score || b.correctCount - a.correctCount);
   let rank = 0;
   return players.map(({ correctCount, ...player }, index) => {
@@ -136,7 +155,8 @@ export function demoRoundResult(game: DemoGame): RoundResult | undefined {
 
 export function demoPersonalResult(game: DemoGame, playerId: string): PersonalResult {
   const validQuestionCount = gameQuestions(game).length;
-  const { score, correctCount } = scoreAnswers(game, game.answers, validQuestionCount);
+  const player = scorePlayers(game).find(player => player.id === playerId);
+  const { score = 0, correctCount = 0 } = player ?? {};
   return {
     playerId,
     score,

@@ -81,7 +81,8 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     engine = new GameEngine(pin, { title: 'Patrones de diseño', questions: demoQuestions }, { votingEnabled: true }, deps);
     engine.enableRuntimeChaos();
     const offView = engine.subscribe(onChange);
-    const offPilot = attachAutopilot(engine, config.autopilot ?? defaultAutopilot, deps);
+    const offPilot = attachAutopilot(engine, config.autopilot ?? defaultAutopilot, deps,
+      config.autopilot ? undefined : presentationDelay);
     detach = () => {
       offView();
       offPilot();
@@ -90,6 +91,22 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
 
   function queueReaction(kind: Reaction) {
     reaction = { id: deps.newId(), kind, started: deps.now() };
+  }
+
+  function presentationDelay(phase: 'results' | 'voting') {
+    if (!showFact) return 0;
+    if (phase === 'voting') {
+      if (showFact.kind === 'expelled') return show.videos ? ARENA_PACE.expelledMs : 0;
+      return showFact.kind === 'vote-closed' && !engine.voteWasCancelled && show.sound
+        ? ARENA_PACE.voteClosedMs : 0;
+    }
+    if (!show.sound) return 0;
+    switch (showFact.kind) {
+      case 'timeout': return ARENA_PACE.roundTimeoutMs;
+      case 'streak': return ARENA_PACE.streakMs;
+      case 'leader': return ARENA_PACE.leaderMs;
+      default: return 0;
+    }
   }
 
   function announce(kind: ShowFact['kind'], title: string, detail?: string) {

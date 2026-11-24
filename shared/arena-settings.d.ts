@@ -13,4 +13,11 @@ export const ARENA_PACE: Readonly<{
   rouletteResultMs: number;
   duelResultMs: number;
   podiumRevealMs: number;
+  roundTimeoutMs: number;
+  streakMs: number;
+  leaderMs: number;
+  voteOpenMs: number;
+  voteClosedMs: number;
+  expelledMs: number;
+  podiumWinnerMs: number;
 }>;

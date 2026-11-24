@@ -23,25 +23,25 @@ function eventAsset(event: RuntimeLiveEvent): MediaId | undefined {
 function factScene(fact: ShowFact, view: RuntimeDisplayView) {
   const base = { title: fact.title, detail: fact.detail, ms: 1450 };
   switch (fact.kind) {
-    case 'intro': return scene(fact.id, fact.started, { ...base, ms: ARENA_PACE.introMs, asset: 'vamo-a-jugar', rate: 1.2, fallback: view.clips?.inicio });
-    case 'timeout': return scene(fact.id, fact.started, { ...base, asset: 'tiempo-agotado' });
+    case 'intro': return scene(fact.id, fact.started, { ...base, ms: ARENA_PACE.introMs, asset: 'vamo-a-jugar', fallback: view.clips?.inicio });
+    case 'timeout': return scene(fact.id, fact.started, { ...base, ms: ARENA_PACE.roundTimeoutMs, asset: 'tiempo-agotado' });
     case 'correct': return scene(fact.id, fact.started, { ...base, asset: 'acierto-concurso' });
     case 'none': return scene(fact.id, fact.started, { ...base, asset: 'family-feud' });
-    case 'streak': return scene(fact.id, fact.started, { ...base, asset: 'siuuu' });
-    case 'leader': return scene(fact.id, fact.started, { ...base, asset: 'goool' });
-    case 'shield': return scene(fact.id, fact.started, { ...base, asset: 'shield-activated' });
-    case 'vote-open': return scene(fact.id, fact.started, { ...base, ms: 900, asset: 'among-us-emergency', fallback: view.clips?.votacion });
-    case 'vote-closed': return scene(fact.id, fact.started, { ...base, ms: 1450, asset: 'caso-cerrado' });
+    case 'streak': return scene(fact.id, fact.started, { ...base, ms: ARENA_PACE.streakMs, asset: 'siuuu', rate: 1.2 });
+    case 'leader': return scene(fact.id, fact.started, { ...base, ms: ARENA_PACE.leaderMs, asset: 'goool', rate: 1.2 });
+    case 'shield': return scene(fact.id, fact.started, { ...base, ms: 2250, asset: 'shield-activated', rate: 1.2 });
+    case 'vote-open': return scene(fact.id, fact.started, { ...base, ms: ARENA_PACE.voteOpenMs, asset: 'among-us-emergency', rate: 1.6, fallback: view.clips?.votacion });
+    case 'vote-closed': return scene(fact.id, fact.started, fact.title === 'Votación cancelada'
+      ? base : { ...base, ms: ARENA_PACE.voteClosedMs, asset: 'caso-cerrado', rate: 1.25 });
     case 'expelled': return scene(fact.id, fact.started,
-      { title: fact.title, ms: 750, asset: 'caso-cerrado' },
-      { title: 'Modo fantasma', detail: fact.detail, ms: 1500, asset: 'coffin-dance', rate: 1.5 });
+      { title: 'Modo fantasma', detail: fact.detail, ms: ARENA_PACE.expelledMs, asset: 'coffin-dance', rate: 1.25 });
     case 'final': {
       const winners = view.players.filter(player => player.rank === 1);
       return scene(fact.id, fact.started,
-        { title: 'Y el campeón de ChaosArena es…', ms: ARENA_PACE.podiumRevealMs, asset: 'redoble' },
+        { title: 'Y el campeón de ChaosArena es…', ms: ARENA_PACE.podiumRevealMs, asset: 'redoble', rate: 1.2 },
         { title: winners.length > 1 ? 'Primer puesto compartido' : '¡Campeón de ChaosArena!',
           detail: winners.map(player => `${player.nickname} · ${player.score} pts`).join(' / '),
-          ms: 2250, asset: 'la-plata', fallback: view.clips?.podio });
+          ms: ARENA_PACE.podiumWinnerMs, asset: 'la-plata', rate: 1.2, fallback: view.clips?.podio });
     }
   }
 }
@@ -50,13 +50,13 @@ export function currentScene(view: RuntimeDisplayView): MediaScene | undefined {
   const event = view.chaosEvent;
   if (view.phase === 'roulette' && event && !view.duel) {
     return scene(`wheel-${view.round?.roundId}`, event.started,
-      { title: '¡Evento de caos!', detail: 'La ruleta está decidiendo…', ms: ARENA_PACE.rouletteSpinMs, rate: 1.6,
+      { title: '¡Evento de caos!', detail: 'La ruleta está decidiendo…', ms: ARENA_PACE.rouletteSpinMs, rate: 1.8,
         asset: 'ruleta-casino', fallback: view.clips?.ruleta },
       { title: eventLabels[event.type], detail: event.description, ms: ARENA_PACE.rouletteResultMs, asset: eventAsset(event) });
   }
   if (view.duel?.stage === 'invite') {
     return scene(view.duel.id, view.duel.deadline - 10_000, { title: '¡Comienza el enfrentamiento!',
-      detail: view.duel.players.map(player => player.nickname).join(' y '), ms: 1200, asset: 'campana-boxeo' });
+      detail: view.duel.players.map(player => player.nickname).join(' y '), ms: 2150, asset: 'campana-boxeo', rate: 1.2 });
   }
   if (view.showFact) return factScene(view.showFact, view);
 }

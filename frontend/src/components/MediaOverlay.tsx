@@ -34,7 +34,7 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
   const activePreview = preview && (view.phase === 'finished' || (view.phase === 'lobby' && view.showFact?.kind !== 'intro'));
   const scene: MediaScene | undefined = activePreview ? {
     id: `preview-${preview.started}`, started: preview.started,
-    steps: [{ asset: preview.asset, title: 'Vista previa local', detail: preview.asset.replaceAll('-', ' '), ms: 6000 }],
+    steps: [{ asset: preview.asset, title: 'Vista previa local', detail: preview.asset.replaceAll('-', ' '), ms: 20_000 }],
   } : currentScene(view);
   const elapsed = Math.max(0, now - (scene?.started ?? now));
   let start = 0;
@@ -125,11 +125,12 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
     return () => window.removeEventListener(audioGesture, playFromGesture);
   }, [audible, visible]);
 
+  const finishPreview = activePreview ? () => setSkipped(id) : undefined;
   const track = played && !failed.includes(mediaKey) && (played.video
     ? <video key={mediaKey} ref={node => { player.current = node; }} src={played.url} muted={!audible}
-      playsInline preload="metadata" aria-hidden="true" onError={() => setFailed(previous => previous.includes(mediaKey) ? previous : [...previous, mediaKey])} />
+      playsInline preload="metadata" aria-hidden="true" onEnded={finishPreview} onError={() => setFailed(previous => previous.includes(mediaKey) ? previous : [...previous, mediaKey])} />
     : <audio key={mediaKey} ref={node => { player.current = node; }} src={played.url}
-      preload="metadata" onError={() => setFailed(previous => previous.includes(mediaKey) ? previous : [...previous, mediaKey])} />);
+      preload="metadata" onEnded={finishPreview} onError={() => setFailed(previous => previous.includes(mediaKey) ? previous : [...previous, mediaKey])} />);
 
   return <>
     <audio ref={ambient} src={ambientUrl} loop preload="none" data-arena-ambient onError={() => setMissingAmbient(primaryAmbient)} />

@@ -31,6 +31,7 @@ export function attachAutopilot(
   engine: GameEngine,
   options: AutopilotOptions = defaultAutopilot,
   deps: Pick<EngineDeps, 'setTimer' | 'rng'> = realDeps,
+  presentationDelay?: (phase: 'results' | 'voting') => number,
 ): () => void {
   let cancel: (() => void) | undefined;
   let rollAfterVote = false;
@@ -76,11 +77,11 @@ export function attachAutopilot(
     if (change.kind === 'round:result') {
       const answered = change.result.counts.reduce((a, b) => a + b, 0);
       const allAnswered = answered >= engine.players.size;
-      later(options.revealMs, 'results', () => afterReveal(allAnswered));
+      later(Math.max(options.revealMs, presentationDelay?.('results') ?? 0), 'results', () => afterReveal(allAnswered));
     } else if (change.kind === 'vote:result') {
       const eligible = rollAfterVote;
       rollAfterVote = false;
-      later(0, 'voting', () => rollOrContinue(eligible));
+      later(presentationDelay?.('voting') ?? 0, 'voting', () => rollOrContinue(eligible));
     } else if (change.kind === 'finished') {
       cancel?.();
     }

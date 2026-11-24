@@ -130,3 +130,22 @@ test('mezclar el cuestionario conserva preguntas, claves y orden del original', 
   assert.deepEqual(questions.map(question => question.id), ids);
   assert.ok(shuffled.every(question => questions.includes(question)));
 });
+
+test('piloto: una reacción larga puede completar su ventana antes de la ruleta', () => {
+  const clock = fakeDeps();
+  const engine = new GameEngine('123456', quiz(2), { votingEnabled: false }, clock.deps);
+  const delay = 2900;
+  attachAutopilot(engine, defaultAutopilot, clock.deps, () => delay);
+  engine.join('Ana');
+  engine.command('start');
+  clock.setRng([0, 0, 0]);
+  answerAll(engine);
+  clock.advance(delay - 1);
+  assert.equal(engine.phase, 'results');
+  clock.advance(1);
+  assert.equal(engine.phase, 'event');
+  clock.advance(defaultAutopilot.rouletteMs - 1);
+  assert.equal(engine.phase, 'event');
+  clock.advance(1);
+  assert.equal(engine.phase, 'question');
+});

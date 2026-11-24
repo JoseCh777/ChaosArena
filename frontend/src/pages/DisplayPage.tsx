@@ -47,7 +47,9 @@ export function DisplayPage() {
           <strong>{p.rank}</strong><span>{p.nickname}</span><small>{p.score} pts</small>
         </div>)}</div>
       <Leaderboard ranking={display.players} playerId="" />
-    </> : round && <section className="projection-round">
+    </> : phase === 'vote' && display.voting ? <section className="projection-round">
+      <h1>Votación secreta</h1><p>{display.voting.received} de {display.voting.candidates.length} votos recibidos</p>
+    </section> : round && <section className="projection-round">
       <div className="round-meta"><span>Ronda {display.number} / {display.total}</span>
         <span>{display.received} / {display.players.length} respuestas</span></div>
       {phase === 'question' && <RoundTimer seconds={Math.max(0, Math.ceil((round.deadline - now) / 1000))} totalSeconds={display.seconds} />}

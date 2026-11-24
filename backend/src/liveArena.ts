@@ -28,7 +28,7 @@ export function attachArena(arena: Namespace) {
     let rank = 0;
     const players = sorted.map((p, i) => {
       if (!i || sorted[i-1].score !== p.score || sorted[i-1].correct !== p.correct) rank = i + 1;
-      return { id: p.id, nickname: p.nickname, score: p.score, status: 'active' as const, rank };
+      return { id: p.id, nickname: p.nickname, score: p.score, status: p.ghost ? 'ghost' as const : 'active' as const, rank };
     });
     const q = game.quiz.questions[game.index];
     const publicView: DisplayView = {
@@ -42,13 +42,16 @@ export function attachArena(arena: Namespace) {
       counts: q.options.map((_, i) => sorted.filter(m => m.choice === i).length),
     };
     if (game.phase === 'roulette') publicView.event = game.event;
+    const voting = game.voting;
+    if (voting) publicView.voting = { id: voting.id, deadline: voting.deadline,
+      received: voting.votes.size, candidates: players.filter(p => p.status === 'active').map(p => p.id) };
     arena.to('display').emit('display', publicView);
     for (const [token, socketId] of connections) {
       const player = members.get(token);
       if (!player) continue;
       const host = token === members.keys().next().value;
       const view: ArenaView = {
-        ...publicView, you: player.id, host, choice: player.choice, correctCount: player.correct,
+        ...publicView, you: player.id, host, choice: player.choice, correctCount: player.correct, voted: voting?.votes.has(player.id),
       };
       if (host && game.phase === 'finished') view.summary = sorted.map(p => ({ id: p.id, correct: p.correct }));
       arena.to(socketId).emit('view', view);
@@ -93,11 +96,13 @@ export function attachArena(arena: Namespace) {
       if (!player || connections.get(session) !== socket.id) return fail('Vuelve a conectarte a la sala.');
       if (kind === 'answer') {
         if (!game.answer(player, data?.roundId, data?.choice)) return fail('Esta ronda ya no acepta esa respuesta.');
+      } else if (kind === 'vote') {
+        if (!game.vote(player, data?.id, data?.target)) return fail('Este voto ya no está disponible.');
       } else if (kind === 'start') {
         if (session !== members.keys().next().value || !['lobby','finished'].includes(game.phase)) return fail('Solo el anfitrión puede iniciar desde la sala.');
         const quiz = data?.quiz ?? { title: 'Patrones de diseño', questions: demoQuestions };
         if (!validQuiz(quiz)) return fail('Revisa los campos del cuestionario.');
-        game.start(quiz);
+        game.start(quiz, data?.voting !== false);
       } else if (kind === 'leave' && ['lobby','finished'].includes(game.phase)) {
         remove(session); session = '';
       } else return fail('Acción no disponible en esta fase.');

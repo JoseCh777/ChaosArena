@@ -31,6 +31,7 @@ export async function command<K extends keyof ArenaCommands>(kind: K, payload: A
 function alignClock(view: DisplayView) {
   const offset = Date.now() - view.serverNow;
   if (view.round) view.round.deadline += offset;
+  if (view.voting) view.voting.deadline += offset;
   if (view.event) view.event.started += offset;
 }
 socket.on('view', (view: ArenaView) => {

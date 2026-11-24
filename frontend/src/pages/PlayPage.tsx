@@ -3,6 +3,7 @@ import type { ArenaView } from '../../../shared/live';
 import { command } from '../services/arena';
 import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
+import { VotePage } from './VotePage';
 import { DemoRoulette } from '../components/DemoRoulette';
 import '../styles/game.css';
 
@@ -22,10 +23,13 @@ export function PlayPage({ view, online }: { view: ArenaView; online: boolean })
     const reply = await command('answer', { roundId: round.roundId, choice });
     if (!reply.ok) { setError(reply.error); setPending(null); }
   }
+  if (view.phase === 'vote' && view.voting) return <VotePage view={view} online={online} />;
+  const ghost = view.players.some(player => player.id === view.you && player.status === 'ghost');
   const choice = view.choice ?? pending;
   const reveal = view.solution;
   return <main className="game-layout play-view">
     <section className="panel game-panel" aria-labelledby="game-title">
+      {ghost && <p className="lock-feedback">Modo fantasma · Tus respuestas siguen contando para la evaluación.</p>}
       <div className="round-meta"><span>Ronda {view.number} / {view.total}</span><span>{view.received} de {view.players.length} respuestas</span></div>
       {view.phase === 'question' && <RoundTimer seconds={Math.max(0, Math.ceil((round.deadline - now) / 1000))} totalSeconds={view.seconds} />}
       <div className="prompt-board">

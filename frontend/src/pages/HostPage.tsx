@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { command, sessionToken, useArena } from '../services/arena';
 import { decodeQuiz, DRAFT_KEY } from '../services/quizDraft';
 
-const phases = { lobby: 'Sala de espera', question: 'Pregunta abierta', reveal: 'Resultados de ronda', roulette: 'Ruleta de caos', finished: 'Partida terminada' };
+const phases = { lobby: 'Sala de espera', question: 'Pregunta abierta', reveal: 'Resultados de ronda', roulette: 'Ruleta de caos', vote: 'Votación secreta', finished: 'Partida terminada' };
 
 export function HostPage() {
   const { view, online, message } = useArena();
   const [error, setError] = useState('');
+  const [voting, setVoting] = useState(true);
   const [busy, setBusy] = useState(false);
 
   async function start(draft: boolean) {
@@ -14,7 +15,7 @@ export function HostPage() {
     setError('');
     try {
       const quiz = draft ? decodeQuiz(localStorage.getItem(DRAFT_KEY) ?? '') : undefined;
-      const reply = await command('start', { quiz });
+      const reply = await command('start', { quiz, voting });
       if (!reply.ok) setError(reply.error);
     } catch {
       setError('Guarda un cuestionario válido en el editor antes de iniciarlo.');
@@ -41,6 +42,7 @@ export function HostPage() {
       </div>
       {!online && <p role="status">{message}</p>}
       {error && <p className="form-error" role="alert">{error}</p>}
+      {startable && <label><input type="checkbox" checked={voting} onChange={event => setVoting(event.target.checked)} /> Activar votaciones</label>}
       {startable ? <div className="host-actions">
         <button className="button button-primary" disabled={!online || busy} onClick={() => start(false)}>Iniciar con preguntas de muestra</button>
         <button className="button button-text" disabled={!online || busy} onClick={() => start(true)}>Iniciar mi cuestionario</button>

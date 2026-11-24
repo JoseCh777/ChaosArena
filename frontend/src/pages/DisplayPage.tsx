@@ -1,3 +1,4 @@
+import { ARENA_PACE } from '@chaos-arena/shared/arena-settings.js';
 import { setAudioFromGesture } from '../services/mediaAudio';
 import { useEffect, useState } from 'react';
 import type { RuntimeDisplayView } from '../../../shared/runtime-chaos';
@@ -25,7 +26,7 @@ export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayPr
   const selected = (display?.show?.output ?? 'host') === output;
   const phase = display?.phase;
   const [now, setNow] = useState(Date.now);
-  const podiumAt = phase === 'finished' && display?.showFact?.kind === 'final' ? display.showFact.started + 3050 : 0;
+  const podiumAt = phase === 'finished' && display?.showFact?.kind === 'final' ? display.showFact.started + ARENA_PACE.podiumRevealMs : 0;
   useEffect(() => {
     if (!podiumAt) return;
     setNow(Date.now());

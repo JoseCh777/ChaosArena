@@ -1,3 +1,4 @@
+import { ARENA_PACE } from '@chaos-arena/shared/arena-settings.js';
 import { useEffect, useRef, useState } from 'react';
 import type { MediaOutput, RuntimeDisplayView } from '../../../shared/runtime-chaos';
 import { ChaosDial } from './ChaosDial';
@@ -78,8 +79,9 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
     const node = player.current;
     if (!node || !mediaKey) return;
     let active = true;
+    node.playbackRate = step?.rate ?? 1;
     const align = () => {
-      const offset = (Date.now() - (scene?.started ?? Date.now()) - start) / 1000;
+      const offset = (Date.now() - (scene?.started ?? Date.now()) - start) / 1000 * node.playbackRate;
       if (offset > .25 && offset < node.duration && node.currentTime < .1) node.currentTime = offset;
     };
     if (node.readyState) align();
@@ -133,7 +135,7 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
     <audio ref={ambient} src={ambientUrl} loop preload="none" data-arena-ambient onError={() => setMissingAmbient(primaryAmbient)} />
     {(showText || track || wheelEvent) && <aside className="arena-media" aria-label="Efecto de la partida"
       data-kind={view.showFact?.kind}>
-      {wheelEvent && <ChaosDial type={wheelEvent.type} started={wheelEvent.started} spin={elapsed < 2450} onRest={onWheelRest} />}
+      {wheelEvent && <ChaosDial type={wheelEvent.type} started={wheelEvent.started} spin={elapsed < ARENA_PACE.rouletteSpinMs} onRest={onWheelRest} />}
       {track}
       {showText && step && <div className="arena-media-copy" role="status">
         <strong>{step.title}</strong>{step.detail && <p>{step.detail}</p>}

@@ -1,3 +1,4 @@
+import { ARENA_PACE } from '@chaos-arena/shared/arena-settings.js';
 import type { GameCommand } from '@chaos-arena/shared';
 import type { EngineChange, GameEngine } from './game.js';
 import { GameError, realDeps, type EngineDeps } from './model.js';
@@ -20,9 +21,9 @@ export interface AutopilotOptions {
 }
 
 export const defaultAutopilot: AutopilotOptions = {
-  revealMs: 3500,
-  rouletteMs: 5400,
-  eventChance: 0.3,
+  revealMs: ARENA_PACE.revealMs,
+  rouletteMs: ARENA_PACE.rouletteSpinMs + ARENA_PACE.rouletteResultMs,
+  eventChance: 0.45,
   voteAfter: [5, 10],
 };
 

@@ -18,7 +18,7 @@ La ampliación de juego de [RuntimeChaos v1.1](RUNTIME-CHAOS.md) incorpora ocho 
 
 ## Flujo de partida
 
-Lobby → pregunta → resultados → evento o votación opcional → siguiente pregunta → final. El servidor avanza automáticamente y el anfitrión configura la partida antes de iniciarla. El tiempo objetivo de sesión es 15–20 minutos, por confirmar en ensayo. 30 segundos por defecto, con opción de ajustar la duración en bloque o usar los tiempos del cuestionario. Mostrar explicaciones durante 5–8 segundos. Cada ronda que todos completan tiene un 30 % de probabilidad de ruleta. En las preguntas cinco y diez, si se cumplen las condiciones, la asamblea se resuelve antes de sortear la ruleta.
+Lobby → pregunta → resultados → evento o votación opcional → siguiente pregunta → final. El servidor avanza automáticamente y el anfitrión configura la partida antes de iniciarla. El tiempo objetivo de sesión es 15–20 minutos, por confirmar en ensayo. 30 segundos por defecto, con opción de ajustar la duración en bloque o usar los tiempos del cuestionario. La revelación entre rondas dura 1,75 segundos. Cada ronda que todos completan tiene un 45 % de probabilidad de ruleta. En las preguntas cinco y diez, si se cumplen las condiciones, la asamblea se resuelve antes de sortear la ruleta.
 
 ## Reglas de evaluación
 

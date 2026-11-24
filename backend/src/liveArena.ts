@@ -1,3 +1,4 @@
+import { ARENA_PACE } from '@chaos-arena/shared/arena-settings.js';
 import type { Namespace } from 'socket.io';
 import type { ErrorCode, RankingEntry } from '@chaos-arena/shared';
 import type { RuntimeArenaView, RuntimeDisplayView, Reaction, ShowFact, ShowSettings } from '../../shared/runtime-chaos.js';
@@ -7,6 +8,7 @@ import { GameEngine, type EngineChange } from './game.js';
 import { GameError, realDeps, type EngineDeps } from './model.js';
 import { designPatternQuiz } from './designPatternBank.js';
 import { demoQuestions } from './practiceQuestions.js';
+import { shuffleQuestions } from './questionOrder.js';
 import { validateQuiz } from './questions.js';
 import { generatePin, normalizeNickname, safeEqual } from './rooms.js';
 import { parseArenaSettings } from './arenaSettings.js';
@@ -374,12 +376,14 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
           if (!nextSettings) return fail('Revisa la duración y los clips de la sala.');
           settings = nextSettings;
           if (engine.phase === 'finished') engine.restart();
-          const quiz = settings.roundSeconds === null ? validation.quiz : {
+          const questions = shuffleQuestions(validation.quiz.questions, deps.rng);
+          const seconds = settings.roundSeconds;
+          const quiz = {
             ...validation.quiz,
-            questions: validation.quiz.questions.map(q => ({ ...q, seconds: settings.roundSeconds! })),
+            questions: seconds === null ? questions : questions.map(question => ({ ...question, seconds })),
           };
           engine.configure(quiz, { votingEnabled: data.voting !== false });
-          const introMs = config.introMs ?? 2500;
+          const introMs = config.introMs ?? ARENA_PACE.introMs;
           if (introMs > 0 && show.videos) {
             announce('intro', '¡Que comience el caos!');
             cancelIntro = deps.setTimer(introMs, () => {

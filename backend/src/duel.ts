@@ -1,3 +1,4 @@
+import { ARENA_PACE } from '@chaos-arena/shared/arena-settings.js';
 import type { Question } from '@chaos-arena/shared';
 import type { DuelView } from '../../shared/runtime-chaos.js';
 import type { EngineDeps, PlayerState } from './model.js';
@@ -109,7 +110,7 @@ export class Duel {
     if (this.stage === 'invite') this.accepts.clear();
     this.stage = 'result';
     this.result = result;
-    this.schedule(3000, this.advance);
+    this.schedule(ARENA_PACE.duelResultMs, this.advance);
     this.publish();
   }
 }

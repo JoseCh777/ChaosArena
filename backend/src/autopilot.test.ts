@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { attachAutopilot } from './autopilot.js';
+import { attachAutopilot, defaultAutopilot } from './autopilot.js';
 import { GameEngine } from './game.js';
+import { shuffleQuestions } from './questionOrder.js';
 import { fakeDeps, quiz } from './testing.js';
 
 const pilot = { revealMs: 100, rouletteMs: 200, eventChance: 0.3, voteAfter: [1] };
@@ -105,4 +106,27 @@ test('piloto: una asamblea programada conserva el sorteo tras cerrar sus votos',
   clock.advance(200);
   assert.equal(caro.status, 'active');
   assert.equal(engine.questionIndex, 1);
+});
+
+test('piloto: el sorteo predeterminado incluye 0,44 y excluye 0,45', () => {
+  for (const [draw, phase] of [[.44, 'event'], [.45, 'question']] as const) {
+    const clock = fakeDeps();
+    const engine = new GameEngine('123456', quiz(2), { votingEnabled: false }, clock.deps);
+    attachAutopilot(engine, defaultAutopilot, clock.deps);
+    engine.join('Ana');
+    engine.command('start');
+    clock.setRng([draw, 0, 0]);
+    answerAll(engine);
+    clock.advance(defaultAutopilot.revealMs);
+    assert.equal(engine.phase, phase);
+  }
+});
+
+test('mezclar el cuestionario conserva preguntas, claves y orden del original', () => {
+  const { questions } = quiz(4);
+  const ids = questions.map(question => question.id);
+  const shuffled = shuffleQuestions(questions, () => 0);
+  assert.deepEqual(shuffled.map(question => question.id), [...ids.slice(1), ids[0]]);
+  assert.deepEqual(questions.map(question => question.id), ids);
+  assert.ok(shuffled.every(question => questions.includes(question)));
 });

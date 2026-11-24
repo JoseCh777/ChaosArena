@@ -8,15 +8,14 @@ import { useRoundSeconds } from '../components/useRoundSeconds';
 import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
 import { DuelStage } from '../components/DuelStage';
-import { ArenaHeader } from '../components/ArenaHeader';
 import { RoundMoment, ArenaRecognitions } from '../components/ArenaMoments';
 import { ArenaPodium } from '../components/ArenaPodium';
 import { MediaOverlay } from '../components/MediaOverlay';
 import './projection.css';
 
-type DisplayProps = { hostView?: RuntimeDisplayView; enabled?: boolean; toggleAudio?: () => void; close?: () => void };
+type DisplayProps = { hostView?: RuntimeDisplayView; enabled?: boolean; toggleAudio?: () => void };
 
-export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayProps = {}) {
+export function DisplayPage({ hostView, enabled, toggleAudio }: DisplayProps = {}) {
   const arena = useArena();
   const display = hostView ?? arena.display;
   const { online, message } = arena;
@@ -40,14 +39,7 @@ export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayPr
   const audioControl = display?.pin && selected && <button className="button button-text" type="button" aria-pressed={audioEnabled}
       onClick={toggleAudio ?? (() => setAudioFromGesture(() => setLocalAudio(!localAudio)))}>{audioEnabled ? 'Silenciar' : 'Activar sonido'}</button>;
 
-  const header = <ArenaHeader label={online ? (hostView ? 'Modo presentación' : 'Proyector') : message} actions={
-      close ? <button className="button button-text" type="button" onClick={close}>Volver al anfitrión</button>
-        : <><a className="button button-text" href="/host">Volver al anfitrión</a>
-          <a className="button button-text" href="/join">Ingreso</a></>
-  } extra={audioControl} />;
-
   if (!display?.pin) return <main className="projection">
-    {header}
     <section className="panel empty-state">
       <h1>{display ? 'Esperando sala' : 'Proyector'}</h1>
       <p role="status">{display && online ? 'El PIN y el QR aparecerán cuando el anfitrión cree la sala.' : message}</p>
@@ -100,6 +92,6 @@ export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayPr
           onSkip={() => { if (phase === 'finished') setSkippedFinal(display.showFact?.id); }} />
       </div>
     </div>
-    <footer className="projection-footer">{header}</footer>
+    {audioControl && <footer className="projection-footer">{audioControl}</footer>}
   </main>;
 }

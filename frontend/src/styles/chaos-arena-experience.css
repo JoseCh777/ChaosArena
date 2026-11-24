@@ -6,10 +6,6 @@
     radial-gradient(ellipse at 91% 33%, #2a174bbb, transparent 52%),
     repeating-linear-gradient(125deg, transparent 0 68px, #cfaaff0c 69px 70px, transparent 71px 100px), #0a0d18;
 }
-.arena .projection-brand {
-  border-color: #6d568d;
-  background: linear-gradient(90deg, #34244855, transparent 55%);
-}
 .arena .entry.arena-entry { gap: clamp(1.3rem, 7vw, 6rem); }
 .arena-entry .entry-intro h1 { font-weight: 950; letter-spacing: -.08em; }
 .arena-entry .entry-intro h1 span { color: #f6d07b; text-shadow: .055em .06em #715147; }

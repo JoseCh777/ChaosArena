@@ -118,10 +118,7 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
     <a href={view ? '/lobby' : '/join'} className="button button-primary">{view ? 'Volver a la sala' : 'Ir al ingreso'}</a>
   </main>;
 
-  if (presenting) return <DisplayPage hostView={view} enabled={audioEnabled} toggleAudio={toggleAudio} close={() => {
-    setPresenting(false);
-    if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
-  }} />;
+  if (presenting) return <DisplayPage hostView={view} enabled={audioEnabled} toggleAudio={toggleAudio} />;
   const intro = view.phase === 'lobby' && view.showFact?.kind === 'intro';
   const startable = !intro && (view.phase === 'lobby' || view.phase === 'finished');
   return <main className="game-layout host-layout">

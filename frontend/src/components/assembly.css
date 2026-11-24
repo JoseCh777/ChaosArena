@@ -1,0 +1,36 @@
+.assembly-vote { width: min(100% - 1rem, 38rem); margin: 1rem auto; padding: 1rem; box-sizing: border-box; border: 1px solid #80649d; border-radius: 1rem; background: #1b182c; }
+.assembly-call { margin: 0; text-align: center; color: #ffda92; }
+.assembly-art { position: relative; width: min(100%, 28rem); aspect-ratio: 1.42; margin: 1rem auto; }
+.arena .assembly-disc {
+  position: absolute; inset: 18% 15%; display: grid; place-content: center; justify-items: center;
+  border-radius: 50%; background: #d2ebe2; color: #244b40;
+  border: 5px solid #679989; box-shadow: inset 0 0 0 2px #f3fff7, 0 .35rem 0 #467364, 0 .7rem 1.35rem #234d3e26;
+}
+.assembly-disc strong { font-size: clamp(.88rem, 3vw, 1.15rem); }
+.assembly-disc small { margin-top: .2rem; font: 750 .75rem var(--font-mono); }
+.assembly-seat {
+  position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center;
+  gap: .2rem; max-width: 25%; color: #312347;
+}
+.assembly-seat b {
+  display: grid; place-items: center; width: clamp(1.75rem, 6vw, 2.35rem); aspect-ratio: 1;
+  border-radius: 50%; background: #5c4082; color: #fff;
+  border: 2px solid #fff; box-shadow: 0 .16rem .4rem #41285433; font-size: .68rem;
+}
+.assembly-seat small {
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  background: #f8f3ff; border: 1px solid #ccbfdf; border-radius: .3rem; padding: .12rem .28rem;
+  font-size: .68rem; font-weight: 700;
+}
+.assembly-art:has(.assembly-extra) { margin-bottom: 2.25rem; }
+.assembly-extra { position: absolute; inset: calc(100% + .25rem) 0 auto; text-align: center; color: var(--muted); }
+.assembly-vote .game-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .5rem; }
+.assembly-vote .game-option { min-width: 0; min-height: 48px; padding: .6rem; overflow-wrap: anywhere; justify-content: center; }
+.shield-fx { display: inline-block; font-size: 1.6em; }
+.guest-audio { display: block; margin: .35rem auto; }
+@media (prefers-reduced-motion: no-preference) {
+  .assembly-call, .ghost-state span, .shield-fx { display: block; animation: assembly-arrives 350ms ease-out both; }
+  .shield-fx[data-blocked="true"] { animation: shield-impact 450ms ease-out both; }
+  @keyframes assembly-arrives { from { opacity: .15; transform: translateY(.6rem) scale(.9); } }
+  @keyframes shield-impact { 25% { transform: translateX(-.25rem) rotate(-15deg); } 55% { transform: translateX(.2rem) rotate(10deg); } }
+}

@@ -47,6 +47,21 @@ test('ronda: una respuesta por persona, opción válida y cierre único', () => 
   assert.equal(ana.correctCount, 1);
 });
 
+test('una ronda sin el anfitrión cierra con los jugadores y lo excluye de la clasificación', () => {
+  const { engine, changes } = setup();
+  const host = engine.join('Anfitrión');
+  const player = engine.join('Jugadora');
+  engine.configureParticipation(host.id);
+  engine.command('start');
+  const progress = engine.roundProgress()!;
+  assert.equal(progress.expected, 1);
+  assert.throws(() => engine.answer(host.id, progress.roundId, 1), /NOT_ACTIVE/);
+  engine.answer(player.id, progress.roundId, 1);
+  assert.equal(engine.phase, 'results');
+  const result = changes.find(change => change.kind === 'round:result');
+  assert.deepEqual(result?.result.ranking.map(entry => entry.id), [player.id]);
+});
+
 test('ronda: temporizador cierra y respuesta tardía se rechaza', () => {
   const { engine, clock } = setup();
   const ana = engine.join('Ana');

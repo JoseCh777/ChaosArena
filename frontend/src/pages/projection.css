@@ -1,8 +1,4 @@
-.arena-nav { display: flex; flex-wrap: wrap; justify-content: end; gap: 0 clamp(8px, 2vw, 20px); }
 .projection { width: min(1440px, calc(100% - 40px)); margin: auto; padding-block: 20px 48px; }
-.projection-brand { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #6c5a83; padding-bottom: 14px; }
-.projection-brand strong { font-size: 1.55rem; letter-spacing: -.07em; }
-.projection-brand span { margin-left: auto; color: var(--muted); text-align: right; }
 .projection h1 { font-size: clamp(2rem, 5vw, 5.75rem); font-style: italic; line-height: 1; letter-spacing: -.06em; margin: 24px 0; overflow-wrap: anywhere; }
 .projection h1 em { color: var(--mint); }
 .projection-prompt { min-height: 75svh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 32%); align-items: center; gap: clamp(24px, 6vw, 100px); }
@@ -25,10 +21,8 @@
 @media (max-width: 640px) {
   .projection-prompt, .projection-options { grid-template-columns: 1fr; }
   .projection-prompt { padding-top: 28px; min-height: auto; }
-  .arena-nav .mode-label { min-height: 26px; }
 }
 
-.projection-brand { flex-wrap: wrap; }
 .host-close { padding-top: 12px; border-top: 1px solid var(--border); }
 .host-close p { margin: 0 0 12px; color: var(--muted); }
 .projection-clip { margin: 12px auto; width: min(100%, 510px); }
@@ -47,13 +41,8 @@
 @media (max-width: 520px) {
   .host-options-grid { grid-template-columns: minmax(0, 1fr); }
 }
-.arena-shared-header { width: min(1440px, calc(100% - 40px)); margin: 20px auto 0; }
 @media (max-width: 640px) {
-  .projection, .arena-shared-header { width: calc(100% - 24px); }
-  .projection-brand { gap: .5rem; }
-  .projection-brand strong { font-size: 1.25rem; }
-  .projection-brand nav { max-width: 100%; }
-  .projection-brand nav .button { min-height: 44px; padding-inline: .55rem; }
+  .projection { width: calc(100% - 24px); }
 }
 .projection-stage { position: relative; isolation: isolate; min-height: 70svh; }
 @media (min-width: 761px) {
@@ -68,7 +57,6 @@
 .arena-stage-content { min-width: 0; }
 .projection-stage .projection-round { padding: clamp(.85rem, 2.2vw, 1.8rem); border: 1px solid var(--border); border-radius: 1rem; background: #151927; }
 .projection-footer { margin-top: 1rem; }
-.projection-footer .projection-brand { padding-top: .75rem; border-top: 1px solid #6c5a83; border-bottom: 0; }
 @media (max-width: 760px) {
   .projection-stage { min-height: 0; }
   .projection-stage .projection-round h1 { font-size: clamp(1.55rem, 6vw, 2.5rem); }

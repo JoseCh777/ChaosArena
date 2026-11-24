@@ -1,33 +1,43 @@
 import { ARENA_PACE } from '@chaos-arena/shared/arena-settings.js';
 import { useLayoutEffect, useRef } from 'react';
 import type { RuntimeEvent } from '../../../shared/runtime-chaos';
-import { eventLabels } from '../services/runtimeCatalog';
+import { eventDescriptions, eventLabels, rouletteTypes } from '../services/runtimeCatalog';
 import './chaos-dial.css';
 
-const sectors = Object.entries(eventLabels);
-const glyphs = ['◉', '×2', '404', '⬡', '✦', '⇄', '⚔', '↺'];
+const sectors = {
+  'black-hole': ['◉', '#453d59'],
+  'double-or-nothing': ['×2', '#30303e'],
+  'error-404': ['404', '#453d59'],
+  firewall: ['⬡', '#30303e'],
+  'loot-box': ['✦', '#453d59'],
+  hack: ['⇄', '#30303e'],
+  duel: ['⚔', '#453d59'],
+  respawn: ['↺', '#30303e'],
+} satisfies Record<RuntimeEvent, [string, string]>;
 
-export function ChaosDial({ type, spin, onRest, started }: {
+export function ChaosDial({ type, events, spin, onRest, started }: {
   type: RuntimeEvent;
+  events?: RuntimeEvent[];
   spin: boolean;
   started: number;
   onRest: () => void;
 }) {
   const rotor = useRef<HTMLDivElement>(null);
-  const sector = sectors.findIndex(([id]) => id === type);
-  const step = 360 / sectors.length;
+  const wheel = events?.includes(type) ? events : rouletteTypes;
+  const sector = wheel.indexOf(type);
+  const step = 360 / wheel.length;
+  const wedges = wheel.map((id, index) =>
+    `${sectors[id][1]} ${index * step}deg ${(index + 1) * step - 1}deg, #e5cfff ${(index + 1) * step - 1}deg ${(index + 1) * step}deg`
+  );
   const angle = 1440 - sector * step;
   useLayoutEffect(() => {
     const wheel = rotor.current;
     if (!wheel || !spin) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      onRest();
-      return;
-    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const motion = wheel.animate([
       { transform: 'rotate(0deg)' },
       { transform: `rotate(${angle}deg)` },
-    ], { duration: ARENA_PACE.rouletteSpinMs, easing: 'cubic-bezier(.17,.68,.16,1)' });
+    ], { duration: ARENA_PACE.rouletteSpinMs, fill: 'forwards', easing: 'cubic-bezier(.17,.68,.16,1)' });
     motion.currentTime = Math.min(ARENA_PACE.rouletteSpinMs, Math.max(0, Date.now() - started));
     motion.onfinish = onRest;
     return () => { motion.onfinish = null; motion.cancel(); };
@@ -36,10 +46,13 @@ export function ChaosDial({ type, spin, onRest, started }: {
   return (
     <div className="chaos-dial" aria-hidden="true">
       <div className="dial-frame">
-        <div className="dial-rotor" ref={rotor} style={{ transform: `rotate(${angle}deg)` }}>
-          {sectors.map(([id, label], i) => (
+        <div className="dial-rotor" ref={rotor} style={{
+          transform: `rotate(${spin ? 0 : angle}deg)`,
+          backgroundImage: `conic-gradient(from ${-step / 2}deg, ${wedges.join(', ')})`,
+        }}>
+          {wheel.map((id, i) => (
             <div className="dial-sector" key={id} style={{ transform: `rotate(${i * step}deg)` }}>
-              <b>{glyphs[i]}</b><span>{label}</span>
+              <b>{sectors[id][0]}</b><span title={eventDescriptions[id]}>{eventLabels[id]}</span>
             </div>
           ))}
         </div>

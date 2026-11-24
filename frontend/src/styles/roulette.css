@@ -46,3 +46,29 @@
   .roulette-launch:hover { border-color: #ffd297; }
   .roulette-continue:hover { background: #ffe3b9; }
 }
+.roulette-stage { position: relative; }
+.roulette-progress {
+  margin: 0; padding: .65rem 1rem; text-align: center;
+  color: #e0d1ee; font: 750 .78rem var(--font-mono); letter-spacing: .09em; text-transform: uppercase;
+}
+.roulette-result-layer { position: absolute; inset: 3.9rem .75rem 1rem; display: grid; align-items: center; pointer-events: none; }
+.roulette-reveal {
+  --result-accent: #ffd297;
+  position: relative; padding: clamp(.8rem, 3vw, 1.4rem);
+  border: 1px solid var(--result-accent); border-top-width: 4px;
+  border-radius: .35rem 1rem; text-align: center;
+  background: linear-gradient(140deg, #362b4b, #151322 72%);
+  box-shadow: 0 .7rem 2.7rem #090611ce, 0 0 1.7rem color-mix(in srgb, var(--result-accent) 25%, transparent);
+}
+.roulette-reveal[data-impact="loss"] { --result-accent: #ff9cae; }
+.roulette-reveal:is([data-impact="shield"], [data-impact="blocked"]) { --result-accent: #9de9ff; }
+.roulette-reveal[data-impact="reward"] { --result-accent: #a9f7d9; }
+.roulette-reveal strong { display: block; color: var(--result-accent); font-size: clamp(1.35rem, 5.5vw, 2.35rem); line-height: 1.05; letter-spacing: -.035em; }
+.roulette-reveal p { margin: .5rem 0 0; color: #f0e7fa; line-height: 1.4; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: no-preference) {
+  .roulette-reveal { animation: roulette-reveal-in 280ms var(--ease-out) both; }
+  @keyframes roulette-reveal-in {
+    from { opacity: 0; transform: translateY(.45rem) scale(.9); }
+    to { opacity: 1; transform: none; }
+  }
+}

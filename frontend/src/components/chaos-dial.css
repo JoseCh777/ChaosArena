@@ -23,13 +23,7 @@
   position: relative;
   border-radius: 50%;
   overflow: hidden;
-  background:
-    radial-gradient(circle, transparent 14%, #08031233 63%, #ffffff19 69%, #07031199 71%),
-    conic-gradient(from -22.5deg, #6636a3 0deg 44deg, #bf9dea 44deg 45deg,
-      #126575 45deg 89deg, #b8e5db 89deg 90deg, #87404b 90deg 134deg, #f6bfd0 134deg 135deg,
-      #436027 135deg 179deg, #d0e8a7 179deg 180deg, #8c551a 180deg 224deg, #f4d28f 224deg 225deg,
-      #953653 225deg 269deg, #f6c6db 269deg 270deg, #315080 270deg 314deg, #a9c2ff 314deg 315deg,
-      #206854 315deg 359deg, #a0eed0 359deg);
+  background-color: #251a30;
 }
 .dial-sector {
   position: absolute;
@@ -56,3 +50,5 @@
   background: linear-gradient(90deg, #fff2cc 50%, #f0ad46 50%);
   clip-path: polygon(0 0, 100% 0, 100% 30%, 50% 100%, 0 30%);
 }
+.dial-sector { pointer-events: none; }
+.dial-sector span { pointer-events: auto; }

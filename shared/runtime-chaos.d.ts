@@ -4,13 +4,13 @@ import type { ArenaView, ConfiguredDisplayView, LiveEvent } from './live.js';
 export type RuntimeEvent = ChaosEvent | 'error-404' | 'firewall' | 'duel' | 'respawn';
 export type Power = 'proxy' | 'decorator' | 'memento' | 'adapter' | 'prototype' | 'command';
 export type EventImpact = 'loss' | 'reward' | 'shield' | 'blocked';
-export type RuntimeLiveEvent = Omit<LiveEvent, 'type'> & { type: RuntimeEvent; impact?: EventImpact };
+export type RuntimeLiveEvent = Omit<LiveEvent, 'type'> & { type: RuntimeEvent; impact?: EventImpact; wheel?: RuntimeEvent[] };
 export type MediaOutput = 'host' | 'display';
 export interface ShowFact {
   id: string;
   started: number;
   kind: 'intro' | 'timeout' | 'correct' | 'none' | 'streak' | 'leader' | 'vote-open'
-    | 'vote-closed' | 'expelled' | 'final' | 'shield';
+    | 'none-clip' | 'streak-clip' | 'vote-closed' | 'expelled' | 'final' | 'shield';
   title: string;
   detail?: string;
 }
@@ -37,7 +37,7 @@ export interface PrivateChaos {
 }
 
 export interface ShowSettings {
-  output: MediaOutput;
+  output: MediaOutput | 'both';
   sound: boolean;
   videos: boolean;
   reactions: boolean;
@@ -45,11 +45,17 @@ export interface ShowSettings {
 }
 
 export type ShowChange = { key: 'volume'; value: number }
-  | { key: 'output'; value: MediaOutput }
+  | { key: 'output'; value: MediaOutput | 'both' }
   | { key: 'sound' | 'videos' | 'reactions'; value: boolean };
 export type HostRoundAction = 'pause' | 'resume' | 'close' | 'skipEvent' | 'skipRoulette' | 'cancelVote';
 
+export type ArenaAward = { kind: 'streak' | 'comeback' | 'accuracy'; names: string[]; amount?: number };
+
 export interface RuntimePublic {
+  expectedAnswers?: number;
+  voterCount?: number;
+  roundStage?: 'regular' | 'boss';
+  awards?: ArenaAward[];
   pausedMs?: number;
   showFact?: ShowFact;
   show?: ShowSettings;
@@ -58,7 +64,7 @@ export interface RuntimePublic {
   protectedIds?: string[];
   reaction?: { id: string; kind: Reaction; started: number };
 }
-export type RuntimeArenaView = ArenaView & Pick<ConfiguredDisplayView, 'clips'> & RuntimePublic & { chaos?: PrivateChaos; canSkipEvent?: boolean };
+export type RuntimeArenaView = ArenaView & Pick<ConfiguredDisplayView, 'clips'> & RuntimePublic & { chaos?: PrivateChaos; canAnswer?: boolean; canVote?: boolean; canSkipEvent?: boolean };
 export type RuntimeDisplayView = ConfiguredDisplayView & RuntimePublic;
 
 export interface RuntimeCommands {

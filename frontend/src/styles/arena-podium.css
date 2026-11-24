@@ -6,12 +6,15 @@
   display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center;
   gap: .18rem .65rem; width: min(29%, 14rem); min-height: 4.15rem;
   padding: .55rem .75rem; position: relative; color: #f8f4ff;
-  background: linear-gradient(125deg, color-mix(in srgb, var(--medal) 20%, #141625), #151624 66%);
+  background:
+    repeating-linear-gradient(135deg, transparent 0 11px, color-mix(in srgb, var(--medal) 8%, transparent) 12px 13px, transparent 14px 19px) right / 38% 100% no-repeat,
+    linear-gradient(125deg, color-mix(in srgb, var(--medal) 23%, #141625), #151624 68%);
   border: 1px solid color-mix(in srgb, var(--medal) 55%, #191824);
   border-radius: .35rem .95rem .35rem .95rem;
   box-shadow: inset 0 -3px color-mix(in srgb, var(--medal) 65%, transparent), 0 .4rem 1rem #05061366;
 }
 .arena-podium-place[data-rank="1"] { --medal: #ffd36d; width: min(34%, 17rem); min-height: 5.1rem; }
+.arena-podium-place[data-rank="1"] .arena-podium-medal { filter: drop-shadow(0 .15rem .3rem #72551e); }
 .arena-podium-place[data-rank="3"] { --medal: #ef9b76; }
 .arena-podium-medal {
   grid-row: span 2; display: grid; place-items: center; width: clamp(1.7rem, 4vw, 2.8rem); aspect-ratio: .88;

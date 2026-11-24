@@ -3,13 +3,15 @@ import type { Power, RuntimeArenaView } from '../../../shared/runtime-chaos';
 import { command } from '../services/arena';
 import { powerInfo } from '../services/runtimeCatalog';
 
+const icons: Record<Power, string> = { proxy: '🛡️', decorator: '✦', memento: '↶', adapter: '⚙', prototype: '×2', command: '⚔' };
+
 export function PowerTray({ view, online }: { view: RuntimeArenaView; online: boolean }) {
   const [target, setTarget] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const chaos = view.chaos;
   if (!chaos || !(chaos.items.length || chaos.shield || chaos.suppressed)) return null;
-  const targets = view.players.filter(player => player.id !== view.you && player.status === 'active');
+  const targets = view.players.filter(player => player.id !== view.you && player.status === 'active' && player.rank > 0);
   const selected = targets.some(player => player.id === target) ? target : '';
 
   async function activate(power: Power) {
@@ -21,15 +23,16 @@ export function PowerTray({ view, online }: { view: RuntimeArenaView; online: bo
   }
 
   return <section className="power-tray" aria-label="Tus poderes">
-    <h2>Tus poderes <small>{chaos.items.length}/2</small></h2>
+    <h2><span aria-hidden="true">🎒 </span>Tus poderes <small>{chaos.items.length}/2</small></h2>
     {(chaos.shield || chaos.suppressed) && <p role="status">
+      {chaos.shield && <span className="shield-fx" aria-hidden="true">🛡️ </span>}
       {[chaos.shield && 'Escudo activo', chaos.suppressed && 'Error 404 · Sin bonus de rapidez o racha'].filter(Boolean).join(' · ')}
     </p>}
     {chaos.items.map(power => {
       const info = powerInfo[power];
       const available = chaos.available.includes(power);
       return <div className="power-card" key={power}>
-        <div><strong>{info.label}</strong><p>{info.description}</p></div>
+        <div><strong><span aria-hidden="true">{icons[power]} </span>{info.label}</strong><p>{info.description}</p></div>
         {power === 'command' && available && <select aria-label="Rival para el duelo" value={selected}
           disabled={!online || busy} onChange={event => setTarget(event.target.value)}>
           <option value="">Selecciona un rival</option>

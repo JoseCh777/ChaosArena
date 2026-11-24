@@ -5,25 +5,26 @@ import type { RuntimeDisplayView } from '../../../shared/runtime-chaos';
 import QRCode from 'react-qr-code';
 import { useArena } from '../services/arena';
 import { useRoundSeconds } from '../components/useRoundSeconds';
+import { AssemblyTable } from '../components/AssemblyTable';
 import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
 import { DuelStage } from '../components/DuelStage';
-import { ArenaHeader } from '../components/ArenaHeader';
+import { RoundMoment, ArenaRecognitions } from '../components/ArenaMoments';
 import { ArenaPodium } from '../components/ArenaPodium';
 import { MediaOverlay } from '../components/MediaOverlay';
 import './projection.css';
 
-type DisplayProps = { hostView?: RuntimeDisplayView; enabled?: boolean; toggleAudio?: () => void; close?: () => void };
+type DisplayProps = { hostView?: RuntimeDisplayView; enabled?: boolean; toggleAudio?: () => void };
 
-export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayProps = {}) {
+export function DisplayPage({ hostView, enabled, toggleAudio }: DisplayProps = {}) {
   const arena = useArena();
   const display = hostView ?? arena.display;
   const { online, message } = arena;
-  const [localAudio, setLocalAudio] = useState(false);
+  const [localAudio, setLocalAudio] = useState(true);
   const [skippedFinal, setSkippedFinal] = useState<string>();
   const output = hostView ? 'host' : 'display';
   const audioEnabled = enabled ?? localAudio;
-  const selected = (display?.show?.output ?? 'host') === output;
+  const selected = display?.show?.output === 'both' || (display?.show?.output ?? 'host') === output;
   const phase = display?.phase;
   const [now, setNow] = useState(Date.now);
   const podiumAt = phase === 'finished' && display?.showFact?.kind === 'final' ? display.showFact.started + ARENA_PACE.podiumRevealMs : 0;
@@ -39,14 +40,7 @@ export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayPr
   const audioControl = display?.pin && selected && <button className="button button-text" type="button" aria-pressed={audioEnabled}
       onClick={toggleAudio ?? (() => setAudioFromGesture(() => setLocalAudio(!localAudio)))}>{audioEnabled ? 'Silenciar' : 'Activar sonido'}</button>;
 
-  const header = <ArenaHeader label={online ? (hostView ? 'Modo presentación' : 'Proyector') : message} actions={
-      close ? <button className="button button-text" type="button" onClick={close}>Volver al anfitrión</button>
-        : <><a className="button button-text" href="/host">Volver al anfitrión</a>
-          <a className="button button-text" href="/join">Ingreso</a></>
-  } extra={audioControl} />;
-
   if (!display?.pin) return <main className="projection">
-    {header}
     <section className="panel empty-state">
       <h1>{display ? 'Esperando sala' : 'Proyector'}</h1>
       <p role="status">{display && online ? 'El PIN y el QR aparecerán cuando el anfitrión cree la sala.' : message}</p>
@@ -74,12 +68,14 @@ export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayPr
       </div>
     </section> : finished ? <>
       {hideWinner && <h1>Podio de la arena</h1>}
+      {!hideWinner && <ArenaRecognitions awards={display.awards} />}
       {!hideWinner && <Leaderboard ranking={display.players} playerId="" />}
     </> : display.duel ? <DuelStage key={display.duel.id} duel={display.duel} /> : phase === 'vote' && display.voting ? <section className="projection-round">
-      <h1>Votación secreta</h1><p>{display.voting.received} de {display.voting.candidates.length} votos recibidos</p>
-    </section> : round && <section className="projection-round">
+      <h1 className="assembly-call">¡Atención, asamblea!</h1><AssemblyTable view={display} />
+    </section> : round && <section className="projection-round" data-boss={display.roundStage === 'boss' || undefined}>
+      <RoundMoment view={display} />
       <div className="round-meta"><span>Ronda {display.number} / {display.total}</span>
-        <span>{display.received} / {display.players.length} respuestas</span></div>
+        <span>{display.received} / {display.expectedAnswers ?? display.players.length} respuestas</span></div>
       {phase === 'question' && <RoundTimer seconds={remaining} totalSeconds={display.seconds} />}
       {display.pausedMs !== undefined && <p className="lock-feedback" role="status">Pregunta en pausa</p>}
       <h1>{round.prompt}</h1>
@@ -97,6 +93,6 @@ export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayPr
           onSkip={() => { if (phase === 'finished') setSkippedFinal(display.showFact?.id); }} />
       </div>
     </div>
-    <footer className="projection-footer">{header}</footer>
+    {audioControl && <footer className="projection-footer">{audioControl}</footer>}
   </main>;
 }

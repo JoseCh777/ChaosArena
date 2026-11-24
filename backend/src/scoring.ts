@@ -17,23 +17,41 @@ export interface RoundScoreInput {
   modifier?: RoundModifier;
 }
 
-/**
- * Devuelve un outcome por cada jugador de `players`, en el mismo orden.
- * TODO(codex): primer acierto, rachas, fantasmas y Doble o nada. Este stub solo suma la base.
- */
+/** Devuelve un resultado por cada jugador de `players`, en el mismo orden. */
 export function scoreRound(input: RoundScoreInput): PlayerRoundOutcome[] {
-  const byPlayer = new Map(input.submissions.map((s) => [s.playerId, s]));
-  return input.players.map((player) => {
+  const { question, players, submissions, modifier } = input;
+  const activeIds = new Set(players.filter((player) => player.status === 'active').map((player) => player.id));
+  const byPlayer = new Map<string, Submission>();
+  let firstCorrect: Submission | undefined;
+
+  for (const submission of submissions) {
+    byPlayer.set(submission.playerId, submission);
+    if (submission.optionIndex !== question.correctIndex || !activeIds.has(submission.playerId)) continue;
+    if (!firstCorrect || submission.receivedAt < firstCorrect.receivedAt) firstCorrect = submission;
+  }
+
+  const basePoints = question.points * (modifier?.baseMultiplier ?? 1);
+  return players.map((player) => {
     const submission = byPlayer.get(player.id);
-    const correct = submission?.optionIndex === input.question.correctIndex;
+    const correct = submission?.optionIndex === question.correctIndex;
+    const active = player.status === 'active';
+    const scoredCorrectly = active && correct;
+    const newStreak = scoredCorrectly ? player.streak + 1 : 0;
+    const streakBonus = STREAK_BONUSES[newStreak] ?? 0;
+    const firstCorrectBonus = player.id === firstCorrect?.playerId ? FIRST_CORRECT_BONUS : 0;
+
+    let pointsDelta = 0;
+    if (scoredCorrectly) pointsDelta = basePoints + firstCorrectBonus + streakBonus;
+    else if (active && modifier) pointsDelta = -modifier.wrongPenalty;
+
     return {
       playerId: player.id,
       answered: Boolean(submission),
       correct,
-      pointsDelta: correct && player.status === 'active' ? input.question.points : 0,
-      firstCorrectBonus: 0,
-      streakBonus: 0,
-      newStreak: correct ? player.streak + 1 : 0,
+      pointsDelta,
+      firstCorrectBonus,
+      streakBonus,
+      newStreak,
     };
   });
 }
@@ -45,30 +63,29 @@ export function countAnswers(question: Question, submissions: readonly Submissio
   return counts;
 }
 
-/**
- * Ranking por puntos desc y luego aciertos desc. Empate total comparte posición (1, 1, 3).
- * TODO(codex): verificar posiciones compartidas y orden estable con tests.
- */
+/** Ranking por puntos y aciertos descendentes, con posición compartida en caso de empate. */
 export function buildRanking(players: readonly PlayerState[]): RankingEntry[] {
   const sorted = [...players].sort(
     (a, b) => b.score - a.score || b.correctCount - a.correctCount || a.joinedAt - b.joinedAt,
   );
-  return sorted.map((p, i) => ({
-    id: p.id,
-    nickname: p.nickname,
-    score: p.score,
-    status: p.status,
-    rank: i + 1,
-  }));
+  let rank = 0;
+  return sorted.map((player, index) => {
+    const previous = sorted[index - 1];
+    if (!previous || player.score !== previous.score || player.correctCount !== previous.correctCount) rank = index + 1;
+    return { id: player.id, nickname: player.nickname, score: player.score, status: player.status, rank };
+  });
 }
 
 /** Resultado académico individual. validQuestionCount = preguntas cerradas en la partida. */
 export function personalResult(player: PlayerState, validQuestionCount: number): PersonalResult {
+  const academicPercentage = validQuestionCount === 0
+    ? 0
+    : Math.round((player.correctCount / validQuestionCount) * 10000) / 100;
   return {
     playerId: player.id,
     score: player.score,
     correctCount: player.correctCount,
     validQuestionCount,
-    academicPercentage: validQuestionCount === 0 ? 0 : Math.round((player.correctCount / validQuestionCount) * 10000) / 100,
+    academicPercentage,
   };
 }

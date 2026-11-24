@@ -16,8 +16,8 @@ export interface VoteTally {
 }
 
 export class VoteSession {
-  private readonly votes = new Map<string, string | null>();
-  private closed = false;
+  readonly #votes = new Map<string, string | null>();
+  private tally?: VoteTally;
 
   constructor(
     readonly voteId: string,
@@ -28,25 +28,47 @@ export class VoteSession {
 
   /**
    * Registra un voto. Devuelve null si se aceptó o el código de error.
-   * TODO(agente B): validar votante activo, auto-voto, duplicado, plazo y candidato.
    */
   cast(voterId: string, target: string | null, now: number): ErrorCode | null {
-    if (this.closed || now > this.deadline) return 'VOTE_CLOSED';
-    if (this.votes.has(voterId)) return 'ALREADY_VOTED';
-    this.votes.set(voterId, target);
+    if (this.tally || now > this.deadline) return 'VOTE_CLOSED';
+    if (!this.candidateIds.includes(voterId)) return 'NOT_ACTIVE';
+    if (this.#votes.has(voterId)) return 'ALREADY_VOTED';
+    if (target !== null && (target === voterId || !this.candidateIds.includes(target))) return 'TARGET_INVALID';
+    this.#votes.set(voterId, target);
     return null;
   }
 
   get voteCount(): number {
-    return this.votes.size;
+    return this.#votes.size;
   }
 
   /**
    * Cierra la votación una sola vez y calcula el resultado.
-   * TODO(agente B): regla completa (supera a Omitir, sin empate, mínimo de votos). Este stub nunca expulsa.
    */
   close(): VoteTally {
-    this.closed = true;
-    return { expelledId: null, validVotes: this.votes.size };
+    if (this.tally) return this.tally;
+
+    const validVotes = this.#votes.size;
+    let expelledId: string | null = null;
+    if (validVotes >= MIN_VALID_VOTES) {
+      const counts = new Map<string | null, number>();
+      for (const target of this.#votes.values()) {
+        counts.set(target, (counts.get(target) ?? 0) + 1);
+      }
+
+      let maxVotes = counts.get(null) ?? 0;
+      for (const [target, count] of counts) {
+        if (target === null) continue;
+        if (count > maxVotes) {
+          maxVotes = count;
+          expelledId = target;
+        } else if (count === maxVotes) {
+          expelledId = null;
+        }
+      }
+    }
+
+    this.tally = { expelledId, validVotes };
+    return this.tally;
   }
 }

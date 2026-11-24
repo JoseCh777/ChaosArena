@@ -25,7 +25,7 @@ export function LobbyPage() {
       <div className="entry-intro">
         <div className="arena-grid" aria-hidden="true" />
         <h1 id="lobby-title">Sala de <span>espera</span></h1>
-        <p>Practica con tres preguntas y consulta tus resultados al terminar.</p>
+        <p>Prueba el cuestionario de demostración y consulta tus resultados al terminar.</p>
       </div>
       <section className="panel lobby-panel" aria-labelledby="players-title">
         <div className="lobby-heading">

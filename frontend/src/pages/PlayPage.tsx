@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { Leaderboard } from '../components/Leaderboard';
 import { QuestionCard, optionLetter } from '../components/QuestionCard';
 import { RoundTimer } from '../components/RoundTimer';
-import { advanceDemoGame, demoRound, demoRoundResult, readDemoGame, settleDemoRound, writeDemoGame } from '../services/demoGame';
-import { demoQuestions } from '../services/demoQuestions';
+import { advanceDemoGame, demoRound, demoRoundResult, gameQuestions, readDemoGame, settleDemoRound, writeDemoGame } from '../services/demoGame';
 import { readDemoRoom } from '../services/demoRoom';
 import '../styles/game.css';
 
@@ -78,13 +77,14 @@ export function PlayPage() {
 
   const round = demoRound(game);
   const seconds = Math.max(0, Math.ceil((round.deadline - now) / 1000));
-  const finalRound = game.index === demoQuestions.length - 1;
+  const questions = gameQuestions(game);
+  const finalRound = game.index === questions.length - 1;
 
   return (
     <main className="game-layout">
       <section className="panel game-panel" aria-labelledby="game-title">
         <div className="round-meta">
-          <span>Pregunta {game.index + 1} de {demoQuestions.length}</span>
+          <span>Pregunta {game.index + 1} de {questions.length}</span>
           {result && <span>Ronda cerrada</span>}
         </div>
         {result ? (
@@ -110,7 +110,7 @@ export function PlayPage() {
           </>
         ) : (
           <>
-            <RoundTimer seconds={seconds} totalSeconds={demoQuestions[game.index].seconds} />
+            <RoundTimer seconds={seconds} totalSeconds={questions[game.index].seconds} />
             <QuestionCard round={round} disabled={seconds === 0 || storageError} onAnswer={answer} />
           </>
         )}

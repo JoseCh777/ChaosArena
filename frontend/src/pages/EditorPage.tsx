@@ -1,6 +1,8 @@
 import { useRef, useState, type ChangeEvent } from 'react';
 import type { Question, Quiz } from '@chaos-arena/shared';
 import { QuestionForm } from '../components/QuestionForm';
+import { openDemoGame, writeDemoGame } from '../services/demoGame';
+import { readDemoRoom } from '../services/demoRoom';
 import { decodeQuiz, downloadQuiz, DRAFT_KEY, emptyQuiz, newQuestion } from '../services/quizDraft';
 import '../styles/editor.css';
 
@@ -61,6 +63,20 @@ export function EditorPage() {
     }
   }
 
+  function playDraft() {
+    try {
+      if (!readDemoRoom()) {
+        setStatus({ message: 'Ingresa a la sala de prueba con tu apodo y vuelve al editor.', error: true });
+        return;
+      }
+      const validated = decodeQuiz(JSON.stringify(quiz));
+      writeDemoGame(openDemoGame(validated));
+      window.location.assign('/play');
+    } catch {
+      setStatus({ message: 'Se necesita un título, al menos una pregunta y acceso al almacenamiento para iniciar.', error: true });
+    }
+  }
+
   return (
     <main className="editor" aria-labelledby="editor-title">
       <header className="editor-header">
@@ -80,6 +96,9 @@ export function EditorPage() {
             downloadQuiz(quiz);
             setStatus({ message: 'Cuestionario descargado.' });
           }}>Exportar JSON</button>
+          <button type="button" className="button button-primary" onClick={playDraft} disabled={Boolean(editing)}>
+            Probar cuestionario
+          </button>
         </div>
       </header>
       {status && <p className={status.error ? 'form-error editor-status' : 'editor-status'} role={status.error ? 'alert' : 'status'}>{status.message}</p>}

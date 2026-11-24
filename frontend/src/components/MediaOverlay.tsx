@@ -5,6 +5,8 @@ import { mediaSource, type MediaId } from '../services/mediaManifest';
 import { currentAmbient, currentScene, type MediaScene } from '../services/mediaScenes';
 import '../styles/media.css';
 
+const onWheelRest = () => {};
+
 export type MediaPreview = { asset: MediaId; started: number };
 type Props = {
   view: RuntimeDisplayView;
@@ -48,12 +50,13 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false }: 
   const wheelEvent = runningWheel || undefined;
   const stepRemaining = step ? step.ms - (elapsed - start) : 0;
 
+  useEffect(() => { setNow(Date.now()); }, [id, scene?.started]);
+
   useEffect(() => {
-    setNow(Date.now());
     if (!visible) return;
     const timer = window.setTimeout(() => setNow(Date.now()), stepRemaining + 15);
     return () => window.clearTimeout(timer);
-  }, [id, scene?.started, visible, stepRemaining]);
+  }, [id, visible, stepRemaining]);
 
   useEffect(() => {
     const node = player.current;
@@ -66,12 +69,18 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false }: 
     const node = player.current;
     if (!node || !mediaKey) return;
     let active = true;
+    const align = () => {
+      const offset = (Date.now() - (scene?.started ?? Date.now()) - start) / 1000;
+      if (offset > .25 && offset < node.duration && node.currentTime < .1) node.currentTime = offset;
+    };
+    if (node.readyState) align();
+    else node.addEventListener('loadedmetadata', align, { once: true });
     node.play().then(() => { if (active) setBlocked(false); }, error => {
       if (!active || error.name === 'AbortError') return;
       if (error.name === 'NotAllowedError' && audible) setBlocked(true);
       else setFailed(mediaKey);
     });
-    return () => { active = false; node.pause(); };
+    return () => { active = false; node.removeEventListener('loadedmetadata', align); node.pause(); };
   }, [mediaKey, audible]);
 
   useEffect(() => {
@@ -100,7 +109,7 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false }: 
     <audio ref={ambient} src={ambientUrl} loop preload="none" data-arena-ambient />
     {(showText || track || wheelEvent) && <aside className="arena-media" aria-label="Efecto de la partida"
       data-kind={view.showFact?.kind}>
-      {wheelEvent && <ChaosDial type={wheelEvent.type} started={wheelEvent.started} spin={elapsed < 2450} onRest={() => {}} />}
+      {wheelEvent && <ChaosDial type={wheelEvent.type} started={wheelEvent.started} spin={elapsed < 2450} onRest={onWheelRest} />}
       {track}
       {showText && step && <div className="arena-media-copy" role="status">
         <strong>{step.title}</strong>{step.detail && <p>{step.detail}</p>}

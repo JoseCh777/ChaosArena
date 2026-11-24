@@ -1,0 +1,40 @@
+.arena-media {
+  position: relative;
+  display: grid;
+  gap: .65rem;
+  padding: clamp(.8rem, 2vw, 1.3rem);
+  min-width: 0;
+  border: 1px solid #8b5cf577;
+  border-radius: .85rem;
+  background: #151b2b;
+  color: #f8fafc;
+  isolation: isolate;
+  animation: arena-media-appear 230ms ease-out both;
+}
+
+.arena-media video {
+  display: block;
+  width: 100%;
+  max-height: min(44vh, 21rem);
+  object-fit: contain;
+  background: #0b0e17;
+  border-radius: .5rem;
+}
+
+.arena-media :is(.arena-media-copy, video) { min-width: 0; }
+.arena-media > button { justify-self: start; }
+.arena-media-copy strong { font-size: clamp(1.05rem, 2vw, 1.6rem); }
+.arena-media-copy p { margin: .25rem 0 0; overflow-wrap: anywhere; }
+.arena-media-status { color: var(--muted); }
+.arena-media[data-kind="final"] { border-color: #facc15aa; }
+.arena-media[data-kind="timeout"] { border-color: #f43f5e88; }
+.arena-media[data-kind="shield"] { border-color: #06b6d688; }
+.projection .arena-media { max-width: min(100%, 52rem); margin-inline: auto; }
+.host-show .arena-media { margin-top: .3rem; }
+@keyframes arena-media-appear {
+  from { opacity: 0; transform: translateY(.35rem) scale(.985); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arena-media { animation: none; }
+}

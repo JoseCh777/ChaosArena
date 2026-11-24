@@ -1,5 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react';
-import { joinDemoRoom, DEMO_PIN } from '../services/demoRoom';
+import { command, remember } from '../services/arena';
+const DEMO_PIN = '482913';
 
 export function JoinPage() {
   const pinFromUrl = new URLSearchParams(window.location.search).get('pin') ?? '';
@@ -9,29 +10,39 @@ export function JoinPage() {
   const pinInput = useRef<HTMLInputElement>(null);
   const nicknameInput = useRef<HTMLInputElement>(null);
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  const [busy, setBusy] = useState(false);
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const result = joinDemoRoom(pin, nickname);
+    if (busy) return;
+    if (!/^\d{6}$/.test(pin) || !nickname.trim()) {
+      const field = /^\d{6}$/.test(pin) ? 'nickname' : 'pin';
+      setError({ field, message: field === 'pin' ? 'Escribe seis dígitos.' : 'Escribe tu apodo.' });
+      (field === 'pin' ? pinInput : nicknameInput).current?.focus();
+      return;
+    }
+    setBusy(true);
+    const result = await command('join', { pin, nickname });
+    setBusy(false);
 
     if (!result.ok) {
-      setError(result);
-      if (result.field === 'pin') pinInput.current?.focus();
-      if (result.field === 'nickname') nicknameInput.current?.focus();
+      setError({ field: 'form', message: result.error });
       return;
     }
 
+    remember(result.token!);
     window.location.assign('/lobby');
   }
 
   return (
     <main className="entry" aria-labelledby="join-title">
       <div className="entry-intro">
-        <div className="arena-grid" aria-hidden="true" />
+        <div className="entry-art" aria-hidden="true"><i /><img src="/brand/chaos-arena-mark.png" alt="" /><b /></div>
         <h1 id="join-title">Únete a la <span>partida</span></h1>
         <p>Ingresa el PIN que ves en la pantalla del anfitrión y elige tu apodo.</p>
       </div>
 
       <form className="panel entry-form" onSubmit={submit} noValidate>
+        <h2>Acceso a la arena</h2>
         <div className="field">
           <label htmlFor="pin">PIN de la partida</label>
           <input
@@ -59,7 +70,7 @@ export function JoinPage() {
           />
         </div>
         {error && <p className="form-error" id="join-error" role="alert">{error.message}</p>}
-        <button className="button button-primary" type="submit">Entrar a la partida <span aria-hidden="true">→</span></button>
+        <button className="button button-primary" type="submit" disabled={busy}>{busy ? 'Conectando…' : 'Entrar a la partida'} <span aria-hidden="true">→</span></button>
         <button
           className="button button-text" type="button"
           onClick={() => {
@@ -68,7 +79,7 @@ export function JoinPage() {
             nicknameInput.current?.focus();
           }}
         >
-          Usar PIN de prueba <span>{DEMO_PIN}</span>
+          Usar PIN de la arena <span>{DEMO_PIN}</span>
         </button>
       </form>
     </main>

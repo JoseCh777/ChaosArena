@@ -1,59 +1,18 @@
-import { useState } from 'react';
-import { openDemoGame, readDemoGame, writeDemoGame } from '../services/demoGame';
+import type { ArenaView } from '../../../shared/live';
 import { PlayerList } from '../components/PlayerList';
-import { leaveDemoRoom, readDemoRoom } from '../services/demoRoom';
 
-export function LobbyPage() {
-  const room = readDemoRoom();
-  const game = readDemoGame();
-  const [error, setError] = useState('');
-
-  if (!room) {
-    return (
-      <main className="empty-state panel">
-        <h1>Sala de espera</h1>
-        <p>Ingresa el PIN y tu apodo para acceder.</p>
-        <a href="/join" className="button button-primary">Ir al ingreso</a>
-      </main>
-    );
-  }
-
-  const { playerId, snapshot } = room;
-
-  return (
-    <main className="entry" aria-labelledby="lobby-title">
-      <div className="entry-intro">
-        <div className="arena-grid" aria-hidden="true" />
-        <h1 id="lobby-title">Sala de <span>espera</span></h1>
-        <p>Practica con tres preguntas y consulta tus resultados al terminar.</p>
-      </div>
-      <section className="panel lobby-panel" aria-labelledby="players-title">
-        <div className="lobby-heading">
-          <h2 id="players-title">Participantes <span>{snapshot.players.length}</span></h2>
-          <p>PIN <strong>{snapshot.pin}</strong></p>
-        </div>
-        <PlayerList players={snapshot.players} playerId={playerId} />
-        <div className="lobby-play">
-          {game && !game.finished ? (
-            <a className="button button-primary" href="/play">Continuar partida de prueba</a>
-          ) : (
-            <button type="button" className="button button-primary" onClick={() => {
-              try {
-                writeDemoGame(openDemoGame());
-                window.location.assign('/play');
-              } catch {
-                setError('El navegador no pudo guardar la partida de prueba.');
-              }
-            }}>Iniciar partida de prueba</button>
-          )}
-          {game?.finished && <a className="button button-text" href="/results">Ver resultados anteriores</a>}
-          {error && <p className="form-error" role="alert">{error}</p>}
-        </div>
-        <button type="button" className="button button-text" onClick={() => {
-          leaveDemoRoom();
-          window.location.assign('/join');
-        }}>Salir de la sala</button>
-      </section>
-    </main>
-  );
+export function LobbyPage({ view, act }: { view: ArenaView; act: (kind: 'start' | 'leave') => void }) {
+  return <main className="entry lobby-view">
+    <div className="entry-intro">
+      <p className="room-code">PIN <strong>{view.pin}</strong></p>
+      <h1>Sala de <span>espera</span></h1>
+      <p>{view.host ? 'Comparte el PIN. Cuando estén todos, inicia la partida.' : 'Ya estás dentro. El anfitrión dará la salida.'}</p>
+    </div>
+    <section className="panel lobby-panel">
+      <div className="lobby-heading"><h2>Jugadores en pista</h2><strong>{view.players.length}</strong></div>
+      <PlayerList players={view.players} playerId={view.you} />
+      {view.host && <button className="button button-primary" onClick={() => act('start')}>Iniciar partida →</button>}
+      <button className="button button-text" onClick={() => act('leave')}>Salir de la sala</button>
+    </section>
+  </main>;
 }

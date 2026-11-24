@@ -8,6 +8,7 @@ import { GameError } from './model.js';
 import { attachSocketPublisher, channels } from './publisher.js';
 import { validateQuiz } from './questions.js';
 import { generatePin, newToken, safeEqual } from './rooms.js';
+import { attachArena } from './liveArena.js';
 
 const port = Number(process.env.PORT || 3001);
 const clientOrigin = (process.env.CLIENT_ORIGIN || 'http://localhost:5173').split(',').map((o) => o.trim());
@@ -142,6 +143,9 @@ io.on('connection', (socket) => {
     }),
   );
 });
+
+// Protocolo de la arena en vivo (José), usado hoy por el frontend.
+attachArena(io.of('/arena'));
 
 httpServer.listen(port, '0.0.0.0', () => {
   console.log(`ChaosArena backend disponible en el puerto ${port}`);

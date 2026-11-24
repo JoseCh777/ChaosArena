@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: chaosarena-backend
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build -w backend
+    startCommand: npm start -w backend
+    healthCheckPath: /health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST_KEY
+        sync: false
+      - key: CLIENT_ORIGIN
+        sync: false

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MediaOutput, RuntimeDisplayView } from '../../../shared/runtime-chaos';
 import { ChaosDial } from './ChaosDial';
-import { mediaSource, type MediaId } from '../services/mediaManifest';
+import { audioGesture } from '../services/mediaAudio';
+import { fallbackAudio, mediaSource, type MediaId } from '../services/mediaManifest';
 import { currentAmbient, currentScene, type MediaScene } from '../services/mediaScenes';
 import '../styles/media.css';
 
@@ -22,7 +23,8 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
   const player = useRef<HTMLMediaElement>(null);
   const [now, setNow] = useState(Date.now);
   const [skipped, setSkipped] = useState('');
-  const [failed, setFailed] = useState('');
+  const [failed, setFailed] = useState<string[]>([]);
+  const [missingAmbient, setMissingAmbient] = useState<string>();
   const [blocked, setBlocked] = useState(false);
   const show = view.show;
   const selected = (show?.output ?? 'host') === output;
@@ -42,10 +44,16 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
   });
   const id = scene ? `${view.pin}-${scene.id}` : '';
   const visible = step && id !== skipped;
-  const source = visible ? mediaSource(step.asset, step.fallback) : undefined;
+  const primary = visible ? mediaSource(step.asset, step.fallback) : undefined;
+  const primaryKey = primary ? `${id}-${start}-${primary.url}` : '';
+  const source = primaryKey && failed.includes(primaryKey) && step?.asset
+    ? fallbackAudio(step.asset) : primary;
   const played = source && (!source.video || show?.videos !== false) && (source.video || audible) ? source : undefined;
   const mediaKey = played ? `${id}-${start}-${played.url}` : '';
-  const ambientUrl = mediaSource(currentAmbient(view))?.url;
+  const ambientAsset = currentAmbient(view);
+  const primaryAmbient = mediaSource(ambientAsset)?.url;
+  const ambientUrl = ambientAsset && missingAmbient === primaryAmbient && primaryAmbient
+    ? fallbackAudio(ambientAsset).url : primaryAmbient;
   const showText = visible && (show?.reactions !== false || view.phase === 'roulette' || scene?.id === view.showFact?.id && view.showFact?.kind === 'intro');
   const runningWheel = wheel && view.phase === 'roulette' && !view.duel && view.chaosEvent;
   const wheelEvent = runningWheel || undefined;
@@ -79,14 +87,14 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
     node.play().then(() => { if (active) setBlocked(false); }, error => {
       if (!active || error.name === 'AbortError') return;
       if (error.name === 'NotAllowedError' && audible) setBlocked(true);
-      else setFailed(mediaKey);
+      else setFailed(previous => previous.includes(mediaKey) ? previous : [...previous, mediaKey]);
     });
     return () => { active = false; node.removeEventListener('loadedmetadata', align); node.pause(); };
   }, [mediaKey, audible]);
 
   useEffect(() => {
     const node = ambient.current;
-    if (node) node.volume = master * .20;
+    if (node) node.volume = master * .32;
   }, [master]);
 
   useEffect(() => {
@@ -100,14 +108,29 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
     return () => { active = false; node.pause(); };
   }, [ambientUrl, audible, visible]);
 
-  const track = played && mediaKey !== failed && (played.video
+  useEffect(() => {
+    const playFromGesture = () => {
+      if (!audible) return;
+      const node = visible ? player.current : ambient.current;
+      if (node?.getAttribute('src')) {
+        node.muted = false;
+        void node.play().then(() => setBlocked(false), error => {
+          if (error.name === 'NotAllowedError') setBlocked(true);
+        });
+      }
+    };
+    window.addEventListener(audioGesture, playFromGesture);
+    return () => window.removeEventListener(audioGesture, playFromGesture);
+  }, [audible, visible]);
+
+  const track = played && !failed.includes(mediaKey) && (played.video
     ? <video key={mediaKey} ref={node => { player.current = node; }} src={played.url} muted={!audible}
-      playsInline preload="metadata" aria-hidden="true" onError={() => setFailed(mediaKey)} />
+      playsInline preload="metadata" aria-hidden="true" onError={() => setFailed(previous => previous.includes(mediaKey) ? previous : [...previous, mediaKey])} />
     : <audio key={mediaKey} ref={node => { player.current = node; }} src={played.url}
-      preload="metadata" onError={() => setFailed(mediaKey)} />);
+      preload="metadata" onError={() => setFailed(previous => previous.includes(mediaKey) ? previous : [...previous, mediaKey])} />);
 
   return <>
-    <audio ref={ambient} src={ambientUrl} loop preload="none" data-arena-ambient />
+    <audio ref={ambient} src={ambientUrl} loop preload="none" data-arena-ambient onError={() => setMissingAmbient(primaryAmbient)} />
     {(showText || track || wheelEvent) && <aside className="arena-media" aria-label="Efecto de la partida"
       data-kind={view.showFact?.kind}>
       {wheelEvent && <ChaosDial type={wheelEvent.type} started={wheelEvent.started} spin={elapsed < 2450} onRest={onWheelRest} />}

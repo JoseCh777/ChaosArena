@@ -1,3 +1,4 @@
+import { setAudioFromGesture } from '../services/mediaAudio';
 import { useEffect, useState } from 'react';
 import type { RuntimeDisplayView } from '../../../shared/runtime-chaos';
 import QRCode from 'react-qr-code';
@@ -34,7 +35,7 @@ export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayPr
   const remaining = useRoundSeconds(phase === 'question' ? display?.round?.deadline : undefined, display?.pausedMs);
 
   const audioControl = display?.pin && selected && <button className="button button-text" type="button" aria-pressed={audioEnabled}
-      onClick={toggleAudio ?? (() => setLocalAudio(active => !active))}>{audioEnabled ? 'Silenciar' : 'Activar sonido'}</button>;
+      onClick={toggleAudio ?? (() => setAudioFromGesture(() => setLocalAudio(!localAudio)))}>{audioEnabled ? 'Silenciar' : 'Activar sonido'}</button>;
 
   const header = <ArenaHeader label={online ? (hostView ? 'Modo presentación' : 'Proyector') : message} actions={
       close ? <button className="button button-text" type="button" onClick={close}>Volver al anfitrión</button>

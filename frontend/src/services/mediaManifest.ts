@@ -39,6 +39,12 @@ export function mediaSource(id: MediaId | undefined, fallback?: ClipCue | null) 
     const ext = mediaFiles[id];
     return { url: `/media-local/${id}.${ext}`, video: ext === 'mp4' };
   }
+  if (id && mediaFiles[id] !== 'mp4') return fallbackAudio(id);
   if (fallback) return { url: `/media/${fallback}.webm`, video: true };
   return undefined;
+}
+
+export function fallbackAudio(id: MediaId) {
+  const channel = ['wii-shop', 'tic-tac', 'millonario', 'noticias-caracol'].includes(id) ? 'ambiente' : 'efecto';
+  return { url: `/media/${channel}-original.wav`, video: false };
 }

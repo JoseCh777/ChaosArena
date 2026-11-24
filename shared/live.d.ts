@@ -7,7 +7,7 @@ export interface LiveEvent {
   started: number;
 }
 export interface ArenaView {
-  phase: 'lobby' | 'question' | 'reveal' | 'roulette' | 'finished';
+  phase: 'lobby' | 'question' | 'reveal' | 'roulette' | 'vote' | 'finished';
   serverNow: number;
   pin: string;
   you: string;
@@ -22,15 +22,18 @@ export interface ArenaView {
   seconds: number;
   solution?: { index: number; explanation?: string; counts: number[] };
   event?: LiveEvent;
+  voted?: boolean;
+  voting?: { id: string; deadline: number; received: number; candidates: string[] };
   summary?: { id: string; correct: number }[];
 }
-export type DisplayView = Omit<ArenaView, 'you' | 'host' | 'choice' | 'correctCount' | 'summary'>;
+export type DisplayView = Omit<ArenaView, 'you' | 'host' | 'choice' | 'correctCount' | 'summary' | 'voted'>;
 
 export interface ArenaCommands {
   observe: Record<string, never>;
   join: { pin: string; nickname: string };
   resume: { token: string };
-  start: { quiz?: Quiz };
+  start: { quiz?: Quiz; voting?: boolean };
+  vote: { id: string; target: string | null };
   answer: { roundId: string; choice: number };
   leave: Record<string, never>;
 }

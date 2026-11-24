@@ -7,7 +7,8 @@
     "dev": "tsx watch --env-file-if-exists=.env src/server.ts",
     "build": "tsc",
     "start": "node --env-file-if-exists=.env dist/server.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test \"src/**/*.test.ts\""
   },
   "dependencies": {
     "@chaos-arena/shared": "0.1.0",
@@ -19,6 +20,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.0",
     "@types/node": "^22.19.0",
+    "socket.io-client": "^4.8.4",
     "tsx": "^4.20.0"
   }
 }

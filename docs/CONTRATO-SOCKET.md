@@ -18,6 +18,14 @@ Cliente a servidor recibe ack con ok y data, o con ok false y error. Usar deadli
 | vote:open | Servidor a cliente | voteId, candidatos y deadline |
 | media:play | Servidor a proyector | mediaId y triggerId para evitar repetición |
 | game:finished | Servidor a cliente | Podio y datos autorizados por rol |
+| room:watch | Proyector a servidor | PIN. Suscribe al canal display y devuelve snapshot |
+| host:kick | Anfitrión a servidor | hostToken y playerId. Solo en lobby |
+| vote:result | Servidor a cliente | voteId, expelledId o null, votos válidos y jugadores |
+| round:progress | Servidor a host y proyector | Respondidos y esperados de la ronda abierta |
+| player:private | Servidor a jugador | Estado propio: puntos, racha, respuesta enviada y última ronda |
+| player:kicked | Servidor a jugador | El anfitrión lo retiró del lobby |
+
+Errores: ack con `error` igual a un `ErrorCode` de shared/types.ts. Reglas de puntuación, eventos y votación acordadas en backend/AGENTS.md.
 
 La vista pública evita correctCount y resultados académicos individuales. El servidor puede usarlos internamente para desempatar. FinishedView diferencia proyector, jugador y anfitrión. Autorizar cada emisión en backend.
 

@@ -77,7 +77,9 @@ export class RuntimePowers {
 
   consume(player: PlayerState, power: Power, index: number) {
     const item = this.get(player.id);
-    item.items.splice(item.items.indexOf(power), 1);
+    const itemIndex = item.items.indexOf(power);
+    if (itemIndex < 0) return;
+    item.items.splice(itemIndex, 1);
     item.usedAt = index;
     switch (power) {
       case 'proxy': case 'decorator': case 'prototype':

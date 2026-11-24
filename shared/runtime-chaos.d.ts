@@ -1,4 +1,4 @@
-import type { ChaosEvent } from './types.js';
+import type { ChaosEvent } from '@chaos-arena/shared';
 import type { ArenaView, ConfiguredDisplayView, LiveEvent } from './live.js';
 
 export type RuntimeEvent = ChaosEvent | 'error-404' | 'firewall' | 'duel' | 'respawn';

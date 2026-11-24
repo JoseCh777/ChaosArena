@@ -47,8 +47,8 @@ export class Duel {
     return {
       id: this.id, stage: this.stage, deadline: this.deadline,
       players: this.players.map(({ id, nickname }) => ({ id, nickname })),
-      prompt: this.stage !== 'invite' ? this.question.prompt : undefined,
-      options: this.stage !== 'invite' ? this.question.options : undefined,
+      prompt: this.accepts.size === 2 ? this.question.prompt : undefined,
+      options: this.accepts.size === 2 ? this.question.options : undefined,
       correctIndex: this.stage === 'result' && this.accepts.size === 2 ? this.question.correctIndex : undefined,
       result: this.result,
     };

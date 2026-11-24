@@ -74,3 +74,25 @@
 @media (prefers-reduced-motion: reduce) {
   .duel-stage { animation: none; }
 }
+.projection-reaction {
+  position: fixed;
+  z-index: 5;
+  inset: auto clamp(1rem, 5vw, 6rem) clamp(1rem, 5vh, 5rem) auto;
+  max-width: calc(100% - 2rem);
+  padding: clamp(.75rem, 2vw, 1.6rem);
+  border-radius: .65rem;
+  color: #191120;
+  background: #e1c5ff;
+  box-shadow: 0 0 2rem #1e0b4e85;
+  font-size: clamp(1.2rem, 3vw, 2.55rem);
+  font-weight: 800;
+  pointer-events: none;
+  animation: runtime-enter 220ms ease-out both;
+}
+
+.projection-reaction:is([data-kind="racha"], [data-kind="todos-aciertan"]) { background: #c5ff80; }
+.projection-reaction:is([data-kind="nadie-acierta"], [data-kind="expulsion"]) { background: #ffb599; }
+
+@media (prefers-reduced-motion: reduce) {
+  .projection-reaction { animation: none; }
+}

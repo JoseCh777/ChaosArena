@@ -25,9 +25,11 @@
   overflow: hidden;
   background:
     radial-gradient(circle, transparent 14%, #08031233 63%, #ffffff19 69%, #07031199 71%),
-    conic-gradient(from -45deg, #6636a3 0deg 89deg, #d4c2ed 89deg 90deg,
-      #126575 90deg 179deg, #b8e5db 179deg 180deg, #8c551a 180deg 269deg,
-      #f4d28f 269deg 270deg, #953653 270deg 359deg, #f6c6db 359deg);
+    conic-gradient(from -22.5deg, #6636a3 0deg 44deg, #bf9dea 44deg 45deg,
+      #126575 45deg 89deg, #b8e5db 89deg 90deg, #87404b 90deg 134deg, #f6bfd0 134deg 135deg,
+      #436027 135deg 179deg, #d0e8a7 179deg 180deg, #8c551a 180deg 224deg, #f4d28f 224deg 225deg,
+      #953653 225deg 269deg, #f6c6db 269deg 270deg, #315080 270deg 314deg, #a9c2ff 314deg 315deg,
+      #206854 315deg 359deg, #a0eed0 359deg);
 }
 .dial-sector {
   position: absolute;
@@ -35,12 +37,12 @@
   display: flex;
   align-items: center;
   flex-direction: column;
-  padding-top: 9%;
+  padding-top: 8%;
   gap: 1%;
   text-shadow: 0 1px 4px #170c2c;
 }
 .dial-sector b { font: 800 clamp(16px, 4vw, 28px)/1 var(--font-ui); }
-.dial-sector span { font: 750 clamp(9px, 2.4vw, 12px)/1.3 var(--font-mono); text-transform: uppercase; letter-spacing: .04em; }
+.dial-sector span { font: 750 clamp(7px, 2.1vw, 11px)/1.3 var(--font-mono); text-transform: uppercase; letter-spacing: .04em; }
 .dial-hub {
   position: absolute; inset: 37%;
   display: grid; place-items: center;

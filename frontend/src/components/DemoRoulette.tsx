@@ -1,10 +1,10 @@
 import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import type { LiveEvent } from '../../../shared/live';
-import { eventLabels } from '../services/demoEvents';
+import type { RuntimeLiveEvent } from '../../../shared/runtime-chaos';
+import { eventLabels } from '../services/runtimeCatalog';
 import { ChaosDial } from './ChaosDial';
 import '../styles/roulette.css';
 
-export function DemoRoulette({ event, preview }: { event: LiveEvent; preview?: ReactNode }) {
+export function DemoRoulette({ event, preview }: { event: RuntimeLiveEvent; preview?: ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [rest, setRest] = useState(() => Date.now() >= event.started + 2450);
   const reveal = useCallback(() => setRest(true), []);

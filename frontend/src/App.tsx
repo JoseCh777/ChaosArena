@@ -19,7 +19,7 @@ export function App() {
         </a>
         <nav className="arena-nav" aria-label="Vistas de la arena">
           <a className="mode-label" href="/host">Anfitrión</a>
-          <a className="mode-label" href="/display" target="_blank" rel="noreferrer">Proyector</a>
+          <a className="mode-label" href="/display">Proyector</a>
           <a className="mode-label" href={route === '/editor' ? '/join' : '/editor'}>
             {route === '/editor' ? 'Ingreso' : 'Editor de preguntas'}
           </a>

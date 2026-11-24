@@ -120,7 +120,7 @@ export function HostPage() {
       <p className="room-code">PIN <strong>{view.pin}</strong></p>
       <div className="host-actions">
         <button className="button button-primary" type="button" onClick={() => setPresenting(true)}>Modo presentación</button>
-        <a href="/display" target="_blank" rel="noreferrer" className="button button-text">Abrir proyector ↗</a>
+        <a href="/display" className="button button-text">Abrir proyector</a>
         <a href="/lobby" className="button button-text">Mi vista de jugador</a>
         <a href="/editor" className="button button-text">Editor</a>
       </div>

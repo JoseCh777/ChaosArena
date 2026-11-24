@@ -1,37 +1,47 @@
-import { presentation } from '../services/presentation';
+import { useEffect, useState } from 'react';
+import type { RuntimeDisplayView } from '../../../shared/runtime-chaos';
 import QRCode from 'react-qr-code';
 import { useArena } from '../services/arena';
 import { useRoundSeconds } from '../components/useRoundSeconds';
 import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
-import { DemoRoulette } from '../components/DemoRoulette';
-import { ProjectionClip } from '../components/ProjectionClip';
 import { DuelStage } from '../components/DuelStage';
-import { ProjectionReaction } from '../components/ProjectionReaction';
-import { useProjectionAudio } from './useProjectionAudio';
+import { MediaOverlay } from '../components/MediaOverlay';
 import './projection.css';
 
-export function DisplayPage() {
-  const { display, online, message } = useArena();
+type DisplayProps = { hostView?: RuntimeDisplayView; enabled?: boolean; toggleAudio?: () => void; close?: () => void };
+
+export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayProps = {}) {
+  const arena = useArena();
+  const display = hostView ?? arena.display;
+  const { online, message } = arena;
+  const [localAudio, setLocalAudio] = useState(false);
+  const output = hostView ? 'host' : 'display';
+  const audioEnabled = enabled ?? localAudio;
+  const selected = (display?.show?.output ?? 'host') === output;
   const phase = display?.phase;
-  const { audio: cue, clip } = presentation(display);
-  const show = display?.show;
-  const volume = show?.sound === false ? 0 : (show?.volume ?? 75);
-  const audio = useProjectionAudio(cue, volume);
-  const clipSettings = { enabled: show?.videos !== false, sound: audio.enabled && volume > 0, volume };
+  const [now, setNow] = useState(Date.now);
+  const podiumAt = phase === 'finished' && display?.showFact?.kind === 'final' ? display.showFact.started + 3050 : 0;
+  useEffect(() => {
+    if (!podiumAt) return;
+    setNow(Date.now());
+    const timer = window.setTimeout(() => setNow(Date.now()), Math.max(0, podiumAt - Date.now()) + 20);
+    return () => window.clearTimeout(timer);
+  }, [podiumAt]);
+  const hideWinner = now < podiumAt;
   const remaining = useRoundSeconds(phase === 'question' ? display?.round?.deadline : undefined, display?.pausedMs);
 
   const header = <header className="projection-brand">
     <img src="/brand/chaos-arena-mark.png" alt="" width="36" height="40" />
     <strong>ChaosArena</strong>
-    <span>{online ? 'Proyector' : message}</span>
+    <span>{online ? (hostView ? 'Modo presentación' : 'Proyector') : message}</span>
     <nav className="host-actions" aria-label="Salir del proyector">
-      <a className="button button-text" href="/host">Anfitrión</a>
-      <a className="button button-text" href="/join">Ingreso</a>
+      {close ? <button className="button button-text" type="button" onClick={close}>Volver al anfitrión</button>
+        : <><a className="button button-text" href="/host">Volver al anfitrión</a>
+          <a className="button button-text" href="/join">Ingreso</a></>}
     </nav>
-    {display?.pin && <button className="button button-text" type="button" aria-pressed={audio.enabled} onClick={audio.toggle}>
-      {audio.enabled ? 'Silenciar' : 'Activar sonido'}
-    </button>}
+    {display?.pin && selected && <button className="button button-text" type="button" aria-pressed={audioEnabled}
+      onClick={toggleAudio ?? (() => setLocalAudio(active => !active))}>{audioEnabled ? 'Silenciar' : 'Activar sonido'}</button>}
   </header>;
 
   if (!display?.pin) return <main className="projection">
@@ -47,12 +57,9 @@ export function DisplayPage() {
   const round = display.round;
   const waiting = phase === 'lobby';
   const finished = phase === 'finished';
-  const event = display.chaosEvent ?? display.event;
   return <main className={'projection ' + (waiting ? 'projection-lobby' : '')}>
     {header}
-    {clip && phase !== 'roulette' && <ProjectionClip key={phase} cue={clip} {...clipSettings} />}
-    {show?.reactions !== false && display.reaction && <ProjectionReaction key={display.reaction.id} reaction={display.reaction} />}
-    {audio.error && <p role="status">{audio.error}</p>}
+    <MediaOverlay view={display} output={output} enabled={audioEnabled} wheel />
     {waiting ? <section className="projection-prompt">
       <div><p className="round-meta">Sala de espera</p><h1>Entra a la <em>arena</em></h1>
         <p className="projection-pin">{display.pin}</p>
@@ -65,11 +72,11 @@ export function DisplayPage() {
       </div>
     </section> : finished ? <>
       <h1>Podio de la arena</h1>
-      <div className="finish-stage">{display.players.filter(p => p.rank <= 3).map(p =>
+      <div className="finish-stage">{display.players.filter(p => p.rank <= 3 && (!hideWinner || p.rank > 1)).map(p =>
         <div className="podium-place" data-rank={p.rank} key={p.id}>
           <strong>{p.rank}</strong><span>{p.nickname}</span><small>{p.score} pts</small>
         </div>)}</div>
-      <Leaderboard ranking={display.players} playerId="" />
+      {!hideWinner && <Leaderboard ranking={display.players} playerId="" />}
     </> : display.duel ? <DuelStage key={display.duel.id} duel={display.duel} /> : phase === 'vote' && display.voting ? <section className="projection-round">
       <h1>Votación secreta</h1><p>{display.voting.received} de {display.voting.candidates.length} votos recibidos</p>
     </section> : round && <section className="projection-round">
@@ -86,6 +93,5 @@ export function DisplayPage() {
       {display.solution?.explanation && <p>{display.solution.explanation}</p>}
       {phase === 'reveal' && <Leaderboard ranking={display.players} playerId="" />}
     </section>}
-    {phase === 'roulette' && event && !display.duel && <DemoRoulette event={event} preview={clip && <ProjectionClip cue={clip} {...clipSettings} />} />}
   </main>;
 }

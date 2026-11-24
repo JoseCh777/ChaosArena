@@ -172,6 +172,7 @@ export class GameEngine {
   private pendingDuel?: { players: [PlayerState, PlayerState]; challenger?: PlayerState };
   private duel?: Duel;
   private cancelTimer?: () => void;
+  private pausedMs?: number;
 
   constructor(
     readonly pin: string,
@@ -279,6 +280,7 @@ export class GameEngine {
     this.clearTimer();
     for (const p of this.players.values()) Object.assign(p, { status: 'active', score: 0, correctCount: 0, streak: 0 });
     this.round = undefined;
+    this.pausedMs = undefined;
     this.voteSession = undefined;
     this.pendingModifier = undefined;
     this.questionIndex = -1;
@@ -328,7 +330,7 @@ export class GameEngine {
   recordAnswer(player: PlayerState, roundId: string, optionIndex: unknown) {
     const round = this.round;
     const now = this.deps.now();
-    if (!round || round.settled || round.roundId !== roundId || now > round.deadline) throw new GameError('ROUND_CLOSED');
+    if (this.pausedMs !== undefined || !round || round.settled || round.roundId !== roundId || now > round.deadline) throw new GameError('ROUND_CLOSED');
     if (round.submissions.has(player.id)) throw new GameError('ALREADY_ANSWERED');
     if (!Number.isInteger(optionIndex) || (optionIndex as number) < 0 || (optionIndex as number) >= round.question.options.length) {
       throw new GameError('OPTION_INVALID');
@@ -343,6 +345,7 @@ export class GameEngine {
     const round = this.round;
     if (!round || round.settled) return;
     round.settled = true;
+    this.pausedMs = undefined;
     this.clearTimer();
     const players = [...this.players.values()];
     const submissions = [...round.submissions.values()];
@@ -369,6 +372,66 @@ export class GameEngine {
       },
     });
     this.notify({ kind: 'snapshot' });
+  }
+
+  get questionPausedMs() { return this.pausedMs; }
+
+  setQuestionPaused(roundId: unknown, paused: boolean) {
+    const round = this.round;
+    if (!round || round.roundId !== roundId || this.phase !== 'question') return false;
+    if (paused === (this.pausedMs !== undefined)) return true;
+    const now = this.deps.now();
+    if (paused) {
+      if (round.deadline <= now) return false;
+      this.pausedMs = round.deadline - now;
+      this.clearTimer();
+    } else {
+      const remaining = this.pausedMs!;
+      this.pausedMs = undefined;
+      round.deadline = now + remaining;
+      this.schedule(remaining);
+    }
+    this.notify({ kind: 'snapshot' });
+    return true;
+  }
+
+  closeQuestion(roundId: unknown) {
+    if (this.phase !== 'question' || this.round?.roundId !== roundId) return false;
+    this.settleRound();
+    return true;
+  }
+
+  get canSkipEvent() {
+    return this.phase === 'results' && !this.interlude.eventUsed && !this.pendingDuel
+      && this.round?.submissions.size === this.players.size;
+  }
+
+  skipEvent(roundId: unknown) {
+    if (!this.canSkipEvent || this.round?.roundId !== roundId) return false;
+    this.interlude.eventUsed = true;
+    this.notify({ kind: 'snapshot' });
+    return true;
+  }
+
+  skipRoulette(roundId: unknown) {
+    if (this.phase !== 'event' || this.duel || !this.runtimeResult || this.round?.roundId !== roundId) return false;
+    this.advanceInterlude();
+    return true;
+  }
+
+  cancelVote(voteId: unknown) {
+    if (!this.voteSession || this.voteSession.voteId !== voteId) return false;
+    this.voteSession = undefined;
+    this.clearTimer();
+    this.protectedVoters = [];
+    this.interlude.voteUsed = true;
+    this.state = new InterludeState('voting');
+    this.notify({
+      kind: 'vote:result',
+      result: { voteId: String(voteId), expelledId: null, validVotes: 0, players: this.publicPlayers() },
+    });
+    this.notify({ kind: 'snapshot' });
+    return true;
   }
 
   runEvent() {
@@ -476,11 +539,11 @@ export class GameEngine {
   }
 
   private regularPowerPhase() {
-    return !this.duel && (this.phase === 'question' || this.phase === 'results' || this.phase === 'event');
+    return !this.duel && this.pausedMs === undefined && (this.phase === 'question' || this.phase === 'results' || this.phase === 'event');
   }
 
   private canChallenge() {
-    return (this.phase === 'question' || this.phase === 'results') && !this.pendingDuel
+    return this.pausedMs === undefined && (this.phase === 'question' || this.phase === 'results') && !this.pendingDuel
       && !this.duel && this.activePlayers().length >= 2;
   }
 

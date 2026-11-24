@@ -1,4 +1,4 @@
-import { DEFAULT_CLIPS } from '@chaos-arena/shared/arena-settings.js';
+import { presentation } from '../services/presentation';
 import QRCode from 'react-qr-code';
 import { useArena } from '../services/arena';
 import { useRoundSeconds } from '../components/useRoundSeconds';
@@ -14,7 +14,11 @@ import './projection.css';
 export function DisplayPage() {
   const { display, online, message } = useArena();
   const phase = display?.phase;
-  const audio = useProjectionAudio(phase === 'lobby' ? 'sala' : phase === 'roulette' && !display?.duel ? 'ruleta' : phase === 'finished' ? 'podio' : undefined);
+  const { audio: cue, clip } = presentation(display);
+  const show = display?.show;
+  const volume = show?.sound === false ? 0 : (show?.volume ?? 75);
+  const audio = useProjectionAudio(cue, volume);
+  const clipSettings = { enabled: show?.videos !== false, sound: audio.enabled && volume > 0, volume };
   const remaining = useRoundSeconds(phase === 'question' ? display?.round?.deadline : undefined, display?.pausedMs);
 
   const header = <header className="projection-brand">
@@ -43,14 +47,11 @@ export function DisplayPage() {
   const round = display.round;
   const waiting = phase === 'lobby';
   const finished = phase === 'finished';
-  const cue = phase === 'vote' ? 'votacion' : finished ? 'podio' : phase === 'question' && display.number === 1 ? 'inicio' : undefined;
   const event = display.chaosEvent ?? display.event;
-  const clips = display.clips ?? DEFAULT_CLIPS;
-  const clip = cue && clips[cue];
   return <main className={'projection ' + (waiting ? 'projection-lobby' : '')}>
     {header}
-    {clip && <ProjectionClip key={cue} cue={clip} />}
-    {display.reaction && <ProjectionReaction key={display.reaction.id} reaction={display.reaction} />}
+    {clip && phase !== 'roulette' && <ProjectionClip key={phase} cue={clip} {...clipSettings} />}
+    {show?.reactions !== false && display.reaction && <ProjectionReaction key={display.reaction.id} reaction={display.reaction} />}
     {audio.error && <p role="status">{audio.error}</p>}
     {waiting ? <section className="projection-prompt">
       <div><p className="round-meta">Sala de espera</p><h1>Entra a la <em>arena</em></h1>
@@ -85,6 +86,6 @@ export function DisplayPage() {
       {display.solution?.explanation && <p>{display.solution.explanation}</p>}
       {phase === 'reveal' && <Leaderboard ranking={display.players} playerId="" />}
     </section>}
-    {phase === 'roulette' && event && !display.duel && <DemoRoulette event={event} preview={clips.ruleta && <ProjectionClip cue={clips.ruleta} />} />}
+    {phase === 'roulette' && event && !display.duel && <DemoRoulette event={event} preview={clip && <ProjectionClip cue={clip} {...clipSettings} />} />}
   </main>;
 }

@@ -1,12 +1,13 @@
 import type { Namespace } from 'socket.io';
 import type { ErrorCode, RankingEntry } from '@chaos-arena/shared';
-import type { ArenaView, DisplayView, LiveEvent, Reply } from '../../shared/live.js';
+import type { ArenaView, ConfiguredDisplayView, LiveEvent, Reply } from '../../shared/live.js';
 import { attachAutopilot, defaultAutopilot, type AutopilotOptions } from './autopilot.js';
 import { GameEngine, type EngineChange } from './game.js';
 import { GameError, realDeps, type EngineDeps } from './model.js';
 import { demoQuestions } from './practiceQuestions.js';
 import { validateQuiz } from './questions.js';
 import { generatePin, normalizeNickname, safeEqual } from './rooms.js';
+import { parseArenaSettings } from './arenaSettings.js';
 import { buildRanking } from './scoring.js';
 
 /**
@@ -48,6 +49,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
   let engine!: GameEngine;
   let previousPin = '';
   let detach = () => {};
+  let settings = parseArenaSettings(undefined)!;
   let lastEvent: LiveEvent | undefined;
   let lastScores = new Map<string, number>();
 
@@ -58,6 +60,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     tokens.clear();
     lastEvent = undefined;
     lastScores.clear();
+    settings = parseArenaSettings(undefined)!;
     engine = new GameEngine(pin, { title: 'Patrones de diseño', questions: demoQuestions }, { votingEnabled: true }, deps);
     const offView = engine.subscribe(onChange);
     const offPilot = attachAutopilot(engine, config.autopilot ?? defaultAutopilot, deps);
@@ -120,10 +123,11 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     const round = engine.currentRound();
     const q = round?.question;
     const received = round ? all.filter((p) => engine.choiceOf(p.id) !== null).length : 0;
-    const view: DisplayView = {
+    const view: ConfiguredDisplayView = {
       phase,
       serverNow: Date.now(),
       pin: engine.pin,
+      clips: settings.clips,
       players,
       number: Math.max(engine.questionIndex, 0) + 1,
       total: engine.publicSnapshot().questionCount,
@@ -250,8 +254,15 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
           if (!isHost || !['lobby', 'finished'].includes(engine.phase)) return fail('Solo el anfitrión puede iniciar desde la sala.');
           const validation = validateQuiz(data.quiz ?? { title: 'Patrones de diseño', questions: demoQuestions });
           if (!validation.ok) return fail(validation.error);
+          const nextSettings = parseArenaSettings(data.settings);
+          if (!nextSettings) return fail('Revisa la duración y los clips de la sala.');
+          settings = nextSettings;
           if (engine.phase === 'finished') engine.restart();
-          engine.configure(validation.quiz, { votingEnabled: data.voting !== false });
+          const quiz = settings.roundSeconds === null ? validation.quiz : {
+            ...validation.quiz,
+            questions: validation.quiz.questions.map(q => ({ ...q, seconds: settings.roundSeconds! })),
+          };
+          engine.configure(quiz, { votingEnabled: data.voting !== false });
           engine.command('start');
           break;
         }

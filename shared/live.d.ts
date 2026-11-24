@@ -47,3 +47,12 @@ export interface ArenaHostCommands {
 export interface ArenaRoomLifecycleCommands {
   closeRoom: Record<string, never>;
 }
+
+export type ClipCue = 'inicio' | 'votacion' | 'ruleta' | 'podio';
+export type ProjectionClips = Record<ClipCue, ClipCue | null>;
+export type ConfiguredDisplayView = DisplayView & { clips?: ProjectionClips };
+
+export interface ArenaSettings {
+  roundSeconds: number | null;
+  clips: ProjectionClips;
+}

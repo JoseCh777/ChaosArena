@@ -1,4 +1,4 @@
-import type { ChaosEvent, PublicRound, Quiz, RankingEntry } from './types.js';
+import type { ChaosEvent, PublicRound, Quiz, RankingEntry } from '@chaos-arena/shared';
 
 export interface LiveEvent {
   type: ChaosEvent;
@@ -8,6 +8,7 @@ export interface LiveEvent {
 }
 export interface ArenaView {
   phase: 'lobby' | 'question' | 'reveal' | 'roulette' | 'finished';
+  serverNow: number;
   pin: string;
   you: string;
   host: boolean;

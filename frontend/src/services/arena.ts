@@ -28,7 +28,12 @@ export async function command<K extends keyof ArenaCommands>(kind: K, payload: A
   }
 }
 
-socket.on('view', (view: ArenaView) => update({ view, online: true, message: '' }));
+socket.on('view', (view: ArenaView) => {
+  const offset = Date.now() - view.serverNow;
+  if (view.round) view.round.deadline += offset;
+  if (view.event) view.event.started += offset;
+  update({ view, online: true, message: '' });
+});
 socket.on('disconnect', () => update({ ...state, online: false, message: 'Reconectando con la arena…' }));
 socket.on('connect_error', () => update({ ...state, online: false, message: 'Esperando al servidor…' }));
 socket.on('connect', async () => {

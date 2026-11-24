@@ -4,7 +4,9 @@ Quiz web multijugador para evaluar patrones de diseño. Jose desarrolla el front
 
 ## Estado inicial
 
-Esta base contiene React/Vite, Express/Socket.IO, health check, cliente socket único, tipos iniciales y tokens visuales. Los flujos de partida están pendientes en los planes de cada integrante.
+La arena compartida usa el PIN de práctica 482913. Abre dos navegadores con apodos diferentes. La primera persona que ingresa puede iniciar con las preguntas de muestra o con un cuestionario del editor. Cada jugador recibe su vista por Socket.IO.
+
+El servidor revela la solución cuando todos han respondido. Si vence el tiempo con respuestas pendientes, cierra la ronda por tiempo. Al completar todos la pregunta, realiza un sorteo del 30 %. Si sale un evento, la ruleta se reproduce en todos los clientes y el servidor avanza automáticamente. El editor conserva su borrador en el navegador y la sala vive en la memoria del servidor.
 
 ## Desarrollo local
 

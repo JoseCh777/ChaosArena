@@ -35,13 +35,13 @@ export function attachArena(arena: Namespace) {
       const p = members.get(token);
       if (!p) continue;
       const view: ArenaView = {
-        phase: game.phase, pin, you: p.id, host: token === members.keys().next().value,
+        phase: game.phase, serverNow: Date.now(), pin, you: p.id, host: token === members.keys().next().value,
         players, number: game.index + 1, total: game.quiz.questions.length,
         choice: p.choice, received: sorted.filter(m => m.choice !== null).length,
         correctCount: p.correct, seconds: q?.seconds ?? 0,
       };
       if (q) view.round = { roundId: game.id, prompt: q.prompt, options: q.options, deadline: game.deadline };
-      if (q && game.phase === 'reveal') view.solution = {
+      if (q && game.phase === 'reveal' && view.received === sorted.length) view.solution = {
         index: q.correctIndex, explanation: q.explanation,
         counts: q.options.map((_, i) => sorted.filter(m => m.choice === i).length),
       };

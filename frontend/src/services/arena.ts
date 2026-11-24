@@ -21,7 +21,7 @@ function subscribe(listener: () => void) {
 export const useArena = () => useSyncExternalStore(subscribe, () => state);
 
 type Commands = Omit<ArenaCommands, 'start'> & ArenaHostCommands & ArenaRoomLifecycleCommands & RuntimeCommands & {
-  start: ArenaCommands['start'] & { settings?: ArenaSettings };
+  start: ArenaCommands['start'] & { settings?: ArenaSettings; bankSize?: 16 | 32 | 48 };
 };
 
 export async function command<K extends keyof Commands>(kind: K, payload: Commands[K]): Promise<Reply> {

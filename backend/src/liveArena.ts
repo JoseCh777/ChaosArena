@@ -5,6 +5,7 @@ import type { ArenaView, LiveEvent, Reply } from '../../shared/live.js';
 import { attachAutopilot, defaultAutopilot, type AutopilotOptions } from './autopilot.js';
 import { GameEngine, type EngineChange } from './game.js';
 import { GameError, realDeps, type EngineDeps } from './model.js';
+import { designPatternQuiz } from './designPatternBank.js';
 import { demoQuestions } from './practiceQuestions.js';
 import { validateQuiz } from './questions.js';
 import { generatePin, normalizeNickname, safeEqual } from './rooms.js';
@@ -362,7 +363,12 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
         }
         case 'start': {
           if (cancelIntro || !isHost || !['lobby', 'finished'].includes(engine.phase)) return fail('Solo el anfitrión puede iniciar desde la sala.');
-          const validation = validateQuiz(data.quiz ?? { title: 'Patrones de diseño', questions: demoQuestions });
+          const count = data.bankSize;
+          if (count !== undefined && count !== 16 && count !== 32 && count !== 48) return fail('Selecciona 16, 32 o 48 preguntas.');
+          const selectedQuiz = count === undefined
+            ? { title: 'Patrones de diseño', questions: demoQuestions }
+            : designPatternQuiz(count);
+          const validation = validateQuiz(data.quiz ?? selectedQuiz);
           if (!validation.ok) return fail(validation.error);
           const nextSettings = parseArenaSettings(data.settings);
           if (!nextSettings) return fail('Revisa la duración y los clips de la sala.');

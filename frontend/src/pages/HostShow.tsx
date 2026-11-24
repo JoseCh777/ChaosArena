@@ -1,36 +1,27 @@
-import { useEffect, useState } from 'react';
-import type { ClipCue, ProjectionClips } from '../../../shared/live';
+import { setAudioFromGesture } from '../services/mediaAudio';
+import { useState } from 'react';
 import type { RuntimeArenaView, ShowChange } from '../../../shared/runtime-chaos';
-import { ProjectionClip } from '../components/ProjectionClip';
+import { MediaOverlay, type MediaPreview } from '../components/MediaOverlay';
 import { command } from '../services/arena';
-import { clipNames, presentation } from '../services/presentation';
-import { reactions } from '../services/runtimeCatalog';
-import { useProjectionAudio } from './useProjectionAudio';
+import { mediaIds, type MediaId } from '../services/mediaManifest';
 
-const labels = { sound: 'Sonido', videos: 'Videos', reactions: 'Reacciones' } as const;
+const labels = { sound: 'Sonido de sala', videos: 'Videos', reactions: 'Reacciones' } as const;
 const controls = ['sound', 'videos', 'reactions'] as const;
 const levels = [0, 25, 50, 75, 100];
-const cues = { sala: 'Música de espera', ruleta: 'Sonido de ruleta', podio: 'Fanfarria de podio',
-  reaccion: 'Señal de celebración', impacto: 'Señal de impacto' };
 
-export function HostShow({ view, online, clips }: { view: RuntimeArenaView; online: boolean; clips?: ProjectionClips }) {
+type Props = {
+  view: RuntimeArenaView;
+  online: boolean;
+  audioEnabled: boolean;
+  toggleAudio: () => void;
+};
+
+export function HostShow({ view, online, audioEnabled, toggleAudio }: Props) {
   const [pending, setPending] = useState<ShowChange>();
   const [error, setError] = useState('');
-  const [preview, setPreview] = useState<ClipCue>();
-  const [recent, setRecent] = useState(true);
+  const [selected, setSelected] = useState<MediaId>('vamo-a-jugar');
+  const [preview, setPreview] = useState<MediaPreview>();
   const show = view.show;
-  const reaction = view.reaction;
-  const current = presentation(view);
-  const volume = show?.sound === false ? 0 : (show?.volume ?? 75);
-  const audio = useProjectionAudio(current.audio, volume);
-  const availableClips = [...new Set(Object.values(clips ?? {}).filter(clip => clip !== null))];
-
-  useEffect(() => {
-    setRecent(true);
-    if (!reaction) return;
-    const timer = window.setTimeout(() => setRecent(false), Math.max(0, reaction.started + 3000 - Date.now()));
-    return () => window.clearTimeout(timer);
-  }, [reaction?.id, reaction?.started]);
 
   async function change(update: ShowChange) {
     setPending(update);
@@ -41,48 +32,59 @@ export function HostShow({ view, online, clips }: { view: RuntimeArenaView; onli
   }
 
   if (!show) return null;
-  const following = audio.enabled;
   const controlsState = pending ? { ...show, [pending.key]: pending.value } : show;
-  return <section className="panel host-show" aria-labelledby="host-show-title">
-    <header>
-      <h2 id="host-show-title">Proyector en vivo</h2>
-      <p className="host-show-cue" role="status">
-        {recent && show.reactions && reaction ? reactions[reaction.kind]
-          : show.videos && current.clip ? `Clip · ${clipNames[current.clip]}`
-          : show.sound && show.volume > 0 && current.audio ? cues[current.audio] : 'Sin señal para esta fase'}
-      </p>
+  const disabled = !online || !!pending;
+  const canPreview = import.meta.env.DEV && (view.phase === 'finished'
+    || (view.phase === 'lobby' && view.showFact?.kind !== 'intro'));
+
+  return <>
+    <div className="arena-effect-lane host-effect-lane">
+      <MediaOverlay view={view} output="host" enabled={audioEnabled} preview={preview} wheel />
+    </div>
+    <section className="panel host-show" aria-labelledby="host-show-title">
+    <header className="host-show-head">
+      <h2 id="host-show-title">Efectos</h2>
+      {show.output === 'host' ? <button className="button button-text" type="button"
+        aria-pressed={audioEnabled} onClick={toggleAudio}>{audioEnabled ? 'Silenciar' : 'Activar sonido'}</button>
+        : <p className="host-show-hint">Audio en el proyector</p>}
     </header>
-    <div className="host-show-switches" aria-label="Efectos del proyector">
+    <details className="host-personal">
+      <summary>Ajustes de efectos</summary>
+    <label className="host-volume">Salida
+      <select value={controlsState.output} disabled={disabled}
+        onChange={event => change({ key: 'output', value: event.target.value === 'display' ? 'display' : 'host' })}>
+        <option value="host">Anfitrión</option><option value="display">Proyector</option>
+      </select>
+    </label>
+    <div className="host-show-switches" aria-label="Efectos de la sala">
       {controls.map(key => <label key={key}>
-        <input type="checkbox" checked={controlsState[key]} disabled={!online || !!pending}
-          onChange={event => change({ key, value: event.target.checked })} />
-        {labels[key]}
+        <input type="checkbox" checked={controlsState[key]} disabled={disabled}
+          onChange={event => change({ key, value: event.target.checked })} />{labels[key]}
       </label>)}
       <label className="host-volume">Volumen
-        <select value={controlsState.volume} disabled={!online || !!pending}
+        <select value={controlsState.volume} disabled={disabled}
           onChange={event => change({ key: 'volume', value: Number(event.target.value) })}>
           {[...new Set([...levels, controlsState.volume])].sort((a, b) => a - b).map(level =>
             <option key={level} value={level}>{level} %</option>)}
         </select>
       </label>
     </div>
-    <p className="host-show-hint">En la ventana del proyector, pulsa Activar sonido una vez.</p>
-    <button className="button button-text host-follow" type="button" aria-pressed={following} onClick={audio.toggle}>
-      {following ? 'Dejar de seguir efectos aquí' : 'Seguir efectos aquí'}
-    </button>
-    {current.clip && <ProjectionClip key={view.phase} cue={current.clip} compact
-      enabled={following && show.videos} sound={following && volume > 0} volume={volume} />}
-    <details className="host-personal">
-      <summary>Vista previa local</summary>
-      <div className="host-actions">
-        <button className="button button-text" type="button" onClick={audio.test}>Probar sonido</button>
-        {availableClips.map(clip => <button className="button button-text" type="button"
-          aria-pressed={preview === clip}
-          key={clip} onClick={() => setPreview(preview === clip ? undefined : clip)}>{clipNames[clip]}</button>)}
-      </div>
-      {preview && availableClips.includes(preview) && <video key={preview} src={`/media/${preview}.webm`}
-        autoPlay controls muted playsInline onError={() => { setPreview(undefined); setError('El clip de vista previa no pudo cargarse.'); }} />}
     </details>
-    {(error || audio.error) && <p className="form-error" role="alert">{error || audio.error}</p>}
-  </section>;
+    {canPreview && <details className="host-personal">
+      <summary>Probar un recurso</summary>
+      <div className="host-actions">
+        <label className="host-volume">Recurso
+          <select value={selected} onChange={event => setSelected(event.target.value as MediaId)}>
+            {mediaIds.map(id => <option key={id} value={id}>{id.replaceAll('-', ' ')}</option>)}
+          </select>
+        </label>
+        <button className="button button-text" type="button" onClick={() => {
+          setAudioFromGesture(() => setPreview({ asset: selected, started: Date.now() }));
+          if (!audioEnabled && show.output === 'host') toggleAudio();
+        }}>Probar</button>
+      </div>
+    </details>}
+    {error && <p className="form-error" role="alert">{error}</p>}
+    </section>
+  </>;
 }

@@ -17,7 +17,7 @@ const ioServer = new Server(server);
 const clients: Socket[] = [];
 
 before(async () => {
-  attachArena(ioServer.of('/arena'), { autopilot: { revealMs: 30, rouletteMs: 30, eventChance: 0, voteAfter: [1] } });
+  attachArena(ioServer.of('/arena'), { introMs: 0, autopilot: { revealMs: 30, rouletteMs: 30, eventChance: 0, voteAfter: [1] } });
   await new Promise<void>((resolve) => server.listen(0, resolve));
   url = `http://localhost:${(server.address() as AddressInfo).port}/arena`;
 });

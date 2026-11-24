@@ -1,3 +1,4 @@
+import { ARENA_PACE } from '@chaos-arena/shared/arena-settings.js';
 import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { RuntimeLiveEvent } from '../../../shared/runtime-chaos';
 import { eventLabels } from '../services/runtimeCatalog';
@@ -7,7 +8,7 @@ import '../styles/roulette.css';
 export function DemoRoulette({ event, preview }: { event: RuntimeLiveEvent; preview?: ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [started] = useState(event.started);
-  const [rest, setRest] = useState(() => Date.now() >= event.started + 2450);
+  const [rest, setRest] = useState(() => Date.now() >= event.started + ARENA_PACE.rouletteSpinMs);
   const reveal = useCallback(() => setRest(true), []);
   useLayoutEffect(() => {
     const node = dialog.current!;

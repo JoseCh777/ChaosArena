@@ -105,7 +105,7 @@ class QuestionState extends PhaseState {
     throw new GameError('WRONG_PHASE');
   }
   override onTimeout(engine: GameEngine) {
-    engine.settleRound();
+    engine.expireQuestion();
   }
 }
 
@@ -173,6 +173,8 @@ export class GameEngine {
   private duel?: Duel;
   private cancelTimer?: () => void;
   private pausedMs?: number;
+  private timedOut = false;
+  private cancelledVote = false;
 
   constructor(
     readonly pin: string,
@@ -303,6 +305,7 @@ export class GameEngine {
   }
 
   openRound(index: number) {
+    this.timedOut = false;
     const question = this.quiz.questions[index];
     const now = this.deps.now();
     const ms = question.seconds * 1000;
@@ -338,6 +341,14 @@ export class GameEngine {
     round.submissions.set(player.id, { playerId: player.id, optionIndex: optionIndex as number, receivedAt: now });
     this.notify({ kind: 'round:progress', progress: this.roundProgress()! });
     if (round.submissions.size >= this.players.size) this.settleRound();
+  }
+
+  get questionTimedOut() { return this.timedOut; }
+  get voteWasCancelled() { return this.cancelledVote; }
+
+  expireQuestion() {
+    this.timedOut = true;
+    this.settleRound();
   }
 
   /** Idempotente: cierre manual y temporizador simultáneos liquidan una sola vez. */
@@ -421,6 +432,7 @@ export class GameEngine {
 
   cancelVote(voteId: unknown) {
     if (!this.voteSession || this.voteSession.voteId !== voteId) return false;
+    this.cancelledVote = true;
     this.voteSession = undefined;
     this.clearTimer();
     this.protectedVoters = [];
@@ -476,6 +488,7 @@ export class GameEngine {
   }
 
   openVote() {
+    this.cancelledVote = false;
     if (this.duel || !this.options.votingEnabled || this.interlude.voteUsed) throw new GameError('WRONG_PHASE');
     const active = this.activePlayers();
     if (active.length < MIN_ACTIVE_TO_VOTE) throw new GameError('NOT_ENOUGH_PLAYERS');

@@ -1,11 +1,14 @@
+import { ARENA_PACE } from '@chaos-arena/shared/arena-settings.js';
 import type { Namespace } from 'socket.io';
 import type { ErrorCode, RankingEntry } from '@chaos-arena/shared';
-import type { RuntimeArenaView, RuntimeDisplayView, Reaction, ShowSettings } from '../../shared/runtime-chaos.js';
+import type { RuntimeArenaView, RuntimeDisplayView, Reaction, ShowFact, ShowSettings } from '../../shared/runtime-chaos.js';
 import type { ArenaView, LiveEvent, Reply } from '../../shared/live.js';
 import { attachAutopilot, defaultAutopilot, type AutopilotOptions } from './autopilot.js';
 import { GameEngine, type EngineChange } from './game.js';
 import { GameError, realDeps, type EngineDeps } from './model.js';
+import { designPatternQuiz } from './designPatternBank.js';
 import { demoQuestions } from './practiceQuestions.js';
+import { shuffleQuestions } from './questionOrder.js';
 import { validateQuiz } from './questions.js';
 import { generatePin, normalizeNickname, safeEqual } from './rooms.js';
 import { parseArenaSettings } from './arenaSettings.js';
@@ -39,6 +42,7 @@ const MESSAGES: Partial<Record<ErrorCode, string>> = {
 export interface ArenaConfig {
   deps?: EngineDeps;
   autopilot?: AutopilotOptions;
+  introMs?: number;
 }
 
 export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
@@ -51,14 +55,21 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
   let previousPin = '';
   let detach = () => {};
   let settings = parseArenaSettings(undefined)!;
-  const initialShow: ShowSettings = { sound: true, videos: true, reactions: true, volume: 75 };
+  const initialShow: ShowSettings = { output: 'host', sound: true, videos: true, reactions: true, volume: 75 };
   let show = { ...initialShow };
   let reaction: RuntimeDisplayView['reaction'];
+  let showFact: ShowFact | undefined;
+  let previousLeader: string | undefined;
+  let cancelIntro: (() => void) | undefined;
   let lastEvent: LiveEvent | undefined;
   let lastScores = new Map<string, number>();
 
   function boot(pin = '') {
     detach();
+    cancelIntro?.();
+    cancelIntro = undefined;
+    showFact = undefined;
+    previousLeader = undefined;
     engine?.dispose();
     connections.clear();
     tokens.clear();
@@ -70,7 +81,8 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     engine = new GameEngine(pin, { title: 'Patrones de diseño', questions: demoQuestions }, { votingEnabled: true }, deps);
     engine.enableRuntimeChaos();
     const offView = engine.subscribe(onChange);
-    const offPilot = attachAutopilot(engine, config.autopilot ?? defaultAutopilot, deps);
+    const offPilot = attachAutopilot(engine, config.autopilot ?? defaultAutopilot, deps,
+      config.autopilot ? undefined : presentationDelay);
     detach = () => {
       offView();
       offPilot();
@@ -81,7 +93,51 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     reaction = { id: deps.newId(), kind, started: deps.now() };
   }
 
+  function presentationDelay(phase: 'results' | 'voting') {
+    if (!showFact) return 0;
+    if (phase === 'voting') {
+      if (showFact.kind === 'expelled') return show.videos ? ARENA_PACE.expelledMs : 0;
+      return showFact.kind === 'vote-closed' && !engine.voteWasCancelled && show.sound
+        ? ARENA_PACE.voteClosedMs : 0;
+    }
+    if (!show.sound) return 0;
+    switch (showFact.kind) {
+      case 'timeout': return ARENA_PACE.roundTimeoutMs;
+      case 'streak': return ARENA_PACE.streakMs;
+      case 'leader': return ARENA_PACE.leaderMs;
+      default: return 0;
+    }
+  }
+
+  function announce(kind: ShowFact['kind'], title: string, detail?: string) {
+    showFact = { id: deps.newId(), started: deps.now(), kind, title, detail };
+  }
+
   function onChange(change: EngineChange) {
+    if (change.kind === 'round:open' && showFact?.kind === 'intro') showFact = undefined;
+    if (change.kind === 'round:result') {
+      const { counts, correctIndex, ranking } = change.result;
+      const correct = counts[correctIndex];
+      const complete = counts.reduce((sum, count) => sum + count, 0) === engine.players.size;
+      const leaders = ranking.filter(player => player.rank === 1);
+      const leaderChanged = leaders.length === 1 && previousLeader && previousLeader !== leaders[0].id;
+      previousLeader = leaders.length === 1 ? leaders[0].id : undefined;
+      const streak = [...engine.players.values()].filter(player => player.streak === 3 || player.streak === 5)
+        .sort((a, b) => b.streak - a.streak)[0];
+      const solution = engine.currentRound()?.question.options[correctIndex];
+      if (engine.questionTimedOut) announce('timeout', '¡Tiempo agotado!', 'La ronda cerró con las respuestas registradas.');
+      else if (complete && correct === 0) announce('none', '¡Nadie acertó!', solution);
+      else if (complete && leaderChanged) announce('leader', '¡Nuevo líder!', `${leaders[0].nickname} · ${leaders[0].score} pts`);
+      else if (complete && streak) announce('streak', `¡Racha ×${streak.streak}!`, streak.nickname);
+      else if (complete) announce('correct', correct === engine.players.size ? '¡Todos acertaron!' : 'Respuesta correcta', solution);
+    }
+    if (change.kind === 'vote:open') announce('vote-open', '¡Asamblea de emergencia!', 'Votación secreta');
+    if (change.kind === 'vote:result') {
+      const expelled = change.result.expelledId;
+      if (expelled) announce('expelled', 'Votación cerrada', `${nicknameOf(expelled)} pasa a modo fantasma.`);
+      else announce('vote-closed', engine.voteWasCancelled ? 'Votación cancelada' : 'Votación cerrada', 'Nadie fue expulsado.');
+    }
+    if (change.kind === 'finished') announce('final', 'Podio de ChaosArena');
     if (change.kind === 'round:open' && reaction?.kind !== 'expulsion') reaction = undefined;
     if (change.kind === 'round:result' && change.result.counts.reduce((sum, count) => sum + count, 0) === engine.players.size) {
       const correct = change.result.counts[change.result.correctIndex];
@@ -172,7 +228,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     if (phase === 'roulette') view.event = lastEvent;
     const vote = engine.voteInfo();
     if (vote) view.voting = { id: vote.voteId, deadline: vote.deadline, received: vote.received, candidates: [...vote.candidateIds] };
-    arena.to('display').emit('display', { ...view, show });
+    arena.to('display').emit('display', { ...view, show, showFact });
 
     const host = hostId();
     for (const [token, socketId] of connections) {
@@ -189,6 +245,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
       };
       if (personal.host) {
         personal.show = show;
+        personal.showFact = showFact;
         personal.canSkipEvent = engine.canSkipEvent;
       }
       if (personal.host && phase === 'finished') personal.summary = all.map((p) => ({ id: p.id, correct: p.correctCount }));
@@ -255,6 +312,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
             previousPin = pin;
             boot(pin);
           } else {
+            if (cancelIntro) return fail('La partida ya está por comenzar.');
             if (!engine.pin) return fail('El anfitrión todavía no ha abierto la sala.');
             if (data.pin !== engine.pin) return fail('PIN de sala incorrecto.');
           }
@@ -281,6 +339,10 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
           break;
         case 'usePower':
           if (!engine.usePower(player.id, data.power, data.target)) return fail('Ese poder no está disponible ahora.');
+          if (data.power === 'proxy' && engine.chaosView(player.id)?.shield) {
+            announce('shield', '¡Escudo activado!', `${player.nickname} · Protección contra un ataque dirigido`);
+            publish();
+          }
           break;
         case 'duelConsent':
           if (!engine.duelAction(player.id, 'consent', data.id, data.accepted)) return fail('Esta invitación ya no está disponible.');
@@ -308,7 +370,9 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
         case 'hostShow': {
           if (!isHost) return fail('Solo el anfitrión puede controlar el proyector.');
           const { key, value } = data;
-          if (key === 'volume' && typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 100) {
+          if (key === 'output' && (value === 'host' || value === 'display')) {
+            show = { ...show, output: value };
+          } else if (key === 'volume' && typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 100) {
             show = { ...show, volume: value };
           } else if ((key === 'sound' || key === 'videos' || key === 'reactions') && typeof value === 'boolean') {
             show = { ...show, [key]: value };
@@ -317,23 +381,38 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
           break;
         }
         case 'start': {
-          if (!isHost || !['lobby', 'finished'].includes(engine.phase)) return fail('Solo el anfitrión puede iniciar desde la sala.');
-          const validation = validateQuiz(data.quiz ?? { title: 'Patrones de diseño', questions: demoQuestions });
+          if (cancelIntro || !isHost || !['lobby', 'finished'].includes(engine.phase)) return fail('Solo el anfitrión puede iniciar desde la sala.');
+          const count = data.bankSize;
+          if (count !== undefined && count !== 16 && count !== 32 && count !== 48) return fail('Selecciona 16, 32 o 48 preguntas.');
+          const selectedQuiz = count === undefined
+            ? { title: 'Patrones de diseño', questions: demoQuestions }
+            : designPatternQuiz(count);
+          const validation = validateQuiz(data.quiz ?? selectedQuiz);
           if (!validation.ok) return fail(validation.error);
           const nextSettings = parseArenaSettings(data.settings);
           if (!nextSettings) return fail('Revisa la duración y los clips de la sala.');
           settings = nextSettings;
           if (engine.phase === 'finished') engine.restart();
-          const quiz = settings.roundSeconds === null ? validation.quiz : {
+          const questions = shuffleQuestions(validation.quiz.questions, deps.rng);
+          const seconds = settings.roundSeconds;
+          const quiz = {
             ...validation.quiz,
-            questions: validation.quiz.questions.map(q => ({ ...q, seconds: settings.roundSeconds! })),
+            questions: seconds === null ? questions : questions.map(question => ({ ...question, seconds })),
           };
           engine.configure(quiz, { votingEnabled: data.voting !== false });
-          engine.command('start');
+          const introMs = config.introMs ?? ARENA_PACE.introMs;
+          if (introMs > 0 && show.videos) {
+            announce('intro', '¡Que comience el caos!');
+            cancelIntro = deps.setTimer(introMs, () => {
+              cancelIntro = undefined;
+              engine.command('start');
+            });
+            publish();
+          } else engine.command('start');
           break;
         }
         case 'removePlayer': {
-          if (engine.phase !== 'lobby' || !isHost) return fail('Solo el anfitrión puede retirar jugadores durante la espera.');
+          if (cancelIntro || engine.phase !== 'lobby' || !isHost) return fail('Solo el anfitrión puede retirar jugadores durante la espera.');
           if (typeof data.id !== 'string' || data.id === player.id || !engine.players.has(data.id)) return fail('Selecciona a otro jugador.');
           engine.kick(data.id);
           break;
@@ -348,7 +427,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
           break;
         }
         case 'leave':
-          if (!['lobby', 'finished'].includes(engine.phase)) return fail('Acción no disponible en esta fase.');
+          if (cancelIntro || !['lobby', 'finished'].includes(engine.phase)) return fail('Acción no disponible en esta fase.');
           leave(session);
           session = '';
           break;

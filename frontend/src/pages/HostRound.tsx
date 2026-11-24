@@ -33,13 +33,16 @@ export function HostRound({ view, online }: { view: RuntimeArenaView; online: bo
   if (!round) return null;
   return <section className="host-console" aria-labelledby="host-control-title">
     <header>
-      <h2 id="host-control-title">Control de partida</h2>
+      <h2 id="host-control-title">{question ? 'Pregunta en juego' : 'Control de partida'}</h2>
       <p>Ronda {view.number} de {view.total} · {view.received}/{view.players.length} respuestas</p>
     </header>
     {question && <>
       <RoundTimer seconds={seconds} totalSeconds={view.seconds} />
       {paused && <p className="host-state" role="status">Pregunta en pausa</p>}
       <p className="host-question">{round.prompt}</p>
+      <ol className="host-answer-list" type="A">
+        {round.options.map(option => <li key={option}>{option}</li>)}
+      </ol>
       <div className="host-actions">
         <button className="button button-primary" type="button" disabled={disabled || seconds <= 0}
           onClick={() => run(paused ? 'resume' : 'pause')}>{paused ? 'Reanudar pregunta' : 'Pausar pregunta'}</button>

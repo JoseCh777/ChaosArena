@@ -1,3 +1,4 @@
+import { ARENA_PACE } from '@chaos-arena/shared/arena-settings.js';
 import type { GameCommand } from '@chaos-arena/shared';
 import type { EngineChange, GameEngine } from './game.js';
 import { GameError, realDeps, type EngineDeps } from './model.js';
@@ -20,9 +21,9 @@ export interface AutopilotOptions {
 }
 
 export const defaultAutopilot: AutopilotOptions = {
-  revealMs: 3500,
-  rouletteMs: 5400,
-  eventChance: 0.3,
+  revealMs: ARENA_PACE.revealMs,
+  rouletteMs: ARENA_PACE.rouletteSpinMs + ARENA_PACE.rouletteResultMs,
+  eventChance: 0.45,
   voteAfter: [5, 10],
 };
 
@@ -30,6 +31,7 @@ export function attachAutopilot(
   engine: GameEngine,
   options: AutopilotOptions = defaultAutopilot,
   deps: Pick<EngineDeps, 'setTimer' | 'rng'> = realDeps,
+  presentationDelay?: (phase: 'results' | 'voting') => number,
 ): () => void {
   let cancel: (() => void) | undefined;
   let rollAfterVote = false;
@@ -75,11 +77,11 @@ export function attachAutopilot(
     if (change.kind === 'round:result') {
       const answered = change.result.counts.reduce((a, b) => a + b, 0);
       const allAnswered = answered >= engine.players.size;
-      later(options.revealMs, 'results', () => afterReveal(allAnswered));
+      later(Math.max(options.revealMs, presentationDelay?.('results') ?? 0), 'results', () => afterReveal(allAnswered));
     } else if (change.kind === 'vote:result') {
       const eligible = rollAfterVote;
       rollAfterVote = false;
-      later(0, 'voting', () => rollOrContinue(eligible));
+      later(presentationDelay?.('voting') ?? 0, 'voting', () => rollOrContinue(eligible));
     } else if (change.kind === 'finished') {
       cancel?.();
     }

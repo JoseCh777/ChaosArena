@@ -1,3 +1,4 @@
+import { ARENA_PACE } from '@chaos-arena/shared/arena-settings.js';
 import { useLayoutEffect, useRef } from 'react';
 import type { RuntimeEvent } from '../../../shared/runtime-chaos';
 import { eventLabels } from '../services/runtimeCatalog';
@@ -26,8 +27,8 @@ export function ChaosDial({ type, spin, onRest, started }: {
     const motion = wheel.animate([
       { transform: 'rotate(0deg)' },
       { transform: `rotate(${angle}deg)` },
-    ], { duration: 2450, easing: 'cubic-bezier(.17,.68,.16,1)' });
-    motion.currentTime = Math.min(2450, Math.max(0, Date.now() - started));
+    ], { duration: ARENA_PACE.rouletteSpinMs, easing: 'cubic-bezier(.17,.68,.16,1)' });
+    motion.currentTime = Math.min(ARENA_PACE.rouletteSpinMs, Math.max(0, Date.now() - started));
     motion.onfinish = onRest;
     return () => { motion.onfinish = null; motion.cancel(); };
   }, [angle, spin, onRest, started]);

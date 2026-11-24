@@ -30,6 +30,8 @@ export function PlayPage({ view, online }: { view: RuntimeArenaView; online: boo
   const ghost = view.players.some(player => player.id === view.you && player.status === 'ghost');
   const choice = view.choice ?? pending;
   const reveal = view.solution;
+  const verdict = !reveal ? undefined : view.choice === null ? 'unanswered'
+    : view.choice === reveal.index ? 'correct' : 'incorrect';
   return <main className="game-layout play-view">
     <section className="panel game-panel" aria-labelledby="game-title">
       {ghost && <p className="lock-feedback">Modo fantasma · Tus respuestas siguen contando para la evaluación.</p>}
@@ -40,9 +42,17 @@ export function PlayPage({ view, online }: { view: RuntimeArenaView; online: boo
         <span className="round-digit" aria-hidden="true">{String(view.number).padStart(2, '0')}</span>
         <h1 className="game-prompt" id="game-title">{round.prompt}</h1>
       </div>
+      {verdict && reveal && <div className="round-verdict player-verdict" data-verdict={verdict} role="status">
+        <span className="verdict-mark" aria-hidden="true">{verdict === 'correct' ? '✓' : verdict === 'incorrect' ? '×' : '–'}</span>
+        <div>
+          <strong>{verdict === 'correct' ? '¡Respuesta correcta!' : verdict === 'incorrect' ? 'Respuesta incorrecta' : 'Sin respuesta'}</strong>
+          {verdict !== 'correct' && <p>Correcta · {round.options[reveal.index]}</p>}
+          {reveal.explanation && <p>{reveal.explanation}</p>}
+        </div>
+      </div>}
       <div className="game-options" aria-label="Opciones de respuesta" role="group">
         {round.options.map((option, i) => <button key={i} className="game-option"
-          data-picked={choice === i || undefined} data-correct={reveal?.index === i || undefined}
+          data-picked={choice === i || undefined} data-correct={reveal?.index === i || undefined} data-wrong={verdict === 'incorrect' && view.choice === i || undefined}
           disabled={!online || choice !== null || view.phase !== 'question' || paused || remaining <= 0}
           onClick={() => answer(i)}>
           <span className="option-letter">{String.fromCharCode(65 + i)}</span>
@@ -54,10 +64,6 @@ export function PlayPage({ view, online }: { view: RuntimeArenaView; online: boo
         {view.choice !== null ? 'Respuesta registrada. Esperando a los demás…' : 'Enviando respuesta…'}
       </p>}
       {view.phase === 'reveal' && !reveal && <p className="lock-feedback" role="status">Pregunta cerrada. Preparando la siguiente fase…</p>}
-      {reveal && <div className="round-verdict" role="status">
-        <strong>{view.choice === null ? 'Tiempo agotado' : view.choice === reveal.index ? '¡Respuesta correcta!' : 'Respuesta incorrecta'}</strong>
-        {reveal.explanation && <p>{reveal.explanation}</p>}
-      </div>}
       {error && view.phase === 'question' && <p role="alert">{error}</p>}
     </section>
     <PowerTray view={view} online={online} />

@@ -3,7 +3,17 @@ import type { ArenaView, ConfiguredDisplayView, LiveEvent } from './live.js';
 
 export type RuntimeEvent = ChaosEvent | 'error-404' | 'firewall' | 'duel' | 'respawn';
 export type Power = 'proxy' | 'decorator' | 'memento' | 'adapter' | 'prototype' | 'command';
-export type RuntimeLiveEvent = Omit<LiveEvent, 'type'> & { type: RuntimeEvent };
+export type EventImpact = 'loss' | 'reward' | 'shield' | 'blocked';
+export type RuntimeLiveEvent = Omit<LiveEvent, 'type'> & { type: RuntimeEvent; impact?: EventImpact };
+export type MediaOutput = 'host' | 'display';
+export interface ShowFact {
+  id: string;
+  started: number;
+  kind: 'intro' | 'timeout' | 'correct' | 'none' | 'streak' | 'leader' | 'vote-open'
+    | 'vote-closed' | 'expelled' | 'final' | 'shield';
+  title: string;
+  detail?: string;
+}
 export type Reaction = 'racha' | 'todos-aciertan' | 'nadie-acierta' | 'empate' | 'expulsion';
 
 export interface DuelView {
@@ -27,6 +37,7 @@ export interface PrivateChaos {
 }
 
 export interface ShowSettings {
+  output: MediaOutput;
   sound: boolean;
   videos: boolean;
   reactions: boolean;
@@ -34,11 +45,13 @@ export interface ShowSettings {
 }
 
 export type ShowChange = { key: 'volume'; value: number }
+  | { key: 'output'; value: MediaOutput }
   | { key: 'sound' | 'videos' | 'reactions'; value: boolean };
 export type HostRoundAction = 'pause' | 'resume' | 'close' | 'skipEvent' | 'skipRoulette' | 'cancelVote';
 
 export interface RuntimePublic {
   pausedMs?: number;
+  showFact?: ShowFact;
   show?: ShowSettings;
   chaosEvent?: RuntimeLiveEvent;
   duel?: DuelView;

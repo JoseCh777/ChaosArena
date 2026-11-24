@@ -37,7 +37,7 @@ function factScene(fact: ShowFact, view: RuntimeDisplayView) {
     case 'final': {
       const winners = view.players.filter(player => player.rank === 1);
       return scene(fact.id, fact.started,
-        { title: 'El podio está por decidirse', ms: 3050, asset: 'redoble' },
+        { title: 'Y el campeón de ChaosArena es…', ms: 3050, asset: 'redoble' },
         { title: winners.length > 1 ? 'Primer puesto compartido' : '¡Campeón de ChaosArena!',
           detail: winners.map(player => `${player.nickname} · ${player.score} pts`).join(' / '),
           ms: 5600, asset: 'la-plata', fallback: view.clips?.podio });

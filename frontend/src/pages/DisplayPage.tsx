@@ -16,6 +16,7 @@ export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayPr
   const display = hostView ?? arena.display;
   const { online, message } = arena;
   const [localAudio, setLocalAudio] = useState(false);
+  const [skippedFinal, setSkippedFinal] = useState<string>();
   const output = hostView ? 'host' : 'display';
   const audioEnabled = enabled ?? localAudio;
   const selected = (display?.show?.output ?? 'host') === output;
@@ -28,7 +29,7 @@ export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayPr
     const timer = window.setTimeout(() => setNow(Date.now()), Math.max(0, podiumAt - Date.now()) + 20);
     return () => window.clearTimeout(timer);
   }, [podiumAt]);
-  const hideWinner = now < podiumAt;
+  const hideWinner = now < podiumAt && skippedFinal !== display?.showFact?.id;
   const remaining = useRoundSeconds(phase === 'question' ? display?.round?.deadline : undefined, display?.pausedMs);
 
   const header = <header className="projection-brand">
@@ -59,7 +60,8 @@ export function DisplayPage({ hostView, enabled, toggleAudio, close }: DisplayPr
   const finished = phase === 'finished';
   return <main className={'projection ' + (waiting ? 'projection-lobby' : '')}>
     {header}
-    <MediaOverlay view={display} output={output} enabled={audioEnabled} wheel />
+    <MediaOverlay view={display} output={output} enabled={audioEnabled} wheel
+      onSkip={() => { if (phase === 'finished') setSkippedFinal(display.showFact?.id); }} />
     {waiting ? <section className="projection-prompt">
       <div><p className="round-meta">Sala de espera</p><h1>Entra a la <em>arena</em></h1>
         <p className="projection-pin">{display.pin}</p>

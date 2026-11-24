@@ -14,9 +14,10 @@ type Props = {
   enabled: boolean;
   preview?: MediaPreview;
   wheel?: boolean;
+  onSkip?: () => void;
 };
 
-export function MediaOverlay({ view, output, enabled, preview, wheel = false }: Props) {
+export function MediaOverlay({ view, output, enabled, preview, wheel = false, onSkip }: Props) {
   const ambient = useRef<HTMLAudioElement>(null);
   const player = useRef<HTMLMediaElement>(null);
   const [now, setNow] = useState(Date.now);
@@ -114,7 +115,7 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false }: 
       {showText && step && <div className="arena-media-copy" role="status">
         <strong>{step.title}</strong>{step.detail && <p>{step.detail}</p>}
       </div>}
-      {visible && selected && <button className="button button-text" type="button" onClick={() => setSkipped(id)}>Omitir efecto</button>}
+      {visible && selected && <button className="button button-text" type="button" onClick={() => { setSkipped(id); onSkip?.(); }}>Omitir efecto</button>}
     </aside>}
     {blocked && audible && <p className="arena-media-status" role="status">Pulsa Silenciar y Activar sonido para reintentar el audio.</p>}
   </>;

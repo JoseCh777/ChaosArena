@@ -10,7 +10,7 @@ import type {
   RoundProgress,
   ServerToClientEvents,
 } from '@chaos-arena/shared';
-import type { Power, RuntimeLiveEvent } from '../../shared/runtime-chaos.js';
+import type { RuntimeLiveEvent } from '../../shared/runtime-chaos.js';
 import { Duel } from './duel.js';
 import { rollRuntimeEvent } from './runtimeEvents.js';
 import { RuntimePowers } from './runtimePowers.js';
@@ -413,7 +413,7 @@ export class GameEngine {
   }
 
   openVote() {
-    if (!this.options.votingEnabled || this.interlude.voteUsed) throw new GameError('WRONG_PHASE');
+    if (this.pendingDuel || this.duel || !this.options.votingEnabled || this.interlude.voteUsed) throw new GameError('WRONG_PHASE');
     const active = this.activePlayers();
     if (active.length < MIN_ACTIVE_TO_VOTE) throw new GameError('NOT_ENOUGH_PLAYERS');
     this.protectedVoters = active.filter(player => this.runtime?.firewall(player.id, this.questionIndex)).map(player => player.id);
@@ -473,6 +473,79 @@ export class GameEngine {
 
   hasNextQuestion(): boolean {
     return this.questionIndex + 1 < this.quiz.questions.length;
+  }
+
+  private regularPowerPhase() {
+    return !this.duel && (this.phase === 'question' || this.phase === 'results' || this.phase === 'event');
+  }
+
+  private canChallenge() {
+    return (this.phase === 'question' || this.phase === 'results') && !this.pendingDuel
+      && !this.duel && this.activePlayers().length >= 2;
+  }
+
+  chaosView(playerId: string) {
+    const player = this.players.get(playerId);
+    if (!this.runtime || !player) return undefined;
+    const reserved = this.pendingDuel?.challenger?.id === playerId;
+    return {
+      ...this.runtime.view(player, this.questionIndex, this.duel?.canAdapt(playerId) ?? false,
+        this.canChallenge(), this.regularPowerPhase() && !reserved),
+      ...this.duel?.playerView(playerId),
+    };
+  }
+
+  usePower(playerId: string, power: unknown, target: unknown) {
+    const available = this.chaosView(playerId)?.available.find(item => item === power);
+    if (!available || !this.runtime) return false;
+    const player = this.requirePlayer(playerId);
+    if (available === 'command') return this.challenge(player, target);
+    this.runtime.consume(player, available, this.questionIndex);
+    if (available === 'adapter') this.duel?.adapt(playerId);
+    this.notify({ kind: 'snapshot' });
+    return true;
+  }
+
+  private challenge(player: PlayerState, target: unknown) {
+    const opponent = typeof target === 'string' ? this.players.get(target) : undefined;
+    if (!opponent || opponent.status !== 'active' || opponent === player) return false;
+    this.pendingDuel = { players: [player, opponent], challenger: player };
+    this.notify({ kind: 'snapshot' });
+    return true;
+  }
+
+  duelAction(player: string, kind: 'consent' | 'answer', id: unknown, value: unknown) {
+    if (!this.duel) return false;
+    return kind === 'consent' ? this.duel.consent(player, id, value) : this.duel.answer(player, id, value);
+  }
+
+  advanceInterlude() {
+    if (this.duel) return;
+    const offer = this.pendingDuel;
+    if (!offer) {
+      if (this.hasNextQuestion()) this.openRound(this.questionIndex + 1);
+      else this.finish();
+      return;
+    }
+    this.pendingDuel = undefined;
+    this.runtimeResult = undefined;
+    this.state = new InterludeState('event');
+    this.duel = new Duel(offer.players, this.deps,
+      () => this.notify({ kind: 'snapshot' }),
+      () => { this.duel = undefined; this.advanceInterlude(); },
+      () => {
+        if (offer.challenger) this.runtime?.consume(offer.challenger, 'command', this.questionIndex);
+      },
+    );
+    this.duel.start();
+  }
+
+  runtimeView() {
+    return {
+      chaosEvent: this.phase === 'event' ? this.runtimeResult : undefined,
+      duel: this.duel?.publicView(),
+      protectedIds: this.phase === 'voting' ? [...this.protectedVoters] : undefined,
+    };
   }
 
   // ---------- Vistas por rol ----------

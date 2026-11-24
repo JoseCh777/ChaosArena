@@ -50,3 +50,27 @@
 @media (max-width: 760px), (prefers-reduced-motion: reduce) {
   .arena-effect-lane .arena-media { rotate: none; }
 }
+
+/* The reaction floats above the stage without shifting its content or taking its clicks. */
+.host-layout:has(.host-main-stage) > .host-effect-lane,
+.projection-stage:has(.projection-round) > .arena-effect-lane {
+  z-index: 3;
+  display: grid;
+  align-content: start;
+  justify-items: end;
+  padding: clamp(.75rem, 3vw, 2.5rem);
+  pointer-events: none;
+}
+
+.host-layout:has(.host-main-stage) > .host-effect-lane .arena-media,
+.projection-stage:has(.projection-round) > .arena-effect-lane .arena-media {
+  width: min(100%, clamp(16rem, 49vw, 38rem));
+  margin: 0;
+}
+
+.arena-effect-lane .arena-media > button { pointer-events: auto; }
+
+@media (max-width: 640px) {
+  .host-layout:has(.host-main-stage) > .host-effect-lane .arena-media,
+  .projection-stage:has(.projection-round) > .arena-effect-lane .arena-media { width: 100%; }
+}

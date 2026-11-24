@@ -33,7 +33,7 @@ export function HostOptions({ settings, voting, disabled, onSettings, onVoting }
         onChange={event => onVoting(event.target.checked)} /> Activar votaciones</label>
     </div>
     <fieldset disabled={disabled}>
-      <legend>Clips del proyector</legend>
+      <legend>Clips de respaldo</legend>
       <div className="host-options-grid">
         {CLIP_CUES.map(phase => <div className="field" key={phase}>
           <label htmlFor={`clip-${phase}`}>{labels[phase]}</label>

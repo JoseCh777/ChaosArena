@@ -14,9 +14,11 @@ P0 entretenimiento añade cuatro eventos, votación, fantasmas, 4–6 clips y po
 
 Una sala en memoria y 15 preguntas sugeridas. Preparar ensayo con el tamaño real de la clase. Un reinicio del servidor pierde la sala. El anfitrión conserva el cuestionario en su navegador y mediante exportación JSON.
 
+La ampliación de juego de [RuntimeChaos v1.1](RUNTIME-CHAOS.md) incorpora ocho eventos, seis poderes, duelos y reacciones del proyector sobre el MVP.
+
 ## Flujo de partida
 
-Lobby → pregunta → resultados → evento o votación opcional → siguiente pregunta → final. El servidor avanza automáticamente y el anfitrión configura la partida antes de iniciarla. El tiempo objetivo de sesión es 15–20 minutos, por confirmar en ensayo. 30 segundos por defecto, con opción de ajustar la duración en bloque o usar los tiempos del cuestionario. Mostrar explicaciones durante 5–8 segundos. Cada ronda que todos completan tiene un 30 % de probabilidad de ruleta. En las preguntas cinco y diez, si no sale ruleta y se cumplen las condiciones, puede haber asamblea.
+Lobby → pregunta → resultados → evento o votación opcional → siguiente pregunta → final. El servidor avanza automáticamente y el anfitrión configura la partida antes de iniciarla. El tiempo objetivo de sesión es 15–20 minutos, por confirmar en ensayo. 30 segundos por defecto, con opción de ajustar la duración en bloque o usar los tiempos del cuestionario. La revelación entre rondas dura 1,75 segundos. Cada ronda que todos completan tiene un 45 % de probabilidad de ruleta. En las preguntas cinco y diez, si se cumplen las condiciones, la asamblea se resuelve antes de sortear la ruleta.
 
 ## Reglas de evaluación
 
@@ -43,7 +45,7 @@ Seleccionar uniformemente entre efectos elegibles en el servidor. Máximo un eve
 
 Votación de 20 segundos entre activos. Un voto por persona a otro activo u Omitir. Gana el candidato que supere a Omitir sin empate, con tres votos válidos como mínimo. Máximo una expulsión y al menos dos activos restantes. El expulsado pasa a fantasma y conserva evaluación y puntos. Los votos individuales permanecen secretos. El anfitrión puede desactivar votaciones.
 
-Clips locales autorizados de 2–5 segundos, uno a la vez y solo en el proyector. Audio habilitado mediante gesto del anfitrión, con mute y alternativa visual si falla la reproducción.
+La mesa del anfitrión es la salida audiovisual inicial. El equipo puede seleccionar el proyector como salida alternativa. El audio requiere una interacción en la ventana seleccionada. Ver [operación e inventario multimedia](MULTIMEDIA.md).
 
 ## Entrega y contingencia
 

@@ -1,12 +1,14 @@
+import { ARENA_PACE } from '@chaos-arena/shared/arena-settings.js';
 import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import type { LiveEvent } from '../../../shared/live';
-import { eventLabels } from '../services/demoEvents';
+import type { RuntimeLiveEvent } from '../../../shared/runtime-chaos';
+import { eventLabels } from '../services/runtimeCatalog';
 import { ChaosDial } from './ChaosDial';
 import '../styles/roulette.css';
 
-export function DemoRoulette({ event, preview }: { event: LiveEvent; preview?: ReactNode }) {
+export function DemoRoulette({ event, preview }: { event: RuntimeLiveEvent; preview?: ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const [rest, setRest] = useState(() => Date.now() >= event.started + 2450);
+  const [started] = useState(event.started);
+  const [rest, setRest] = useState(() => Date.now() >= event.started + ARENA_PACE.rouletteSpinMs);
   const reveal = useCallback(() => setRest(true), []);
   useLayoutEffect(() => {
     const node = dialog.current!;
@@ -18,7 +20,7 @@ export function DemoRoulette({ event, preview }: { event: LiveEvent; preview?: R
     <div className="roulette-stage">
       <h2 id="roulette-title">Ruleta de <em>caos</em></h2>
       {preview}
-      <ChaosDial type={event.type} started={event.started} spin={!rest} onRest={reveal} />
+      <ChaosDial type={event.type} started={started} spin={!rest} onRest={reveal} />
     </div>
     <div className="roulette-outcome" role="status">
       <h3>{rest ? eventLabels[event.type] : 'Girando…'}</h3>

@@ -5,6 +5,7 @@ import type { AddressInfo } from 'node:net';
 import { Server } from 'socket.io';
 import { io as connect, type Socket } from 'socket.io-client';
 import type { ArenaView, DisplayView, Reply } from '../../shared/live.js';
+import type { RuntimeDisplayView, RuntimeArenaView } from '../../shared/runtime-chaos.js';
 import { attachArena } from './liveArena.js';
 import { question } from './testing.js';
 
@@ -16,7 +17,7 @@ const ioServer = new Server(server);
 const clients: Socket[] = [];
 
 before(async () => {
-  attachArena(ioServer.of('/arena'), { autopilot: { revealMs: 30, rouletteMs: 30, eventChance: 0, voteAfter: [1] } });
+  attachArena(ioServer.of('/arena'), { introMs: 0, autopilot: { revealMs: 30, rouletteMs: 30, eventChance: 0, voteAfter: [1] } });
   await new Promise<void>((resolve) => server.listen(0, resolve));
   url = `http://localhost:${(server.address() as AddressInfo).port}/arena`;
 });
@@ -57,8 +58,8 @@ async function until(check: () => boolean, ms = 2000) {
 
 test('arena: partida con asamblea, fantasma, final y reinicio', async () => {
   const display = client();
-  let screen: DisplayView | undefined;
-  display.socket.on('display', (v: DisplayView) => (screen = v));
+  let screen: RuntimeDisplayView | undefined;
+  display.socket.on('display', (v: RuntimeDisplayView) => (screen = v));
   assert.ok((await display.cmd('observe')).ok);
 
   const [ana, beto, caro, dani] = [client(), client(), client(), client()];
@@ -98,6 +99,17 @@ test('arena: partida con asamblea, fantasma, final y reinicio', async () => {
   assert.equal(ana.view?.round && 'correctIndex' in ana.view.round, false);
 
   const roundId = ana.view!.round!.roundId;
+  assert.equal((await beto.cmd('hostRound', { action: 'pause', id: roundId })).ok, false);
+  assert.equal((await beto.cmd('hostShow', { key: 'sound', value: false })).ok, false);
+  assert.equal((await ana.cmd('hostShow', { key: 'volume', value: 101 })).ok, false);
+  assert.ok((await ana.cmd('hostShow', { key: 'volume', value: 25 })).ok);
+  await until(() => screen?.show?.volume === 25);
+  assert.equal((beto.view as RuntimeArenaView).show, undefined);
+  assert.ok((await ana.cmd('hostRound', { action: 'pause', id: roundId })).ok);
+  await until(() => screen?.pausedMs !== undefined);
+  assert.equal((await beto.cmd('answer', { roundId, choice: 1 })).ok, false);
+  assert.ok((await ana.cmd('hostRound', { action: 'resume', id: roundId })).ok);
+  await until(() => screen?.pausedMs === undefined);
   for (const c of [ana, beto, caro]) assert.ok((await c.cmd('answer', { roundId, choice: 1 })).ok);
   assert.equal((await ana.cmd('answer', { roundId, choice: 1 })).ok, false);
 

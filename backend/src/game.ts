@@ -10,6 +10,10 @@ import type {
   RoundProgress,
   ServerToClientEvents,
 } from '@chaos-arena/shared';
+import type { RuntimeLiveEvent } from '../../shared/runtime-chaos.js';
+import { Duel } from './duel.js';
+import { rollRuntimeEvent } from './runtimeEvents.js';
+import { RuntimePowers } from './runtimePowers.js';
 import { pickEffect, type EventContext } from './events.js';
 import { GameError, realDeps, type EngineDeps, type PlayerRoundOutcome, type PlayerState, type RoundModifier, type RoundState } from './model.js';
 import { toPublicRound } from './questions.js';
@@ -101,7 +105,7 @@ class QuestionState extends PhaseState {
     throw new GameError('WRONG_PHASE');
   }
   override onTimeout(engine: GameEngine) {
-    engine.settleRound();
+    engine.expireQuestion();
   }
 }
 
@@ -113,7 +117,7 @@ class InterludeState extends PhaseState {
   override command(engine: GameEngine, command: GameCommand) {
     switch (command) {
       case 'next':
-        return engine.hasNextQuestion() ? engine.openRound(engine.questionIndex + 1) : engine.finish();
+        return engine.advanceInterlude();
       case 'event':
         return engine.runEvent();
       case 'vote':
@@ -161,7 +165,16 @@ export class GameEngine {
   private interlude = { eventUsed: false, voteUsed: false };
   private closedRounds = 0;
   private readonly lastOutcomes = new Map<string, PlayerRoundOutcome & { roundId: string }>();
+  private runtime?: RuntimePowers;
+  private previousRuntimeEvent?: RuntimeLiveEvent['type'];
+  private runtimeResult?: RuntimeLiveEvent;
+  private protectedVoters: string[] = [];
+  private pendingDuel?: { players: [PlayerState, PlayerState]; challenger?: PlayerState };
+  private duel?: Duel;
   private cancelTimer?: () => void;
+  private pausedMs?: number;
+  private timedOut = false;
+  private cancelledVote = false;
 
   constructor(
     readonly pin: string,
@@ -169,6 +182,10 @@ export class GameEngine {
     private options: RoomOptions,
     private readonly deps: EngineDeps = realDeps,
   ) {}
+
+  enableRuntimeChaos() {
+    this.runtime = new RuntimePowers();
+  }
 
   get phase(): Phase {
     return this.state.phase;
@@ -228,6 +245,7 @@ export class GameEngine {
   }
 
   dispose() {
+    this.duel?.dispose();
     this.cancelTimer?.();
     this.listeners.clear();
   }
@@ -264,22 +282,30 @@ export class GameEngine {
     this.clearTimer();
     for (const p of this.players.values()) Object.assign(p, { status: 'active', score: 0, correctCount: 0, streak: 0 });
     this.round = undefined;
+    this.pausedMs = undefined;
     this.voteSession = undefined;
     this.pendingModifier = undefined;
     this.questionIndex = -1;
     this.closedRounds = 0;
     this.lastOutcomes.clear();
+    this.runtime?.reset();
+    this.previousRuntimeEvent = undefined;
+    this.runtimeResult = undefined;
+    this.pendingDuel = undefined;
+    this.protectedVoters = [];
     this.state = new LobbyState();
     this.notify({ kind: 'snapshot' });
   }
 
   removePlayer(playerId: string) {
     if (!this.players.delete(playerId)) throw new GameError('BAD_REQUEST');
+    this.runtime?.remove(playerId);
     this.notify({ kind: 'player:kicked', playerId });
     this.notify({ kind: 'snapshot' });
   }
 
   openRound(index: number) {
+    this.timedOut = false;
     const question = this.quiz.questions[index];
     const now = this.deps.now();
     const ms = question.seconds * 1000;
@@ -294,6 +320,8 @@ export class GameEngine {
       settled: false,
     };
     this.pendingModifier = undefined;
+    this.runtimeResult = undefined;
+    this.protectedVoters = [];
     this.interlude = { eventUsed: false, voteUsed: false };
     this.questionIndex = index;
     this.state = new QuestionState();
@@ -305,7 +333,7 @@ export class GameEngine {
   recordAnswer(player: PlayerState, roundId: string, optionIndex: unknown) {
     const round = this.round;
     const now = this.deps.now();
-    if (!round || round.settled || round.roundId !== roundId || now > round.deadline) throw new GameError('ROUND_CLOSED');
+    if (this.pausedMs !== undefined || !round || round.settled || round.roundId !== roundId || now > round.deadline) throw new GameError('ROUND_CLOSED');
     if (round.submissions.has(player.id)) throw new GameError('ALREADY_ANSWERED');
     if (!Number.isInteger(optionIndex) || (optionIndex as number) < 0 || (optionIndex as number) >= round.question.options.length) {
       throw new GameError('OPTION_INVALID');
@@ -315,11 +343,20 @@ export class GameEngine {
     if (round.submissions.size >= this.players.size) this.settleRound();
   }
 
+  get questionTimedOut() { return this.timedOut; }
+  get voteWasCancelled() { return this.cancelledVote; }
+
+  expireQuestion() {
+    this.timedOut = true;
+    this.settleRound();
+  }
+
   /** Idempotente: cierre manual y temporizador simultáneos liquidan una sola vez. */
   settleRound() {
     const round = this.round;
     if (!round || round.settled) return;
     round.settled = true;
+    this.pausedMs = undefined;
     this.clearTimer();
     const players = [...this.players.values()];
     const submissions = [...round.submissions.values()];
@@ -327,7 +364,8 @@ export class GameEngine {
     for (const outcome of outcomes) {
       const player = this.players.get(outcome.playerId);
       if (!player) continue;
-      player.score = Math.max(0, player.score + outcome.pointsDelta);
+      const delta = this.runtime?.points(player, round, outcome) ?? outcome.pointsDelta;
+      player.score = Math.max(0, player.score + delta);
       if (outcome.correct) player.correctCount++;
       player.streak = outcome.newStreak;
       this.lastOutcomes.set(player.id, { ...outcome, roundId: round.roundId });
@@ -347,8 +385,69 @@ export class GameEngine {
     this.notify({ kind: 'snapshot' });
   }
 
+  get questionPausedMs() { return this.pausedMs; }
+
+  setQuestionPaused(roundId: unknown, paused: boolean) {
+    const round = this.round;
+    if (!round || round.roundId !== roundId || this.phase !== 'question') return false;
+    if (paused === (this.pausedMs !== undefined)) return true;
+    const now = this.deps.now();
+    if (paused) {
+      if (round.deadline <= now) return false;
+      this.pausedMs = round.deadline - now;
+      this.clearTimer();
+    } else {
+      const remaining = this.pausedMs!;
+      this.pausedMs = undefined;
+      round.deadline = now + remaining;
+      this.schedule(remaining);
+    }
+    this.notify({ kind: 'snapshot' });
+    return true;
+  }
+
+  closeQuestion(roundId: unknown) {
+    if (this.phase !== 'question' || this.round?.roundId !== roundId) return false;
+    this.settleRound();
+    return true;
+  }
+
+  get canSkipEvent() {
+    return this.phase === 'results' && !this.interlude.eventUsed && !this.pendingDuel
+      && this.round?.submissions.size === this.players.size;
+  }
+
+  skipEvent(roundId: unknown) {
+    if (!this.canSkipEvent || this.round?.roundId !== roundId) return false;
+    this.interlude.eventUsed = true;
+    this.notify({ kind: 'snapshot' });
+    return true;
+  }
+
+  skipRoulette(roundId: unknown) {
+    if (this.phase !== 'event' || this.duel || !this.runtimeResult || this.round?.roundId !== roundId) return false;
+    this.advanceInterlude();
+    return true;
+  }
+
+  cancelVote(voteId: unknown) {
+    if (!this.voteSession || this.voteSession.voteId !== voteId) return false;
+    this.cancelledVote = true;
+    this.voteSession = undefined;
+    this.clearTimer();
+    this.protectedVoters = [];
+    this.interlude.voteUsed = true;
+    this.state = new InterludeState('voting');
+    this.notify({
+      kind: 'vote:result',
+      result: { voteId: String(voteId), expelledId: null, validVotes: 0, players: this.publicPlayers() },
+    });
+    this.notify({ kind: 'snapshot' });
+    return true;
+  }
+
   runEvent() {
-    if (this.interlude.eventUsed) throw new GameError('WRONG_PHASE');
+    if (this.interlude.eventUsed || this.pendingDuel || this.duel) throw new GameError('WRONG_PHASE');
     const ctx: EventContext = {
       activePlayers: this.activePlayers(),
       rng: this.deps.rng,
@@ -358,6 +457,23 @@ export class GameEngine {
         this.pendingModifier = modifier;
       },
     };
+    if (this.runtime) {
+      const ghosts = [...this.players.values()].filter(player => player.status === 'ghost');
+      const result = rollRuntimeEvent({
+        base: ctx, ghosts, index: this.questionIndex, powers: this.runtime,
+        offerDuel: players => { this.pendingDuel = { players }; },
+      }, this.runtimeResult?.type ?? this.previousRuntimeEvent);
+      if (!result) throw new GameError('NOT_ENOUGH_PLAYERS');
+      this.previousRuntimeEvent = result.type;
+      this.runtimeResult = {
+        ...result, started: this.deps.now(),
+        targets: result.targets.map(id => this.players.get(id)?.nickname ?? id),
+      };
+      this.interlude.eventUsed = true;
+      this.state = new InterludeState('event');
+      this.notify({ kind: 'snapshot' });
+      return;
+    }
     const effect = pickEffect(ctx);
     if (!effect) throw new GameError('NOT_ENOUGH_PLAYERS');
     const outcome = effect.apply(ctx);
@@ -372,9 +488,11 @@ export class GameEngine {
   }
 
   openVote() {
-    if (!this.options.votingEnabled || this.interlude.voteUsed) throw new GameError('WRONG_PHASE');
+    this.cancelledVote = false;
+    if (this.duel || !this.options.votingEnabled || this.interlude.voteUsed) throw new GameError('WRONG_PHASE');
     const active = this.activePlayers();
     if (active.length < MIN_ACTIVE_TO_VOTE) throw new GameError('NOT_ENOUGH_PLAYERS');
+    this.protectedVoters = active.filter(player => this.runtime?.firewall(player.id, this.questionIndex)).map(player => player.id);
     const ms = VOTE_SECONDS * 1000;
     this.voteSession = new VoteSession(this.deps.newId(), active.map((p) => p.id), this.deps.now() + ms);
     this.state = new VotingState();
@@ -389,7 +507,7 @@ export class GameEngine {
   recordVote(player: PlayerState, voteId: string, target: unknown) {
     const session = this.voteSession;
     if (!session || session.voteId !== voteId) throw new GameError('VOTE_CLOSED');
-    if (target !== null && typeof target !== 'string') throw new GameError('TARGET_INVALID');
+    if (target !== null && (typeof target !== 'string' || this.protectedVoters.includes(target))) throw new GameError('TARGET_INVALID');
     const error = session.cast(player.id, target, this.deps.now());
     if (error) throw new GameError(error);
     if (session.voteCount >= session.candidateIds.length) this.settleVote();
@@ -420,6 +538,9 @@ export class GameEngine {
   }
 
   finish() {
+    this.duel?.dispose();
+    this.duel = undefined;
+    this.pendingDuel = undefined;
     this.clearTimer();
     this.state = new FinishedState();
     this.notify({ kind: 'finished' });
@@ -428,6 +549,79 @@ export class GameEngine {
 
   hasNextQuestion(): boolean {
     return this.questionIndex + 1 < this.quiz.questions.length;
+  }
+
+  private regularPowerPhase() {
+    return !this.duel && this.pausedMs === undefined && (this.phase === 'question' || this.phase === 'results' || this.phase === 'event');
+  }
+
+  private canChallenge() {
+    return this.pausedMs === undefined && (this.phase === 'question' || this.phase === 'results') && !this.pendingDuel
+      && !this.duel && this.activePlayers().length >= 2;
+  }
+
+  chaosView(playerId: string) {
+    const player = this.players.get(playerId);
+    if (!this.runtime || !player) return undefined;
+    const reserved = this.pendingDuel?.challenger?.id === playerId;
+    return {
+      ...this.runtime.view(player, this.questionIndex, this.duel?.canAdapt(playerId) ?? false,
+        this.canChallenge(), this.regularPowerPhase() && !reserved),
+      ...this.duel?.playerView(playerId),
+    };
+  }
+
+  usePower(playerId: string, power: unknown, target: unknown) {
+    const available = this.chaosView(playerId)?.available.find(item => item === power);
+    if (!available || !this.runtime) return false;
+    const player = this.requirePlayer(playerId);
+    if (available === 'command') return this.challenge(player, target);
+    this.runtime.consume(player, available, this.questionIndex);
+    if (available === 'adapter') this.duel?.adapt(playerId);
+    this.notify({ kind: 'snapshot' });
+    return true;
+  }
+
+  private challenge(player: PlayerState, target: unknown) {
+    const opponent = typeof target === 'string' ? this.players.get(target) : undefined;
+    if (!opponent || opponent.status !== 'active' || opponent === player) return false;
+    this.pendingDuel = { players: [player, opponent], challenger: player };
+    this.notify({ kind: 'snapshot' });
+    return true;
+  }
+
+  duelAction(player: string, kind: 'consent' | 'answer', id: unknown, value: unknown) {
+    if (!this.duel) return false;
+    return kind === 'consent' ? this.duel.consent(player, id, value) : this.duel.answer(player, id, value);
+  }
+
+  advanceInterlude() {
+    if (this.duel) return;
+    const offer = this.pendingDuel;
+    this.pendingDuel = undefined;
+    if (!offer || offer.players.some(player => player.status !== 'active')) {
+      if (this.hasNextQuestion()) this.openRound(this.questionIndex + 1);
+      else this.finish();
+      return;
+    }
+    this.runtimeResult = undefined;
+    this.state = new InterludeState('event');
+    this.duel = new Duel(offer.players, this.deps,
+      () => this.notify({ kind: 'snapshot' }),
+      () => { this.duel = undefined; this.advanceInterlude(); },
+      () => {
+        if (offer.challenger) this.runtime?.consume(offer.challenger, 'command', this.questionIndex);
+      },
+    );
+    this.duel.start();
+  }
+
+  runtimeView() {
+    return {
+      chaosEvent: this.phase === 'event' ? this.runtimeResult : undefined,
+      duel: this.duel?.publicView(),
+      protectedIds: this.phase === 'voting' ? [...this.protectedVoters] : undefined,
+    };
   }
 
   // ---------- Vistas por rol ----------

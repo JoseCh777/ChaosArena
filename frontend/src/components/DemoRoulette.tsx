@@ -22,9 +22,9 @@ export function DemoRoulette({ event, preview }: { event: RuntimeLiveEvent; prev
       {preview}
       <ChaosDial type={event.type} started={started} spin={!rest} onRest={reveal} />
     </div>
-    <div className="roulette-outcome" role="status">
+    <div className="roulette-outcome" data-impact={rest ? event.impact ?? "event" : undefined} role="status">
       <h3>{rest ? eventLabels[event.type] : 'Girando…'}</h3>
-      <p>{rest ? event.description : 'Un mismo giro para toda la arena.'}</p>
+      <p>{rest ? event.description : 'Resultado sincronizado con la sala.'}</p>
     </div>
   </dialog>;
 }

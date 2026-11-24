@@ -135,7 +135,7 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
   return <>
     <audio ref={ambient} src={ambientUrl} loop preload="none" data-arena-ambient onError={() => setMissingAmbient(primaryAmbient)} />
     {(showText || track || wheelEvent) && <aside className="arena-media" aria-label="Efecto de la partida"
-      data-kind={view.showFact?.kind}>
+      data-kind={view.showFact?.kind} data-impact={elapsed >= ARENA_PACE.rouletteSpinMs ? wheelEvent?.impact : undefined}>
       {wheelEvent && <ChaosDial type={wheelEvent.type} started={wheelEvent.started} spin={elapsed < ARENA_PACE.rouletteSpinMs} onRest={onWheelRest} />}
       {track}
       {showText && step && <div className="arena-media-copy" role="status">

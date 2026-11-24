@@ -1,0 +1,43 @@
+.arena-podium { grid-column: 1 / -1; text-align: center; padding: .4rem 0 .85rem; }
+.arena-podium h2 { margin: 0 0 .7rem; font-size: clamp(.78rem, 1.25vw, 1rem); color: #c9c2e2; letter-spacing: .13em; text-transform: uppercase; }
+.arena-podium-places { display: flex; justify-content: center; align-items: end; flex-wrap: wrap; gap: clamp(.45rem, 1.5vw, 1.1rem); }
+.arena-podium-place {
+  --medal: #c5d3ed;
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center;
+  gap: .18rem .65rem; width: min(29%, 14rem); min-height: 4.15rem;
+  padding: .55rem .75rem; position: relative; color: #f8f4ff;
+  background: linear-gradient(125deg, color-mix(in srgb, var(--medal) 20%, #141625), #151624 66%);
+  border: 1px solid color-mix(in srgb, var(--medal) 55%, #191824);
+  border-radius: .35rem .95rem .35rem .95rem;
+  box-shadow: inset 0 -3px color-mix(in srgb, var(--medal) 65%, transparent), 0 .4rem 1rem #05061366;
+}
+.arena-podium-place[data-rank="1"] { --medal: #ffd36d; width: min(34%, 17rem); min-height: 5.1rem; }
+.arena-podium-place[data-rank="3"] { --medal: #ef9b76; }
+.arena-podium-medal {
+  grid-row: span 2; display: grid; place-items: center; width: clamp(1.7rem, 4vw, 2.8rem); aspect-ratio: .88;
+  clip-path: polygon(0 0, 100% 0, 100% 73%, 50% 100%, 0 73%);
+  background: linear-gradient(150deg, #fff9, transparent 60%), var(--medal);
+  color: #191529; font: 900 clamp(1rem, 3vw, 1.7rem)/1 var(--font-ui);
+}
+.arena-podium-names { display: grid; text-align: left; overflow-wrap: anywhere; line-height: 1.15; }
+.arena-podium-names span { color: #d1c4e1; font-size: .73rem; }
+.arena-podium-score { text-align: left; color: var(--medal); font-family: var(--font-mono); }
+.arena-podium-score small { font-size: .68em; }
+.arena-podium[data-final] { margin-block: clamp(.6rem, 3vw, 2.25rem); }
+.arena-podium[data-final] h2 { font-size: clamp(1.15rem, 3vw, 2rem); letter-spacing: .06em; }
+.arena-podium[data-final] .arena-podium-place { min-height: clamp(5rem, 12vw, 9rem); }
+.arena-podium[data-final] .arena-podium-place[data-rank="1"] {
+  min-height: clamp(6.2rem, 15vw, 11rem);
+  box-shadow: inset 0 -4px #ffd36da0, 0 0 2rem #ffd36d25;
+}
+.arena-podium[data-final] .arena-podium-names { font-size: clamp(.8rem, 2.2vw, 1.55rem); }
+@media (prefers-reduced-motion: no-preference) {
+  .arena-podium[data-final] .arena-podium-place { animation: podium-arrive 240ms cubic-bezier(.23, 1, .32, 1) both; }
+  @keyframes podium-arrive {
+    from { opacity: 0; transform: translateY(.55rem); }
+    to { opacity: 1; transform: none; }
+  }
+}
+@media (max-width: 640px) {
+  .arena-podium-place, .arena-podium-place[data-rank="1"] { padding: .45rem; gap: .2rem .35rem; font-size: .78rem; }
+}

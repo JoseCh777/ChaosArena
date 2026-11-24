@@ -74,7 +74,7 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
     const node = player.current;
     if (!node) return;
     node.muted = !audible;
-    node.volume = master * (played?.video ? .75 : .60);
+    node.volume = master * (played?.video ? .85 : .90);
   }, [mediaKey, master, audible, played?.video]);
 
   useEffect(() => {
@@ -98,24 +98,25 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
 
   useEffect(() => {
     const node = ambient.current;
-    if (node) node.volume = master * .32;
+    if (node) node.volume = master * .54;
   }, [master]);
 
   useEffect(() => {
     const node = ambient.current;
     if (!node) return;
-    if (!audible || !ambientUrl || visible) { node.pause(); return; }
+    if (!audible || !ambientUrl || played) { node.pause(); return; }
     let active = true;
     node.play().then(() => { if (active) setBlocked(false); }, error => {
       if (active && error.name === 'NotAllowedError') setBlocked(true);
     });
     return () => { active = false; node.pause(); };
-  }, [ambientUrl, audible, visible]);
+  }, [ambientUrl, audible, played?.url]);
 
   useEffect(() => {
-    const playFromGesture = () => {
+    const playFromGesture = (event?: Event) => {
+      if (event?.target instanceof Element && event.target.closest('button[aria-pressed], .arena-media-unlock')) return;
       if (!audible) return;
-      const node = visible ? player.current : ambient.current;
+      const node = played ? player.current : ambient.current;
       if (node?.getAttribute('src')) {
         node.muted = false;
         void node.play().then(() => setBlocked(false), error => {
@@ -133,7 +134,7 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
       window.removeEventListener('pointerup', playFromGesture);
       window.removeEventListener('keydown', playFromGesture);
     };
-  }, [audible, visible, blocked]);
+  }, [audible, played?.url, blocked]);
 
   const finishPreview = activePreview ? () => setSkipped(id) : undefined;
   const track = played && !failed.includes(mediaKey) && (played.video
@@ -155,6 +156,8 @@ export function MediaOverlay({ view, output, enabled, preview, wheel = false, on
         </div>)}
       {visible && selected && <button className="button button-text" type="button" onClick={() => { setSkipped(id); onSkip?.(); }}>Omitir efecto</button>}
     </aside>}
-    {blocked && audible && <p className="arena-media-status" role="status">Toca la pantalla para escuchar.</p>}
+    {blocked && audible && <button type="button" className="button button-primary arena-media-unlock" onClick={() => {
+      window.dispatchEvent(new Event(audioGesture));
+    }}>Toca para escuchar</button>}
   </>;
 }

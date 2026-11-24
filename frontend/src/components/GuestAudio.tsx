@@ -32,7 +32,7 @@ export function GuestAudio({ view }: { view: RuntimeArenaView }) {
     const node = audio.current;
     if (!enabled || !node) return;
     let current = true;
-    node.volume = loop ? .15 : .55;
+    node.volume = loop ? .30 : .74;
     node.currentTime = 0;
     void node.play().then(() => { if (current) setBlocked(false); }).catch(error => {
       if (current && error.name !== 'AbortError') setBlocked(true);
@@ -41,7 +41,10 @@ export function GuestAudio({ view }: { view: RuntimeArenaView }) {
   }, [enabled, url, loop, round, cue]);
   useEffect(() => {
     if (!enabled || !blocked) return;
-    const retry = () => { void audio.current?.play().then(() => setBlocked(false), () => {}); };
+    const retry = (event: Event) => {
+      if (event.target instanceof Element && event.target.closest('.guest-audio')) return;
+      void audio.current?.play().then(() => setBlocked(false), () => {});
+    };
     window.addEventListener('pointerup', retry);
     window.addEventListener('keydown', retry);
     return () => { window.removeEventListener('pointerup', retry); window.removeEventListener('keydown', retry); };
@@ -55,7 +58,7 @@ export function GuestAudio({ view }: { view: RuntimeArenaView }) {
       if (enabled && !blocked) { audio.current?.pause(); setEnabled(false); return; }
       const node = audio.current;
       if (!node) return;
-      node.volume = loop ? .15 : .55;
+      node.volume = loop ? .30 : .74;
       void node.play().then(() => { setEnabled(true); setBlocked(false); }, () => setBlocked(true));
     }}>{blocked ? 'Toca para escuchar' : enabled ? 'Silenciar mi teléfono' : 'Activar sonido en mi teléfono'}</button>
   </>;

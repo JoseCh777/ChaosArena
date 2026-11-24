@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { RuntimeArenaView } from '../../../shared/runtime-chaos';
 import { command } from '../services/arena';
+import { useRoundSeconds } from '../components/useRoundSeconds';
 import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
 import { VotePage } from './VotePage';
@@ -10,17 +11,13 @@ import { PowerTray } from '../components/PowerTray';
 import '../styles/game.css';
 
 export function PlayPage({ view, online }: { view: RuntimeArenaView; online: boolean }) {
-  const [now, setNow] = useState(Date.now);
   const [pending, setPending] = useState<number | null>(null);
   const [error, setError] = useState('');
   const round = view.round!;
-  useEffect(() => {
-    if (view.phase !== 'question') return;
-    const id = setInterval(() => setNow(Date.now()), 150);
-    return () => clearInterval(id);
-  }, [view.phase]);
+  const paused = view.pausedMs !== undefined;
+  const remaining = useRoundSeconds(view.phase === 'question' ? round.deadline : undefined, view.pausedMs);
   async function answer(choice: number) {
-    if (!online || pending !== null || view.choice !== null) return;
+    if (!online || paused || pending !== null || view.choice !== null) return;
     setPending(choice);
     const reply = await command('answer', { roundId: round.roundId, choice });
     if (!reply.ok) { setError(reply.error); setPending(null); }
@@ -37,7 +34,8 @@ export function PlayPage({ view, online }: { view: RuntimeArenaView; online: boo
     <section className="panel game-panel" aria-labelledby="game-title">
       {ghost && <p className="lock-feedback">Modo fantasma · Tus respuestas siguen contando para la evaluación.</p>}
       <div className="round-meta"><span>Ronda {view.number} / {view.total}</span><span>{view.received} de {view.players.length} respuestas</span></div>
-      {view.phase === 'question' && <RoundTimer seconds={Math.max(0, (round.deadline - now) / 1000)} totalSeconds={view.seconds} />}
+      {view.phase === 'question' && <RoundTimer seconds={remaining} totalSeconds={view.seconds} />}
+      {paused && <p className="lock-feedback" role="status">Pregunta en pausa</p>}
       <div className="prompt-board">
         <span className="round-digit" aria-hidden="true">{String(view.number).padStart(2, '0')}</span>
         <h1 className="game-prompt" id="game-title">{round.prompt}</h1>
@@ -45,7 +43,7 @@ export function PlayPage({ view, online }: { view: RuntimeArenaView; online: boo
       <div className="game-options" aria-label="Opciones de respuesta" role="group">
         {round.options.map((option, i) => <button key={i} className="game-option"
           data-picked={choice === i || undefined} data-correct={reveal?.index === i || undefined}
-          disabled={!online || choice !== null || view.phase !== 'question' || now >= round.deadline}
+          disabled={!online || choice !== null || view.phase !== 'question' || paused || remaining <= 0}
           onClick={() => answer(i)}>
           <span className="option-letter">{String.fromCharCode(65 + i)}</span>
           <span>{option}{reveal?.index === i && <small> · Correcta</small>}</span>
@@ -55,7 +53,7 @@ export function PlayPage({ view, online }: { view: RuntimeArenaView; online: boo
       {view.phase === 'question' && choice !== null && <p className="lock-feedback" role="status">
         {view.choice !== null ? 'Respuesta registrada. Esperando a los demás…' : 'Enviando respuesta…'}
       </p>}
-      {view.phase === 'reveal' && !reveal && <p className="lock-feedback" role="status">Tiempo agotado. Preparando la siguiente fase…</p>}
+      {view.phase === 'reveal' && !reveal && <p className="lock-feedback" role="status">Pregunta cerrada. Preparando la siguiente fase…</p>}
       {reveal && <div className="round-verdict" role="status">
         <strong>{view.choice === null ? 'Tiempo agotado' : view.choice === reveal.index ? '¡Respuesta correcta!' : 'Respuesta incorrecta'}</strong>
         {reveal.explanation && <p>{reveal.explanation}</p>}

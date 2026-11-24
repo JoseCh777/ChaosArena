@@ -1,7 +1,7 @@
 import { DEFAULT_CLIPS } from '@chaos-arena/shared/arena-settings.js';
-import { useEffect, useState } from 'react';
 import QRCode from 'react-qr-code';
 import { useArena } from '../services/arena';
+import { useRoundSeconds } from '../components/useRoundSeconds';
 import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
 import { DemoRoulette } from '../components/DemoRoulette';
@@ -13,15 +13,9 @@ import './projection.css';
 
 export function DisplayPage() {
   const { display, online, message } = useArena();
-  const [now, setNow] = useState(Date.now);
   const phase = display?.phase;
   const audio = useProjectionAudio(phase === 'lobby' ? 'sala' : phase === 'roulette' && !display?.duel ? 'ruleta' : phase === 'finished' ? 'podio' : undefined);
-  useEffect(() => {
-    if (phase !== 'question') return;
-    setNow(Date.now());
-    const timer = window.setInterval(() => setNow(Date.now()), 200);
-    return () => clearInterval(timer);
-  }, [phase, display?.round?.roundId]);
+  const remaining = useRoundSeconds(phase === 'question' ? display?.round?.deadline : undefined, display?.pausedMs);
 
   const header = <header className="projection-brand">
     <img src="/brand/chaos-arena-mark.png" alt="" width="36" height="40" />
@@ -80,7 +74,8 @@ export function DisplayPage() {
     </section> : round && <section className="projection-round">
       <div className="round-meta"><span>Ronda {display.number} / {display.total}</span>
         <span>{display.received} / {display.players.length} respuestas</span></div>
-      {phase === 'question' && <RoundTimer seconds={Math.max(0, (round.deadline - now) / 1000)} totalSeconds={display.seconds} />}
+      {phase === 'question' && <RoundTimer seconds={remaining} totalSeconds={display.seconds} />}
+      {display.pausedMs !== undefined && <p className="lock-feedback" role="status">Pregunta en pausa</p>}
       <h1>{round.prompt}</h1>
       <ol className="projection-options">{round.options.map((option, i) =>
         <li key={i} data-correct={display.solution?.index === i || undefined}>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { command, forget, sessionToken, useArena } from '../services/arena';
+import { GuestAudio } from '../components/GuestAudio';
 import { LobbyPage } from './LobbyPage';
 import { PlayPage } from './PlayPage';
 import { ResultsPage } from './ResultsPage';
@@ -22,6 +23,7 @@ export function LiveArena() {
     <p role="status">{(sessionToken() || ended) ? message : 'Entra con tu PIN y apodo.'}</p>
     {!sessionToken() && <a className="button button-primary" href="/join">Ir al ingreso</a>}</main>;
   return <>
+    {!view.host && <GuestAudio view={view} />}
     {!online && <p className="arena-notice" role="status">{message}</p>}
     {error && <p className="arena-notice" role="alert">{error}</p>}
     {view.phase === 'lobby' ? <LobbyPage view={view} act={act} />

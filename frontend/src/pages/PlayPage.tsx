@@ -35,7 +35,7 @@ export function PlayPage({ view, online }: { view: RuntimeArenaView; online: boo
     : view.choice === reveal.index ? 'correct' : 'incorrect';
   return <main className="game-layout play-view">
     <section className="panel game-panel" aria-labelledby="game-title">
-      {ghost && <p className="lock-feedback">Modo fantasma · Tus respuestas siguen contando para la evaluación.</p>}
+      {ghost && <p className="lock-feedback ghost-state"><span aria-hidden="true">👻 </span>Modo fantasma · Tus respuestas siguen contando para la evaluación.</p>}
       <div className="round-meta"><span>Ronda {view.number} / {view.total}</span><span>{view.received} de {view.players.length} respuestas</span></div>
       {view.phase === 'question' && <RoundTimer seconds={remaining} totalSeconds={view.seconds} />}
       {paused && <p className="lock-feedback" role="status">Pregunta en pausa</p>}

@@ -11,6 +11,8 @@ export const eventLabels: Record<RuntimeEvent, string> = {
   respawn: 'Respawn',
 };
 
+export const rouletteTypes = Object.keys(eventLabels) as RuntimeEvent[];
+
 export const powerInfo: Record<Power, { label: string; description: string }> = {
   proxy: { label: 'Proxy', description: 'Bloquea un ataque dirigido.' },
   decorator: { label: 'Decorator', description: 'Multiplica por 1,5 la base de tu próximo acierto.' },

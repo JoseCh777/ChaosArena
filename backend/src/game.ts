@@ -175,6 +175,11 @@ export class GameEngine {
   private pausedMs?: number;
   private rouletteEnabled = true;
   private rouletteChallenges = true;
+  private rouletteEvents?: NonNullable<RuntimeLiveEvent['wheel']>;
+
+  configureRouletteEvents(events: NonNullable<RuntimeLiveEvent['wheel']>) {
+    this.rouletteEvents = [...events];
+  }
 
   configureRoulette(enabled: boolean, challenges: boolean) {
     this.rouletteEnabled = enabled;
@@ -472,11 +477,11 @@ export class GameEngine {
       const result = rollRuntimeEvent({
         base: ctx, ghosts, index: this.questionIndex, powers: this.runtime, allowDuel: this.rouletteChallenges,
         offerDuel: players => { this.pendingDuel = { players }; },
-      }, this.runtimeResult?.type ?? this.previousRuntimeEvent);
+      }, this.runtimeResult?.type ?? this.previousRuntimeEvent, this.rouletteEvents);
       if (!result) throw new GameError('NOT_ENOUGH_PLAYERS');
       this.previousRuntimeEvent = result.type;
       this.runtimeResult = {
-        ...result, started: this.deps.now(),
+        ...result, started: this.deps.now(), wheel: this.rouletteEvents,
         targets: result.targets.map(id => this.players.get(id)?.nickname ?? id),
       };
       this.interlude.eventUsed = true;

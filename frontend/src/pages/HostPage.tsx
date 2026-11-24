@@ -1,5 +1,6 @@
 import { DEFAULT_CLIPS, DEFAULT_ROUND_SECONDS } from '@chaos-arena/shared/arena-settings.js';
 import type { ArenaSettings } from '../../../shared/live';
+import { rouletteTypes } from '../services/runtimeCatalog';
 import { HostOptions } from './HostOptions';
 import { HostRound } from './HostRound';
 import { RoundMoment, ArenaRecognitions } from '../components/ArenaMoments';
@@ -24,9 +25,10 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
   const [bankSize, setBankSize] = useState<16 | 32 | 48>(16);
   const [voting, setVoting] = useState(true);
   const [roulette, setRoulette] = useState(true);
-  const [rouletteChallenges, setRouletteChallenges] = useState(true);
+  const [rouletteEvents, setRouletteEvents] = useState(rouletteTypes);
   const [confirmClose, setConfirmClose] = useState(false);
   const [busy, setBusy] = useState(false);
+  const canStart = online && !busy && (!roulette || rouletteEvents.length > 0);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const toggleAudio = () => setAudioFromGesture(() => setAudioEnabled(!audioEnabled));
 
@@ -52,7 +54,7 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
     setError('');
     try {
       const quiz = draft ? decodeQuiz(localStorage.getItem(DRAFT_KEY) ?? '') : undefined;
-      const reply = await command('start', { quiz, voting, settings, roulette, rouletteChallenges, bankSize: draft ? undefined : bankSize });
+      const reply = await command('start', { quiz, voting, settings, roulette, rouletteEvents, bankSize: draft ? undefined : bankSize });
       if (!reply.ok) setError(reply.error);
     } catch {
       setError('Guarda un cuestionario válido en el editor antes de iniciarlo.');
@@ -145,7 +147,7 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
       {!online && <p role="status">{message}</p>}
       {error && <p className="form-error" role="alert">{error}</p>}
       {startable && !confirmClose && <HostOptions settings={settings} voting={voting} onSettings={setSettings} onVoting={setVoting} roulette={roulette}
-        rouletteChallenges={rouletteChallenges} onRoulette={setRoulette} onRouletteChallenges={setRouletteChallenges} disabled={busy} />}
+        rouletteEvents={rouletteEvents} onRoulette={setRoulette} onRouletteEvents={setRouletteEvents} disabled={busy} />}
       {startable && !confirmClose ? <div className="host-actions">
         <label className="host-volume host-count">Preguntas del banco
           <select value={bankSize} disabled={busy} onChange={event => setBankSize(Number(event.target.value) as 16 | 32 | 48)}>
@@ -154,9 +156,9 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
             <option value={48}>48 · Banco completo</option>
           </select>
         </label>
-        <button className="button button-primary" disabled={!online || busy} onClick={() => start(false)}>Iniciar Patrones de Diseño</button>
+        <button className="button button-primary" disabled={!canStart} onClick={() => start(false)}>Iniciar Patrones de Diseño</button>
         <details className="host-personal"><summary>Cuestionario del editor</summary>
-          <button className="button button-text" disabled={!online || busy} onClick={() => start(true)}>Iniciar mi cuestionario</button>
+          <button className="button button-text" disabled={!canStart} onClick={() => start(true)}>Iniciar mi cuestionario</button>
         </details>
       </div> : null}
       {confirmClose ? <div className="host-close">

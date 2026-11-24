@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { GameEngine } from './game.js';
 import { Duel } from './duel.js';
-import { rollRuntimeEvent, type RuntimeEventContext } from './runtimeEvents.js';
+import { parseRouletteEvents, rollRuntimeEvent, type RuntimeEventContext } from './runtimeEvents.js';
 import { RuntimePowers } from './runtimePowers.js';
 import { scoreRound } from './scoring.js';
 import { fakeDeps, player, question, quiz } from './testing.js';
@@ -43,6 +43,16 @@ test('desactivar los retos conserva los otros resultados de la ruleta', () => {
   clock.setRng([.99, 0]);
   assert.equal(rollRuntimeEvent({ ...ctx, allowDuel: false })?.type, 'hack');
   assert.equal(offered, 1);
+});
+
+test('la ruleta solo sortea los eventos seleccionados que se pueden aplicar', () => {
+  const { ctx, clock } = fixture();
+  clock.setRng([0, 0, 0]);
+  assert.deepEqual(parseRouletteEvents(['loot-box', 'loot-box']), ['loot-box']);
+  assert.equal(parseRouletteEvents(['loot-box', 'desconocido']), undefined);
+  assert.equal(rollRuntimeEvent(ctx, 'loot-box', ['loot-box'])?.type, 'loot-box');
+  assert.equal(rollRuntimeEvent({ ...ctx, ghosts: [] }, undefined, ['respawn']), undefined);
+  assert.equal(rollRuntimeEvent(ctx, undefined, []), undefined);
 });
 
 test('Firewall caduca o se consume y Memento recupera hasta 150 del último ataque', () => {

@@ -4,7 +4,7 @@ import type { ArenaView, ConfiguredDisplayView, LiveEvent } from './live.js';
 export type RuntimeEvent = ChaosEvent | 'error-404' | 'firewall' | 'duel' | 'respawn';
 export type Power = 'proxy' | 'decorator' | 'memento' | 'adapter' | 'prototype' | 'command';
 export type EventImpact = 'loss' | 'reward' | 'shield' | 'blocked';
-export type RuntimeLiveEvent = Omit<LiveEvent, 'type'> & { type: RuntimeEvent; impact?: EventImpact };
+export type RuntimeLiveEvent = Omit<LiveEvent, 'type'> & { type: RuntimeEvent; impact?: EventImpact; wheel?: RuntimeEvent[] };
 export type MediaOutput = 'host' | 'display';
 export interface ShowFact {
   id: string;

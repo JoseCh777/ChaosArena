@@ -115,8 +115,15 @@ const effects: readonly Effect[] = [
   },
 ];
 
-export function rollRuntimeEvent(ctx: RuntimeEventContext, previous?: RuntimeEvent): Outcome | undefined {
-  const eligible = effects.filter(effect => effect.eligible(ctx));
+export function parseRouletteEvents(value: unknown): RuntimeEvent[] | undefined {
+  const types = effects.map(effect => effect.type);
+  if (value === undefined) return types;
+  if (!Array.isArray(value) || !value.every(type => types.some(known => known === type))) return undefined;
+  return types.filter(type => value.includes(type));
+}
+
+export function rollRuntimeEvent(ctx: RuntimeEventContext, previous?: RuntimeEvent, enabled?: readonly RuntimeEvent[]): Outcome | undefined {
+  const eligible = effects.filter(effect => (enabled?.includes(effect.type) ?? true) && effect.eligible(ctx));
   if (!eligible.length) return undefined;
   const alternatives = eligible.filter(effect => effect.type !== previous);
   const pool = alternatives.length ? alternatives : eligible;

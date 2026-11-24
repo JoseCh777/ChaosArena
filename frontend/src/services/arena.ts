@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 import { useSyncExternalStore } from 'react';
-import type { RuntimeArenaView, RuntimeDisplayView, RuntimeCommands, RuntimePublic } from '../../../shared/runtime-chaos';
+import type { RuntimeArenaView, RuntimeDisplayView, RuntimeCommands, RuntimeEvent, RuntimePublic } from '../../../shared/runtime-chaos';
 import type { ArenaCommands, ArenaHostCommands, ArenaRoomLifecycleCommands, DisplayView, Reply, ArenaSettings } from '../../../shared/live';
 
 const key = 'chaos-arena.live-session';
@@ -21,7 +21,7 @@ function subscribe(listener: () => void) {
 export const useArena = () => useSyncExternalStore(subscribe, () => state);
 
 type Commands = Omit<ArenaCommands, 'start'> & ArenaHostCommands & ArenaRoomLifecycleCommands & RuntimeCommands & {
-  start: ArenaCommands['start'] & { settings?: ArenaSettings; bankSize?: 16 | 32 | 48; roulette?: boolean; rouletteChallenges?: boolean };
+  start: ArenaCommands['start'] & { settings?: ArenaSettings; bankSize?: 16 | 32 | 48; roulette?: boolean; rouletteEvents?: RuntimeEvent[] };
 };
 
 export async function command<K extends keyof Commands>(kind: K, payload: Commands[K]): Promise<Reply> {

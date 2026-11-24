@@ -11,6 +11,7 @@ import { designPatternQuiz } from './designPatternBank.js';
 import { demoQuestions } from './practiceQuestions.js';
 import { shuffleQuestions } from './questionOrder.js';
 import { validateQuiz } from './questions.js';
+import { parseRouletteEvents } from './runtimeEvents.js';
 import { generatePin, normalizeNickname, safeEqual } from './rooms.js';
 import { parseArenaSettings } from './arenaSettings.js';
 import { buildRanking } from './scoring.js';
@@ -406,6 +407,11 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
             || (data.rouletteChallenges !== undefined && typeof data.rouletteChallenges !== 'boolean')) {
             return fail('Revisa los ajustes de la ruleta.');
           }
+          const rouletteEvents = parseRouletteEvents(data.rouletteEvents)
+            ?.filter(type => type !== 'duel' || data.rouletteChallenges !== false);
+          if (!rouletteEvents || (data.roulette !== false && rouletteEvents.length === 0)) {
+            return fail('Selecciona al menos un evento válido o desactiva la ruleta.');
+          }
           settings = nextSettings;
           if (engine.phase === 'finished') engine.restart();
           const questions = data.quiz === undefined && count !== undefined
@@ -419,6 +425,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
           awards = [];
           previousLeader = undefined;
           engine.configureRoulette(data.roulette !== false, data.rouletteChallenges !== false);
+          engine.configureRouletteEvents(rouletteEvents);
           engine.configure(quiz, { votingEnabled: data.voting !== false });
           const introMs = config.introMs ?? ARENA_PACE.introMs;
           if (introMs > 0 && show.videos) {

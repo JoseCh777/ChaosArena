@@ -1,5 +1,7 @@
 import { CLIP_CUES, DEFAULT_ROUND_SECONDS, ROUND_SECONDS_MAX, ROUND_SECONDS_MIN } from '@chaos-arena/shared/arena-settings.js';
 import type { ArenaSettings, ClipCue } from '../../../shared/live';
+import type { RuntimeEvent } from '../../../shared/runtime-chaos';
+import { eventLabels, rouletteTypes } from '../services/runtimeCatalog';
 
 const labels: Record<ClipCue, string> = {
   inicio: 'Inicio de la partida',
@@ -8,16 +10,16 @@ const labels: Record<ClipCue, string> = {
   podio: 'Podio',
 };
 
-export function HostOptions({ settings, voting, disabled, onSettings, onVoting, roulette, rouletteChallenges, onRoulette, onRouletteChallenges }: {
+export function HostOptions({ settings, voting, disabled, onSettings, onVoting, roulette, rouletteEvents, onRoulette, onRouletteEvents }: {
   settings: ArenaSettings;
   voting: boolean;
   disabled: boolean;
   onSettings: (settings: ArenaSettings) => void;
   onVoting: (enabled: boolean) => void;
   roulette: boolean;
-  rouletteChallenges: boolean;
+  rouletteEvents: RuntimeEvent[];
   onRoulette: (enabled: boolean) => void;
-  onRouletteChallenges: (enabled: boolean) => void;
+  onRouletteEvents: (events: RuntimeEvent[]) => void;
 }) {
   return <details className="host-options">
     <summary>Ajustes de partida</summary>
@@ -37,10 +39,22 @@ export function HostOptions({ settings, voting, disabled, onSettings, onVoting, 
         onChange={event => onVoting(event.target.checked)} /> Activar votaciones</label>
       <label className="host-options-check"><input type="checkbox" checked={roulette} disabled={disabled}
         onChange={event => onRoulette(event.target.checked)} /> Activar ruleta</label>
-      <label className="host-options-check"><input type="checkbox" checked={rouletteChallenges} disabled={disabled || !roulette}
-        onChange={event => onRouletteChallenges(event.target.checked)} /> Permitir retos de la ruleta</label>
-      <p className="host-options-note">Los retos son los duelos de exhibición que puede sortear la ruleta.</p>
     </div>
+    <fieldset className="roulette-options" disabled={disabled || !roulette} aria-describedby="roulette-options-hint">
+      <legend>Eventos de la ruleta · {rouletteEvents.length}/{rouletteTypes.length}</legend>
+      <div className="roulette-event-grid">
+        {rouletteTypes.map(type => <label className="host-options-check" key={type}>
+          <input type="checkbox" checked={rouletteEvents.includes(type)} onChange={event =>
+            onRouletteEvents(event.target.checked ? [...rouletteEvents, type] : rouletteEvents.filter(item => item !== type))
+          } /> {eventLabels[type]}
+        </label>)}
+      </div>
+      <p id="roulette-options-hint" className="host-options-note" role="status">
+        {roulette && rouletteEvents.length === 0
+          ? 'Selecciona al menos un evento o desactiva la ruleta para iniciar.'
+          : 'La ruleta sortea entre los eventos marcados que puedan aplicarse en esa ronda.'}
+      </p>
+    </fieldset>
     <fieldset disabled={disabled}>
       <legend>Clips de respaldo</legend>
       <div className="host-options-grid">

@@ -4,7 +4,7 @@ Quiz web multijugador para evaluar patrones de diseño. Jose desarrolla el front
 
 ## Estado inicial
 
-La arena compartida usa el PIN de práctica 482913. Abre dos navegadores con apodos diferentes. La primera persona que ingresa puede iniciar con las preguntas de muestra o con un cuestionario del editor. Cada jugador recibe su vista por Socket.IO.
+Abre `/host`, escribe tu apodo y crea la sala. El servidor genera un PIN de seis dígitos. Comparte ese PIN o el QR de `/display` y abre otros navegadores con apodos distintos. El anfitrión puede iniciar con las preguntas de muestra o con un cuestionario del editor.
 
 El servidor revela la solución cuando todos han respondido. Si vence el tiempo con respuestas pendientes, cierra la ronda por tiempo. Al completar todos la pregunta, realiza un sorteo del 30 %. Si sale un evento, la ruleta se reproduce en todos los clientes y el servidor avanza automáticamente. El editor conserva su borrador en el navegador y la sala vive en la memoria del servidor.
 
@@ -19,7 +19,7 @@ Copy-Item frontend/.env.example frontend/.env
 npm run dev
 ```
 
-Frontend en http://localhost:5173 y backend en http://localhost:3001/health. Completar HOST_KEY en backend/.env antes de implementar la creación de salas. Las variables del frontend son públicas. Guardar HOST_KEY y tokens del anfitrión únicamente en los flujos privados correspondientes.
+Frontend en http://localhost:5173 y backend en http://localhost:3001/health. Configura HOST_KEY en backend/.env para reservar la creación de salas. En producción es obligatorio. Las variables del frontend son públicas. Guardar HOST_KEY y tokens del anfitrión únicamente en los flujos privados correspondientes.
 
 ```powershell
 npm run typecheck
@@ -31,7 +31,7 @@ El lockfile y la instalación se gestionan desde la raíz. Para teléfonos en re
 
 ### Ensayo en el aula
 
-Entra primero a la sala y abre `/host` para iniciar la partida y consultar los resultados del grupo. Abre `/display` en la pantalla que vas a proyectar. El QR utiliza el origen desde el que abriste el proyector.
+Crea la sala en `/host`, configura las votaciones y elige el cuestionario antes de iniciar. Abre `/display` en la pantalla que vas a proyectar. El QR utiliza el origen desde el que abriste el proyector.
 
 Para probar con teléfonos en la misma red, arranca el backend con `npm run dev:backend` y el frontend en otra terminal con `npm run dev -w frontend -- --host`. Abre `/display` usando la URL Network que muestra Vite. Si usas una URL localhost, el QR solo sirve en el mismo equipo. Mantén el backend y el frontend encendidos durante el ensayo.
 

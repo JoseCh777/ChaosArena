@@ -1,14 +1,33 @@
-import { useState } from 'react';
-import { command, sessionToken, useArena } from '../services/arena';
+import { useState, type FormEvent } from 'react';
+import { command, remember, sessionToken, useArena } from '../services/arena';
 import { decodeQuiz, DRAFT_KEY } from '../services/quizDraft';
 
 const phases = { lobby: 'Sala de espera', question: 'Pregunta abierta', reveal: 'Resultados de ronda', roulette: 'Ruleta de caos', vote: 'Votación secreta', finished: 'Partida terminada' };
 
 export function HostPage() {
   const { view, online, message } = useArena();
+  const [nickname, setNickname] = useState('');
+  const [hostKey, setHostKey] = useState('');
   const [error, setError] = useState('');
   const [voting, setVoting] = useState(true);
   const [busy, setBusy] = useState(false);
+
+  async function create(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy || !nickname.trim()) return;
+    setBusy(true);
+    setError('');
+    try {
+      const reply = await command('create', { nickname, hostKey });
+      if (!reply.ok) setError(reply.error);
+      else if (reply.token) {
+        remember(reply.token);
+        setHostKey('');
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function start(draft: boolean) {
     setBusy(true);
@@ -28,6 +47,35 @@ export function HostPage() {
     setError('');
     const reply = await command('removePlayer', { id });
     if (!reply.ok) setError(reply.error);
+  }
+
+  if (!view && (!sessionToken() || busy)) {
+    return <main className="entry" aria-labelledby="host-create-title">
+      <div className="entry-intro">
+        <h1 id="host-create-title">Abre una <span>sala</span></h1>
+        <p>Al crearla recibes un PIN de seis dígitos y el QR para invitar a los jugadores.</p>
+      </div>
+      <form className="panel entry-form" onSubmit={create}>
+        <h2>Configura el acceso</h2>
+        <div className="field">
+          <label htmlFor="host-nickname">Apodo del anfitrión</label>
+          <input id="host-nickname" autoComplete="nickname" value={nickname} maxLength={20} required
+            onChange={event => setNickname(event.target.value)} />
+        </div>
+        <details>
+          <summary>Clave del anfitrión</summary>
+          <div className="field">
+            <label htmlFor="host-key">Clave configurada en el servidor</label>
+            <input id="host-key" type="password" autoComplete="off" value={hostKey}
+              onChange={event => setHostKey(event.target.value)} />
+          </div>
+        </details>
+        {error && <p className="form-error" role="alert">{error}</p>}
+        <button type="submit" className="button button-primary" disabled={busy}>
+          {busy ? 'Creando sala…' : 'Crear sala'} <span aria-hidden="true">→</span>
+        </button>
+      </form>
+    </main>;
   }
 
   if (!view?.host) return <main className="panel empty-state"><h1>Anfitrión</h1>

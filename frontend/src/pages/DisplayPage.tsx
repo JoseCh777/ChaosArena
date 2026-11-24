@@ -19,6 +19,8 @@ export function DisplayPage() {
     return () => clearInterval(timer);
   }, [phase, display?.round?.roundId]);
 
+  if (display && !display.pin) return <main className="panel empty-state"><h1>Esperando sala</h1>
+    <p role="status">El PIN y el QR aparecerán aquí cuando el anfitrión cree la sala.</p></main>;
   if (!display) return <main className="panel empty-state"><h1>Proyector</h1><p role="status">{message}</p></main>;
   const link = new URL('/join', window.location.origin);
   link.searchParams.set('pin', display.pin);

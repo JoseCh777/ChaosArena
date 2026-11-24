@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 import { useSyncExternalStore } from 'react';
-import type { ArenaCommands, ArenaView, DisplayView, Reply } from '../../../shared/live';
+import type { ArenaCommands, ArenaHostCommands, ArenaView, DisplayView, Reply } from '../../../shared/live';
 
 const key = 'chaos-arena.live-session';
 export const sessionToken = () => sessionStorage.getItem(key);
@@ -19,7 +19,9 @@ function subscribe(listener: () => void) {
 }
 export const useArena = () => useSyncExternalStore(subscribe, () => state);
 
-export async function command<K extends keyof ArenaCommands>(kind: K, payload: ArenaCommands[K]): Promise<Reply> {
+type Commands = ArenaCommands & ArenaHostCommands;
+
+export async function command<K extends keyof Commands>(kind: K, payload: Commands[K]): Promise<Reply> {
   if (!socket.connected) socket.connect();
   try {
     return await socket.timeout(5500).emitWithAck('command', kind, payload);

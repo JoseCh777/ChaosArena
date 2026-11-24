@@ -1,11 +1,12 @@
 import { ARENA_PACE } from '@chaos-arena/shared/arena-settings.js';
 import type { Namespace } from 'socket.io';
 import type { ErrorCode, RankingEntry } from '@chaos-arena/shared';
-import type { RuntimeArenaView, RuntimeDisplayView, Reaction, ShowFact, ShowSettings } from '../../shared/runtime-chaos.js';
+import type { RuntimeArenaView, RuntimeDisplayView, Reaction, ShowFact, ShowSettings, ArenaAward } from '../../shared/runtime-chaos.js';
 import type { ArenaView, LiveEvent, Reply } from '../../shared/live.js';
 import { attachAutopilot, defaultAutopilot, type AutopilotOptions } from './autopilot.js';
 import { GameEngine, type EngineChange } from './game.js';
 import { GameError, realDeps, type EngineDeps } from './model.js';
+import { ArenaAwards } from './arenaAwards.js';
 import { designPatternQuiz } from './designPatternBank.js';
 import { demoQuestions } from './practiceQuestions.js';
 import { shuffleQuestions } from './questionOrder.js';
@@ -59,6 +60,8 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
   let show = { ...initialShow };
   let reaction: RuntimeDisplayView['reaction'];
   let showFact: ShowFact | undefined;
+  const awardTracker = new ArenaAwards();
+  let awards: ArenaAward[] = [];
   let previousLeader: string | undefined;
   let cancelIntro: (() => void) | undefined;
   let lastEvent: LiveEvent | undefined;
@@ -70,6 +73,8 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     cancelIntro = undefined;
     showFact = undefined;
     previousLeader = undefined;
+    awardTracker.reset();
+    awards = [];
     engine?.dispose();
     connections.clear();
     tokens.clear();
@@ -117,6 +122,7 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
     if (change.kind === 'round:open' && showFact?.kind === 'intro') showFact = undefined;
     if (change.kind === 'round:result') {
       const { counts, correctIndex, ranking } = change.result;
+      awardTracker.record(ranking, engine.players);
       const correct = counts[correctIndex];
       const complete = counts.reduce((sum, count) => sum + count, 0) === engine.players.size;
       const leaders = ranking.filter(player => player.rank === 1);
@@ -137,7 +143,10 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
       if (expelled) announce('expelled', 'Votación cerrada', `${nicknameOf(expelled)} pasa a modo fantasma.`);
       else announce('vote-closed', engine.voteWasCancelled ? 'Votación cancelada' : 'Votación cerrada', 'Nadie fue expulsado.');
     }
-    if (change.kind === 'finished') announce('final', 'Podio de ChaosArena');
+    if (change.kind === 'finished') {
+      awards = awardTracker.finish(buildRanking([...engine.players.values()]), engine.players);
+      announce('final', 'Podio de ChaosArena');
+    }
     if (change.kind === 'round:open' && reaction?.kind !== 'expulsion') reaction = undefined;
     if (change.kind === 'round:result' && change.result.counts.reduce((sum, count) => sum + count, 0) === engine.players.size) {
       const correct = change.result.counts[change.result.correctIndex];
@@ -214,6 +223,8 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
       number: Math.max(engine.questionIndex, 0) + 1,
       total: engine.publicSnapshot().questionCount,
       received,
+      roundStage: q?.id === 'patrones-caso-final' ? 'boss' : q?.id.startsWith('patrones-') ? 'regular' : undefined,
+      awards: phase === 'finished' ? awards : undefined,
       seconds: q?.seconds ?? 0,
     };
     if (round && q) view.round = { roundId: round.roundId, prompt: q.prompt, options: [...q.options], deadline: round.deadline };
@@ -386,19 +397,28 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
           if (count !== undefined && count !== 16 && count !== 32 && count !== 48) return fail('Selecciona 16, 32 o 48 preguntas.');
           const selectedQuiz = count === undefined
             ? { title: 'Patrones de diseño', questions: demoQuestions }
-            : designPatternQuiz(count);
+            : designPatternQuiz(count, deps.rng);
           const validation = validateQuiz(data.quiz ?? selectedQuiz);
           if (!validation.ok) return fail(validation.error);
           const nextSettings = parseArenaSettings(data.settings);
           if (!nextSettings) return fail('Revisa la duración y los clips de la sala.');
+          if ((data.roulette !== undefined && typeof data.roulette !== 'boolean')
+            || (data.rouletteChallenges !== undefined && typeof data.rouletteChallenges !== 'boolean')) {
+            return fail('Revisa los ajustes de la ruleta.');
+          }
           settings = nextSettings;
           if (engine.phase === 'finished') engine.restart();
-          const questions = shuffleQuestions(validation.quiz.questions, deps.rng);
+          const questions = data.quiz === undefined && count !== undefined
+            ? validation.quiz.questions : shuffleQuestions(validation.quiz.questions, deps.rng);
           const seconds = settings.roundSeconds;
           const quiz = {
             ...validation.quiz,
-            questions: seconds === null ? questions : questions.map(question => ({ ...question, seconds })),
+            questions: seconds === null ? questions : questions.map(question => question.id === 'patrones-caso-final' ? question : { ...question, seconds }),
           };
+          awardTracker.reset();
+          awards = [];
+          previousLeader = undefined;
+          engine.configureRoulette(data.roulette !== false, data.rouletteChallenges !== false);
           engine.configure(quiz, { votingEnabled: data.voting !== false });
           const introMs = config.introMs ?? ARENA_PACE.introMs;
           if (introMs > 0 && show.videos) {

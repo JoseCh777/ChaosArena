@@ -106,7 +106,7 @@ export function HostPage() {
   const startable = view.phase === 'lobby' || view.phase === 'finished';
   return <main className="game-layout host-layout">
     <section className="panel game-panel">
-      <p className="round-meta">{phases[view.phase]}</p>
+      <p className="round-meta">{view.duel ? 'Duelo relámpago' : phases[view.phase]}</p>
       <h1 className="game-prompt">Mesa del anfitrión</h1>
       <p className="room-code">PIN <strong>{view.pin}</strong></p>
       <div className="host-actions">

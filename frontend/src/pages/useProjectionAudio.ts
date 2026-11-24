@@ -24,31 +24,30 @@ export function useProjectionAudio(cue?: 'sala' | 'ruleta' | 'podio') {
     const context = audio.current;
     if (!enabled || !cue || context?.state !== 'running') return;
     const notes = cue === 'podio' ? [392, 523.25, 659.25] : cue === 'sala' ? [130.81, 196, 261.63, 196] : [196, 293.66, 392];
-    function play() {
-      const start = context!.currentTime;
+    const play = () => {
+      const start = context.currentTime;
       return notes.map((note, index) => {
-        const oscillator = context!.createOscillator();
-        const gain = context!.createGain();
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
         const beat = start + index * (cue === 'sala' ? .24 : .12);
         oscillator.type = 'triangle';
         oscillator.frequency.value = note;
         gain.gain.setValueAtTime(.001, beat);
         gain.gain.exponentialRampToValueAtTime(cue === 'sala' ? .035 : .075, beat + .03);
         gain.gain.exponentialRampToValueAtTime(.001, beat + .28);
-        oscillator.connect(gain).connect(context!.destination);
+        oscillator.connect(gain).connect(context.destination);
+        const disconnect = () => { oscillator.disconnect(); gain.disconnect(); };
+        oscillator.onended = disconnect;
         oscillator.start(beat);
         oscillator.stop(beat + .29);
-        return { oscillator, gain };
+        return oscillator;
       });
-    }
+    };
     let tones = play();
     const ambiance = cue === 'sala' ? window.setInterval(() => { tones = play(); }, 3200) : undefined;
     return () => {
       window.clearInterval(ambiance);
-      for (const { oscillator, gain } of tones) {
-        oscillator.disconnect();
-        gain.disconnect();
-      }
+      for (const oscillator of tones) oscillator.stop();
     };
   }, [cue, enabled]);
 

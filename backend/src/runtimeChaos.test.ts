@@ -58,7 +58,7 @@ test('Error 404 conserva la base multiplicada y no modifica el acierto', () => {
   const modifier = { baseMultiplier: 2, wrongPenalty: 50 };
   const round = { question: question(), questionIndex: 2, roundId: 'r', openedAt: 0, deadline: 0,
     modifier, submissions: new Map(), settled: true };
-  const [result] = scoreRound(round.question, [ana], [{ playerId: ana.id, receivedAt: 0, optionIndex: 1 }], modifier);
+  const [result] = scoreRound({ question: round.question, players: [ana], submissions: [{ playerId: ana.id, receivedAt: 0, optionIndex: 1 }], modifier });
   assert.equal(powers.points(ana, round, result), 200);
   assert.equal(result.correct, true);
   assert.deepEqual(powers.view(ana, 2, false, false, true).items, ['decorator']);

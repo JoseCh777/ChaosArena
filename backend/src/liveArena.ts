@@ -79,12 +79,12 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
   }
 
   function onChange(change: EngineChange) {
-    if (change.kind === 'round:open' && reaction?.kind !== 'expulsion') reaction = undefined;
-    if (change.kind === 'round:result') {
+    if (change.kind === 'round:open') reaction = undefined;
+    if (change.kind === 'round:result' && change.result.counts.reduce((sum, count) => sum + count, 0) === engine.players.size) {
       const correct = change.result.counts[change.result.correctIndex];
       if (correct === 0) queueReaction('nadie-acierta');
-      else if ([...engine.players.values()].some(p => p.streak === 5)) queueReaction('racha');
       else if (correct === engine.players.size) queueReaction('todos-aciertan');
+      else if ([...engine.players.values()].some(p => p.streak === 5)) queueReaction('racha');
     }
     if (change.kind === 'vote:result' && change.result.expelledId) queueReaction('expulsion');
     if (change.kind === 'finished') {

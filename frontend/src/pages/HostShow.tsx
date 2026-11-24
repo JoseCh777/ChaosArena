@@ -14,7 +14,7 @@ const cues = { sala: 'Música de espera', ruleta: 'Sonido de ruleta', podio: 'Fa
   reaccion: 'Señal de celebración', impacto: 'Señal de impacto' };
 
 export function HostShow({ view, online, clips }: { view: RuntimeArenaView; online: boolean; clips?: ProjectionClips }) {
-  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<ShowChange>();
   const [error, setError] = useState('');
   const [preview, setPreview] = useState<ClipCue>();
   const [recent, setRecent] = useState(true);
@@ -33,15 +33,16 @@ export function HostShow({ view, online, clips }: { view: RuntimeArenaView; onli
   }, [reaction?.id, reaction?.started]);
 
   async function change(update: ShowChange) {
-    setBusy(true);
+    setPending(update);
     setError('');
     const reply = await command('hostShow', update);
     if (!reply.ok) setError(reply.error);
-    setBusy(false);
+    setPending(undefined);
   }
 
   if (!show) return null;
   const following = audio.enabled;
+  const controlsState = pending ? { ...show, [pending.key]: pending.value } : show;
   return <section className="panel host-show" aria-labelledby="host-show-title">
     <header>
       <h2 id="host-show-title">Proyector en vivo</h2>
@@ -53,14 +54,14 @@ export function HostShow({ view, online, clips }: { view: RuntimeArenaView; onli
     </header>
     <div className="host-show-switches" aria-label="Efectos del proyector">
       {controls.map(key => <label key={key}>
-        <input type="checkbox" checked={show[key]} disabled={!online || busy}
+        <input type="checkbox" checked={controlsState[key]} disabled={!online || !!pending}
           onChange={event => change({ key, value: event.target.checked })} />
         {labels[key]}
       </label>)}
       <label className="host-volume">Volumen
-        <select value={show.volume} disabled={!online || busy}
+        <select value={controlsState.volume} disabled={!online || !!pending}
           onChange={event => change({ key: 'volume', value: Number(event.target.value) })}>
-          {[...new Set([...levels, show.volume])].sort((a, b) => a - b).map(level =>
+          {[...new Set([...levels, controlsState.volume])].sort((a, b) => a - b).map(level =>
             <option key={level} value={level}>{level} %</option>)}
         </select>
       </label>

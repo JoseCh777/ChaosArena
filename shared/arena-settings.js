@@ -7,6 +7,7 @@ export const DEFAULT_CLIPS = Object.freeze({ inicio: 'inicio', votacion: 'votaci
 export const ARENA_PACE = Object.freeze({
   introMs: 3300,
   revealMs: 1750,
+  roundClipMs: 1900,
   rouletteSpinMs: 1450,
   rouletteResultMs: 3500,
   duelResultMs: 1400,

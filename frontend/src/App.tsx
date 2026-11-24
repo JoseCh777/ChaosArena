@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArenaHeader } from './components/ArenaHeader';
+import { ArenaHeader, type ArenaDestination } from './components/ArenaHeader';
 import { EditorPage } from './pages/EditorPage';
 import { JoinPage } from './pages/JoinPage';
 import { DisplayPage } from './pages/DisplayPage';
@@ -11,21 +11,22 @@ export function App() {
   const { view } = useArena();
   const [presenting, setPresenting] = useState(false);
   const route = window.location.pathname.replace(/\/$/, '');
+  const isPresentation = route === '/host' && presenting && Boolean(view?.host);
+  const current: ArenaDestination = isPresentation || route === '/display' ? '/display'
+    : route === '/host' || route === '/editor' ? route : '/join';
+  const useLiveView = sessionToken() || ['/lobby', '/play', '/results'].includes(route);
 
-  if (route === '/display') return <div className="arena"><DisplayPage /></div>;
+  function closePresentation() {
+    setPresenting(false);
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+  }
 
-  return (
-    <div className="arena">
-      {!(route === '/host' && view?.host) && <ArenaHeader standard>
-        <a className="button button-text" href="/host">Anfitrión</a>
-        <a className="button button-text" href="/display">Proyector</a>
-        <a className="button button-text" href={route === '/editor' ? '/join' : '/editor'}>
-          {route === '/editor' ? 'Ingreso' : 'Editor de preguntas'}
-        </a>
-      </ArenaHeader>}
-      {route === '/editor' && <EditorPage />}
-      {route === '/host' && <HostPage presenting={presenting} setPresenting={setPresenting} />}
-      {!['/editor', '/host'].includes(route) && (sessionToken() || ['/lobby','/play','/results'].includes(route) ? <LiveArena /> : <JoinPage />)}
-    </div>
-  );
+  return <div className="arena">
+    <ArenaHeader current={current} onReturnToHost={isPresentation ? closePresentation : undefined}
+      label={isPresentation ? 'Modo presentación' : current === '/join' && view ? `PIN ${view.pin}` : undefined} />
+    {route === '/display' ? <DisplayPage />
+      : route === '/editor' ? <EditorPage />
+      : route === '/host' ? <HostPage presenting={isPresentation} setPresenting={setPresenting} />
+      : useLiveView ? <LiveArena /> : <JoinPage />}
+  </div>;
 }

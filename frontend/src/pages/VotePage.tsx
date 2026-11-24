@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { RuntimeArenaView } from '../../../shared/runtime-chaos';
+import { AssemblyTable } from '../components/AssemblyTable';
 import { RoundTimer } from '../components/RoundTimer';
 import { command } from '../services/arena';
 
@@ -8,7 +9,7 @@ export function VotePage({ view, online }: { view: RuntimeArenaView; online: boo
   const [now, setNow] = useState(Date.now);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
-  const eligible = voting.candidates.includes(view.you);
+  const eligible = view.canVote ?? voting.candidates.includes(view.you);
   const remaining = Math.max(0, (voting.deadline - now) / 1000);
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 200);
@@ -23,21 +24,19 @@ export function VotePage({ view, online }: { view: RuntimeArenaView; online: boo
     setPending(false);
   }
 
-  return <main className="game-layout play-view">
-    <section className="panel game-panel">
-      <p className="round-meta">{voting.received} de {voting.candidates.length} votos recibidos</p>
-      <h1 className="game-prompt">Votación secreta</h1>
+  return <section className="assembly-vote">
+      <h2 className="assembly-call">¡Atención, asamblea!</h2>
+      <AssemblyTable view={view} />
       <RoundTimer seconds={remaining} totalSeconds={20} />
       {view.protectedIds?.includes(view.you) && <p role="status">Firewall te protege de la expulsión.</p>}
       {eligible && !view.voted ? <div className="game-options">
-        {view.players.filter(p => p.id !== view.you && voting.candidates.includes(p.id) && !view.protectedIds?.includes(p.id)).map(player =>
+        {view.players.filter(p => p.id !== view.you && p.rank > 0 && voting.candidates.includes(p.id) && !view.protectedIds?.includes(p.id)).map(player =>
           <button className="game-option" key={player.id} disabled={pending || !online || !remaining}
             onClick={() => vote(player.id)}>{player.nickname}</button>)}
         <button className="button button-text" disabled={pending || !online || !remaining} onClick={() => vote(null)}>Omitir</button>
       </div> : <p className="lock-feedback" role="status">{view.voted
         ? 'Voto registrado. Espera el cierre de la votación.'
-        : 'Los jugadores activos están votando. Puedes seguir respondiendo después.'}</p>}
+        : 'Observas esta votación. La partida continúa al cerrarse la asamblea.'}</p>}
       {error && <p className="form-error" role="alert">{error}</p>}
-    </section>
-  </main>;
+  </section>;
 }

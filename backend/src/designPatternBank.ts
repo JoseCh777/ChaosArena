@@ -1,4 +1,5 @@
-import type { Quiz } from '@chaos-arena/shared';
+import { shuffleQuestions } from './questionOrder.js';
+import type { Question, Quiz } from '@chaos-arena/shared';
 
 // Basado en las 15 diapositivas de Patrones de Diseño en Ingeniería de Software.
 // Cada grupo de doce aumenta la dificultad. La primera opción de cada fila es la clave.
@@ -53,22 +54,44 @@ const bank = [
   ["¿Qué justifica una combinación de patrones en el caso de las citas?","Cada patrón responde a una presión de cambio distinta y verificable","El catálogo fija una combinación obligatoria por sistema","Las tres familias deben estar siempre presentes","La complejidad añadida sustituye documentar decisiones"],
 ];
 
-export function designPatternQuiz(size: 16 | 32 | 48): Quiz {
-  const perLevel = size / 4;
-  const questions = bank.flatMap(([prompt, ...choices], index) => {
-    const level = Math.floor(index / 12);
-    if (index % 12 >= perLevel) return [];
-    const correctIndex = (index + level) % choices.length;
-    const options = [...choices.slice(choices.length - correctIndex), ...choices.slice(0, choices.length - correctIndex)];
-    return [{
-      id: `patrones-${index + 1}`,
-      type: 'multiple' as const,
-      prompt,
-      options,
-      correctIndex,
-      seconds: [20, 30, 40, 55][level],
-      points: [75, 100, 125, 150][level],
-    }];
+const finalCase: Question = {
+  id: 'patrones-caso-final',
+  type: 'multiple',
+  prompt: 'Una clínica integra calendarios de proveedores incompatibles, cambia la asignación de turnos según la sede y debe avisar a correo y agenda al confirmar una cita. ¿Qué arquitectura permite cambiar cada parte por separado?',
+  options: [
+    'Facade coordina la reserva, Adapter traduce el calendario, Strategy asigna turnos y Observer difunde la confirmación.',
+    'Strategy traduce el calendario, Observer asigna los turnos y Adapter distribuye cada confirmación.',
+    'Builder gestiona todas las reservas, Facade cambia las reglas de turno y Factory Method actualiza los suscriptores.',
+    'Cada pantalla adapta el calendario, asigna sus turnos y envía sus avisos directamente.',
+  ],
+  correctIndex: 0,
+  explanation: 'Facade ofrece un punto de entrada, Adapter aísla al proveedor, Strategy permite cambiar la regla y Observer desacopla los avisos.',
+  seconds: 55,
+  points: 150,
+};
+
+export function designPatternQuiz(size: 16 | 32 | 48, random: () => number): Quiz {
+  const byLevel = [0, 1, 2, 3].map(level => {
+    const questions: Question[] = bank.slice(level * 12, (level + 1) * 12).map(([prompt, ...choices], index) => {
+      const correctIndex = (index + level) % choices.length;
+      const options = [...choices.slice(choices.length - correctIndex), ...choices.slice(0, choices.length - correctIndex)];
+      return {
+        id: `patrones-${level * 12 + index + 1}`, type: 'multiple', prompt, options, correctIndex,
+        seconds: [20, 30, 40, 55][level], points: [75, 100, 125, 150][level],
+      };
+    });
+    return shuffleQuestions(questions, random).slice(0, size / 4 - Number(level === 3));
   });
+  // Cada bloque de cinco sube de dificultad. Dentro de cada nivel se sortea el orden.
+  const block = [0, 1, 2, 2, 3];
+  const questions = Array.from({ length: size - 1 }, (_, index) => {
+    const target = block[index % block.length];
+    const available = [0, 1, 2, 3].filter(level => byLevel[level].length > 0);
+    available.sort((a, b) => Math.abs(a - target) - Math.abs(b - target));
+    return byLevel[available[0]].shift()!;
+  });
+  const shift = Math.floor(random() * finalCase.options.length);
+  const options = [...finalCase.options.slice(shift), ...finalCase.options.slice(0, shift)];
+  questions.push({ ...finalCase, options, correctIndex: (options.length - shift) % options.length });
   return { title: 'Patrones de diseño · Sistema de citas', questions };
 }

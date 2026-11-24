@@ -34,10 +34,13 @@ export const mediaFiles = {
 export type MediaId = keyof typeof mediaFiles;
 export const mediaIds = Object.keys(mediaFiles) as MediaId[];
 
+declare const __LOCAL_MEDIA_FILES__: readonly string[];
+
 export function mediaSource(id: MediaId | undefined, fallback?: ClipCue | null) {
-  if (id && import.meta.env.DEV) {
+  if (id) {
     const ext = mediaFiles[id];
-    return { url: `/media-local/${id}.${ext}`, video: ext === 'mp4' };
+    const file = `media-local/${id}.${ext}`;
+    if (__LOCAL_MEDIA_FILES__.includes(file)) return { url: `/${file}`, video: ext === 'mp4' };
   }
   if (id && mediaFiles[id] !== 'mp4') return fallbackAudio(id);
   if (fallback) return { url: `/media/${fallback}.webm`, video: true };
@@ -45,7 +48,7 @@ export function mediaSource(id: MediaId | undefined, fallback?: ClipCue | null) 
 }
 
 export function fallbackAudio(id: MediaId) {
-const cues: Partial<Record<MediaId, string>> = {
+  const cues: Partial<Record<MediaId, string>> = {
     'wii-shop': 'ambiente',
     'tic-tac': 'ambiente',
     millonario: 'ambiente',

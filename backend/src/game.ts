@@ -86,7 +86,7 @@ class LobbyState extends PhaseState {
   }
   override command(engine: GameEngine, command: GameCommand) {
     if (command !== 'start') throw new GameError('WRONG_PHASE');
-    if (engine.players.size === 0) throw new GameError('NOT_ENOUGH_PLAYERS');
+    if (engine.expectedAnswers === 0) throw new GameError('NOT_ENOUGH_PLAYERS');
     engine.openRound(0);
   }
 }
@@ -173,6 +173,18 @@ export class GameEngine {
   private duel?: Duel;
   private cancelTimer?: () => void;
   private pausedMs?: number;
+  private rouletteEnabled = true;
+  private rouletteChallenges = true;
+  private rouletteEvents?: NonNullable<RuntimeLiveEvent['wheel']>;
+
+  configureRouletteEvents(events: NonNullable<RuntimeLiveEvent['wheel']>) {
+    this.rouletteEvents = [...events];
+  }
+
+  configureRoulette(enabled: boolean, challenges: boolean) {
+    this.rouletteEnabled = enabled;
+    this.rouletteChallenges = challenges;
+  }
   private timedOut = false;
   private cancelledVote = false;
 
@@ -330,17 +342,36 @@ export class GameEngine {
     this.notify({ kind: 'snapshot' });
   }
 
+  private observerId?: string;
+
+  configureParticipation(observerId?: string) {
+    this.observerId = observerId;
+  }
+
+  canAnswer(playerId: string) {
+    return playerId !== this.observerId;
+  }
+
+  roundPlayers() {
+    return [...this.players.values()].filter(player => this.canAnswer(player.id));
+  }
+
+  get expectedAnswers() {
+    return this.players.size - Number(this.observerId !== undefined && this.players.has(this.observerId));
+  }
+
   recordAnswer(player: PlayerState, roundId: string, optionIndex: unknown) {
     const round = this.round;
     const now = this.deps.now();
     if (this.pausedMs !== undefined || !round || round.settled || round.roundId !== roundId || now > round.deadline) throw new GameError('ROUND_CLOSED');
+    if (!this.canAnswer(player.id)) throw new GameError('NOT_ACTIVE');
     if (round.submissions.has(player.id)) throw new GameError('ALREADY_ANSWERED');
     if (!Number.isInteger(optionIndex) || (optionIndex as number) < 0 || (optionIndex as number) >= round.question.options.length) {
       throw new GameError('OPTION_INVALID');
     }
     round.submissions.set(player.id, { playerId: player.id, optionIndex: optionIndex as number, receivedAt: now });
     this.notify({ kind: 'round:progress', progress: this.roundProgress()! });
-    if (round.submissions.size >= this.players.size) this.settleRound();
+    if (round.submissions.size >= this.expectedAnswers) this.settleRound();
   }
 
   get questionTimedOut() { return this.timedOut; }
@@ -358,7 +389,7 @@ export class GameEngine {
     round.settled = true;
     this.pausedMs = undefined;
     this.clearTimer();
-    const players = [...this.players.values()];
+    const players = this.roundPlayers();
     const submissions = [...round.submissions.values()];
     const outcomes = scoreRound({ question: round.question, players, submissions, modifier: round.modifier });
     for (const outcome of outcomes) {
@@ -413,8 +444,9 @@ export class GameEngine {
   }
 
   get canSkipEvent() {
+    if (!this.rouletteEnabled || this.round?.question.id === 'patrones-caso-final') return false;
     return this.phase === 'results' && !this.interlude.eventUsed && !this.pendingDuel
-      && this.round?.submissions.size === this.players.size;
+      && this.round?.submissions.size === this.expectedAnswers;
   }
 
   skipEvent(roundId: unknown) {
@@ -447,9 +479,11 @@ export class GameEngine {
   }
 
   runEvent() {
-    if (this.interlude.eventUsed || this.pendingDuel || this.duel) throw new GameError('WRONG_PHASE');
+    if (!this.rouletteEnabled || this.round?.question.id === 'patrones-caso-final' || this.interlude.eventUsed || this.pendingDuel || this.duel) {
+      throw new GameError('WRONG_PHASE');
+    }
     const ctx: EventContext = {
-      activePlayers: this.activePlayers(),
+      activePlayers: this.activePlayers().filter(player => this.canAnswer(player.id)),
       rng: this.deps.rng,
       hasPendingModifier: Boolean(this.pendingModifier),
       hasNextQuestion: this.hasNextQuestion(),
@@ -460,13 +494,13 @@ export class GameEngine {
     if (this.runtime) {
       const ghosts = [...this.players.values()].filter(player => player.status === 'ghost');
       const result = rollRuntimeEvent({
-        base: ctx, ghosts, index: this.questionIndex, powers: this.runtime,
+        base: ctx, ghosts, index: this.questionIndex, powers: this.runtime, allowDuel: this.rouletteChallenges,
         offerDuel: players => { this.pendingDuel = { players }; },
-      }, this.runtimeResult?.type ?? this.previousRuntimeEvent);
+      }, this.runtimeResult?.type ?? this.previousRuntimeEvent, this.rouletteEvents);
       if (!result) throw new GameError('NOT_ENOUGH_PLAYERS');
       this.previousRuntimeEvent = result.type;
       this.runtimeResult = {
-        ...result, started: this.deps.now(),
+        ...result, started: this.deps.now(), wheel: this.rouletteEvents,
         targets: result.targets.map(id => this.players.get(id)?.nickname ?? id),
       };
       this.interlude.eventUsed = true;
@@ -487,11 +521,21 @@ export class GameEngine {
     this.notify({ kind: 'snapshot' });
   }
 
+  private excludedVoter?: string;
+
+  configureAssembly(excludedVoter?: string) {
+    this.excludedVoter = excludedVoter;
+  }
+
+  eligibleVoters(ids: readonly string[]) {
+    return ids.filter(id => id !== this.excludedVoter);
+  }
+
   openVote() {
     this.cancelledVote = false;
     if (this.duel || !this.options.votingEnabled || this.interlude.voteUsed) throw new GameError('WRONG_PHASE');
     const active = this.activePlayers();
-    if (active.length < MIN_ACTIVE_TO_VOTE) throw new GameError('NOT_ENOUGH_PLAYERS');
+    if (this.eligibleVoters(active.map(player => player.id)).length < MIN_ACTIVE_TO_VOTE) throw new GameError('NOT_ENOUGH_PLAYERS');
     this.protectedVoters = active.filter(player => this.runtime?.firewall(player.id, this.questionIndex)).map(player => player.id);
     const ms = VOTE_SECONDS * 1000;
     this.voteSession = new VoteSession(this.deps.newId(), active.map((p) => p.id), this.deps.now() + ms);
@@ -507,10 +551,11 @@ export class GameEngine {
   recordVote(player: PlayerState, voteId: string, target: unknown) {
     const session = this.voteSession;
     if (!session || session.voteId !== voteId) throw new GameError('VOTE_CLOSED');
-    if (target !== null && (typeof target !== 'string' || this.protectedVoters.includes(target))) throw new GameError('TARGET_INVALID');
+    if (target !== null && (typeof target !== 'string' || this.protectedVoters.includes(target) || !this.canAnswer(target))) throw new GameError('TARGET_INVALID');
+    if (player.id === this.excludedVoter) throw new GameError('NOT_ACTIVE');
     const error = session.cast(player.id, target, this.deps.now());
     if (error) throw new GameError(error);
-    if (session.voteCount >= session.candidateIds.length) this.settleVote();
+    if (session.voteCount >= this.eligibleVoters(session.candidateIds).length) this.settleVote();
     else this.notify({ kind: 'snapshot' });
   }
 
@@ -556,13 +601,14 @@ export class GameEngine {
   }
 
   private canChallenge() {
+    if (this.round?.question.id === 'patrones-caso-final') return false;
     return this.pausedMs === undefined && (this.phase === 'question' || this.phase === 'results') && !this.pendingDuel
-      && !this.duel && this.activePlayers().length >= 2;
+      && !this.duel && this.roundPlayers().filter(player => player.status === 'active').length >= 2;
   }
 
   chaosView(playerId: string) {
     const player = this.players.get(playerId);
-    if (!this.runtime || !player) return undefined;
+    if (!this.runtime || !player || !this.canAnswer(player.id)) return undefined;
     const reserved = this.pendingDuel?.challenger?.id === playerId;
     return {
       ...this.runtime.view(player, this.questionIndex, this.duel?.canAdapt(playerId) ?? false,
@@ -584,7 +630,7 @@ export class GameEngine {
 
   private challenge(player: PlayerState, target: unknown) {
     const opponent = typeof target === 'string' ? this.players.get(target) : undefined;
-    if (!opponent || opponent.status !== 'active' || opponent === player) return false;
+    if (!opponent || opponent.status !== 'active' || opponent === player || !this.canAnswer(opponent.id)) return false;
     this.pendingDuel = { players: [player, opponent], challenger: player };
     this.notify({ kind: 'snapshot' });
     return true;
@@ -676,7 +722,7 @@ export class GameEngine {
 
   roundProgress(): RoundProgress | undefined {
     if (!this.round) return undefined;
-    return { roundId: this.round.roundId, answered: this.round.submissions.size, expected: this.players.size };
+    return { roundId: this.round.roundId, answered: this.round.submissions.size, expected: this.expectedAnswers };
   }
 
   finishedView(role: 'display'): FinishedView;

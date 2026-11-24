@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { RuntimeArenaView } from '../../../shared/runtime-chaos';
 import { command } from '../services/arena';
 import { useRoundSeconds } from '../components/useRoundSeconds';
+import { RoundMoment } from '../components/ArenaMoments';
 import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
 import { VotePage } from './VotePage';
@@ -30,15 +31,16 @@ export function PlayPage({ view, online }: { view: RuntimeArenaView; online: boo
   const ghost = view.players.some(player => player.id === view.you && player.status === 'ghost');
   const choice = view.choice ?? pending;
   const reveal = view.solution;
-  const verdict = !reveal ? undefined : view.choice === null ? 'unanswered'
+  const verdict = view.canAnswer === false || !reveal ? undefined : view.choice === null ? 'unanswered'
     : view.choice === reveal.index ? 'correct' : 'incorrect';
   return <main className="game-layout play-view">
     <section className="panel game-panel" aria-labelledby="game-title">
-      {ghost && <p className="lock-feedback">Modo fantasma · Tus respuestas siguen contando para la evaluación.</p>}
-      <div className="round-meta"><span>Ronda {view.number} / {view.total}</span><span>{view.received} de {view.players.length} respuestas</span></div>
+      {ghost && <p className="lock-feedback ghost-state"><span aria-hidden="true">👻 </span>Modo fantasma · Tus respuestas siguen contando para la evaluación.</p>}
+      <div className="round-meta"><span>Ronda {view.number} / {view.total}</span><span>{view.received} de {view.expectedAnswers ?? view.players.length} respuestas</span></div>
       {view.phase === 'question' && <RoundTimer seconds={remaining} totalSeconds={view.seconds} />}
       {paused && <p className="lock-feedback" role="status">Pregunta en pausa</p>}
-      <div className="prompt-board">
+      <RoundMoment view={view} />
+      <div className="prompt-board" data-boss={view.roundStage === 'boss' || undefined}>
         <span className="round-digit" aria-hidden="true">{String(view.number).padStart(2, '0')}</span>
         <h1 className="game-prompt" id="game-title">{round.prompt}</h1>
       </div>
@@ -53,7 +55,7 @@ export function PlayPage({ view, online }: { view: RuntimeArenaView; online: boo
       <div className="game-options" aria-label="Opciones de respuesta" role="group">
         {round.options.map((option, i) => <button key={i} className="game-option"
           data-picked={choice === i || undefined} data-correct={reveal?.index === i || undefined} data-wrong={verdict === 'incorrect' && view.choice === i || undefined}
-          disabled={!online || choice !== null || view.phase !== 'question' || paused || remaining <= 0}
+          disabled={view.canAnswer === false || !online || choice !== null || view.phase !== 'question' || paused || remaining <= 0}
           onClick={() => answer(i)}>
           <span className="option-letter">{String.fromCharCode(65 + i)}</span>
           <span>{option}{reveal?.index === i && <small> · Correcta</small>}</span>

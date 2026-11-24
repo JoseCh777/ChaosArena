@@ -32,6 +32,7 @@ export function attachAutopilot(
   options: AutopilotOptions = defaultAutopilot,
   deps: Pick<EngineDeps, 'setTimer' | 'rng'> = realDeps,
   presentationDelay?: (phase: 'results' | 'voting') => number,
+  playRoundClip?: () => number,
 ): () => void {
   let cancel: (() => void) | undefined;
   let rollAfterVote = false;
@@ -54,12 +55,14 @@ export function attachAutopilot(
     }
   };
 
-  const rollOrContinue = (allAnswered: boolean) => {
+  const rollOrContinue = (allAnswered: boolean, allowRoundClip = false) => {
     if (allAnswered && deps.rng() < options.eventChance && run('event')) {
       later(options.rouletteMs, 'event', () => run('next'));
       return;
     }
-    run('next');
+    const clipMs = allowRoundClip ? playRoundClip?.() : undefined;
+    if (clipMs) later(clipMs, 'results', () => run('next'));
+    else run('next');
   };
 
   const afterReveal = (allAnswered: boolean) => {
@@ -70,13 +73,13 @@ export function attachAutopilot(
       rollAfterVote = allAnswered;
       return;
     }
-    rollOrContinue(allAnswered);
+    rollOrContinue(allAnswered, true);
   };
 
   const unsubscribe = engine.subscribe((change: EngineChange) => {
     if (change.kind === 'round:result') {
       const answered = change.result.counts.reduce((a, b) => a + b, 0);
-      const allAnswered = answered >= engine.players.size;
+      const allAnswered = answered >= engine.expectedAnswers;
       later(Math.max(options.revealMs, presentationDelay?.('results') ?? 0), 'results', () => afterReveal(allAnswered));
     } else if (change.kind === 'vote:result') {
       const eligible = rollAfterVote;

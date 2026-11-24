@@ -44,7 +44,7 @@ export function HostShow({ view, online, audioEnabled, toggleAudio }: Props) {
     <section className="panel host-show" aria-labelledby="host-show-title">
     <header className="host-show-head">
       <h2 id="host-show-title">Efectos</h2>
-      {show.output === 'host' ? <button className="button button-text" type="button"
+      {show.output !== 'display' ? <button className="button button-text" type="button"
         aria-pressed={audioEnabled} onClick={toggleAudio}>{audioEnabled ? 'Silenciar' : 'Activar sonido'}</button>
         : <p className="host-show-hint">Audio en el proyector</p>}
     </header>
@@ -52,8 +52,8 @@ export function HostShow({ view, online, audioEnabled, toggleAudio }: Props) {
       <summary>Ajustes de efectos</summary>
     <label className="host-volume">Salida
       <select value={controlsState.output} disabled={disabled}
-        onChange={event => change({ key: 'output', value: event.target.value === 'display' ? 'display' : 'host' })}>
-        <option value="host">Anfitrión</option><option value="display">Proyector</option>
+        onChange={event => change({ key: 'output', value: event.target.value === 'both' ? 'both' : event.target.value === 'display' ? 'display' : 'host' })}>
+        <option value="both">Anfitrión y proyector</option><option value="host">Anfitrión</option><option value="display">Proyector</option>
       </select>
     </label>
     <div className="host-show-switches" aria-label="Efectos de la sala">
@@ -80,7 +80,7 @@ export function HostShow({ view, online, audioEnabled, toggleAudio }: Props) {
         </label>
         <button className="button button-text" type="button" onClick={() => {
           setAudioFromGesture(() => setPreview({ asset: selected, started: Date.now() }));
-          if (!audioEnabled && show.output === 'host') toggleAudio();
+          if (!audioEnabled && show.output !== 'display') toggleAudio();
         }}>Probar</button>
       </div>
     </details>}

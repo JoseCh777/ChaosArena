@@ -1,7 +1,11 @@
 import { DEFAULT_CLIPS, DEFAULT_ROUND_SECONDS } from '@chaos-arena/shared/arena-settings.js';
 import type { ArenaSettings } from '../../../shared/live';
+import { rouletteTypes } from '../services/runtimeCatalog';
+import { DuelStage } from '../components/DuelStage';
+import { PowerTray } from '../components/PowerTray';
 import { HostOptions } from './HostOptions';
 import { HostRound } from './HostRound';
+import { RoundMoment, ArenaRecognitions } from '../components/ArenaMoments';
 import { ArenaPodium } from '../components/ArenaPodium';
 import { HostShow } from './HostShow';
 import { DisplayPage } from './DisplayPage';
@@ -21,10 +25,15 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
   const [error, setError] = useState('');
   const [settings, setSettings] = useState<ArenaSettings>({ roundSeconds: DEFAULT_ROUND_SECONDS, clips: { ...DEFAULT_CLIPS } });
   const [bankSize, setBankSize] = useState<16 | 32 | 48>(16);
+  const [hostAnswers, setHostAnswers] = useState(true);
+  const [hostVotes, setHostVotes] = useState(true);
   const [voting, setVoting] = useState(true);
+  const [roulette, setRoulette] = useState(true);
+  const [rouletteEvents, setRouletteEvents] = useState(rouletteTypes);
   const [confirmClose, setConfirmClose] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [audioEnabled, setAudioEnabled] = useState(false);
+  const canStart = online && !busy && (!roulette || rouletteEvents.length > 0);
+  const [audioEnabled, setAudioEnabled] = useState(true);
   const toggleAudio = () => setAudioFromGesture(() => setAudioEnabled(!audioEnabled));
 
   async function create(event: FormEvent<HTMLFormElement>) {
@@ -49,7 +58,7 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
     setError('');
     try {
       const quiz = draft ? decodeQuiz(localStorage.getItem(DRAFT_KEY) ?? '') : undefined;
-      const reply = await command('start', { quiz, voting, settings, bankSize: draft ? undefined : bankSize });
+      const reply = await command('start', { quiz, voting, hostVotes, hostAnswers, settings, roulette, rouletteEvents, bankSize: draft ? undefined : bankSize });
       if (!reply.ok) setError(reply.error);
     } catch {
       setError('Guarda un cuestionario válido en el editor antes de iniciarlo.');
@@ -80,7 +89,7 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
   }
 
   if (!view && (!sessionToken() || busy)) {
-    return <main className="entry" aria-labelledby="host-create-title">
+    return <main className="entry arena-entry" aria-labelledby="host-create-title">
       <div className="entry-intro">
         <h1 id="host-create-title">Abre una <span>sala</span></h1>
         <p>Al crearla recibes un PIN de seis dígitos y el QR para invitar a los jugadores.</p>
@@ -113,17 +122,18 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
     <a href={view ? '/lobby' : '/join'} className="button button-primary">{view ? 'Volver a la sala' : 'Ir al ingreso'}</a>
   </main>;
 
-  if (presenting) return <DisplayPage hostView={view} enabled={audioEnabled} toggleAudio={toggleAudio} close={() => {
-    setPresenting(false);
-    if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
-  }} />;
+  if (presenting) return <DisplayPage hostView={view} enabled={audioEnabled} toggleAudio={toggleAudio} />;
   const intro = view.phase === 'lobby' && view.showFact?.kind === 'intro';
   const startable = !intro && (view.phase === 'lobby' || view.phase === 'finished');
   return <main className="game-layout host-layout">
     {view.phase !== 'lobby' && <ArenaPodium players={view.players} final={view.phase === 'finished'} />}
-    {!startable && <section className="host-main-stage" data-phase={view.phase} aria-label="Partida en curso">
+    {view.phase === 'finished' && <ArenaRecognitions awards={view.awards} />}
+    {!startable && <section className="host-main-stage" data-phase={view.phase} data-boss={view.roundStage === 'boss' || undefined} aria-label="Partida en curso">
+      {!intro && <RoundMoment view={view} />}
       {intro ? <h1 className="game-prompt">Comienza la partida</h1>
-        : <HostRound key={view.round?.roundId} view={view} online={online && !busy} />}
+        : view.duel ? <DuelStage key={view.duel.id} duel={view.duel} view={view} online={online && !busy} />
+        : <><HostRound key={view.round?.roundId} view={view} online={online && !busy} />
+          <PowerTray view={view} online={online && !busy} /></>}
     </section>}
     <section className="panel game-panel host-deck">
       <p className="round-meta">{phases[view.phase]}</p>
@@ -139,7 +149,8 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
       </div>
       {!online && <p role="status">{message}</p>}
       {error && <p className="form-error" role="alert">{error}</p>}
-      {startable && !confirmClose && <HostOptions settings={settings} voting={voting} onSettings={setSettings} onVoting={setVoting} disabled={busy} />}
+      {startable && !confirmClose && <HostOptions hostAnswers={hostAnswers} onHostAnswers={setHostAnswers} hostVotes={hostVotes} onHostVotes={setHostVotes} settings={settings} voting={voting} onSettings={setSettings} onVoting={setVoting} roulette={roulette}
+        rouletteEvents={rouletteEvents} onRoulette={setRoulette} onRouletteEvents={setRouletteEvents} disabled={busy} />}
       {startable && !confirmClose ? <div className="host-actions">
         <label className="host-volume host-count">Preguntas del banco
           <select value={bankSize} disabled={busy} onChange={event => setBankSize(Number(event.target.value) as 16 | 32 | 48)}>
@@ -148,9 +159,9 @@ export function HostPage({ presenting, setPresenting }: { presenting: boolean; s
             <option value={48}>48 · Banco completo</option>
           </select>
         </label>
-        <button className="button button-primary" disabled={!online || busy} onClick={() => start(false)}>Iniciar Patrones de Diseño</button>
+        <button className="button button-primary" disabled={!canStart} onClick={() => start(false)}>Iniciar Patrones de Diseño</button>
         <details className="host-personal"><summary>Cuestionario del editor</summary>
-          <button className="button button-text" disabled={!online || busy} onClick={() => start(true)}>Iniciar mi cuestionario</button>
+          <button className="button button-text" disabled={!canStart} onClick={() => start(true)}>Iniciar mi cuestionario</button>
         </details>
       </div> : null}
       {confirmClose ? <div className="host-close">

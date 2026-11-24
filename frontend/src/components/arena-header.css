@@ -1,0 +1,28 @@
+.arena-header {
+  width: min(1440px, calc(100% - 40px));
+  margin: 0 auto;
+  padding-block: 1rem .65rem;
+  display: flex;
+  align-items: center;
+  gap: .65rem 1rem;
+  border-bottom: 1px solid #6d568d;
+  background: linear-gradient(90deg, #34244855, transparent 55%);
+}
+.arena-brand { display: flex; align-items: center; gap: .55rem; }
+.arena-brand img { flex: none; }
+.arena-brand strong { font-size: 1.4rem; letter-spacing: -.06em; }
+.arena-header-status { color: var(--muted); font-size: .8rem; }
+.arena-header nav { display: flex; gap: .25rem; margin-inline-start: auto; }
+.arena-header nav .button { min-height: 44px; white-space: nowrap; }
+.arena-header nav [aria-current="page"] {
+  color: var(--mint);
+  background: #193832;
+  border-color: #8bf4d366;
+}
+@media (max-width: 690px) {
+  .arena-header { width: calc(100% - 24px); flex-wrap: wrap; gap: .4rem .65rem; }
+  .arena-brand strong { font-size: 1.25rem; }
+  .arena-header-status { margin-inline-start: auto; }
+  .arena-header nav { flex: 0 0 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .arena-header nav .button { padding-inline: .2rem; font-size: .8rem; }
+}

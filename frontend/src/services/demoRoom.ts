@@ -1,6 +1,7 @@
 import type { PublicPlayer, PublicSnapshot } from '@chaos-arena/shared';
 
 export const DEMO_PIN = '482913';
+export const GAME_KEY = 'chaos-arena.demo-game';
 const SESSION_KEY = 'chaos-arena.demo-player';
 const demoPlayers: PublicPlayer[] = [
   { id: 'demo-luna', nickname: 'Luna', score: 0, status: 'active' },
@@ -26,6 +27,7 @@ export function joinDemoRoom(pin: string, nickname: string): JoinResult {
   }
 
   try {
+    sessionStorage.removeItem(GAME_KEY);
     sessionStorage.setItem(SESSION_KEY, name);
     return { ok: true };
   } catch {
@@ -57,4 +59,5 @@ export function readDemoRoom(): { playerId: string; snapshot: PublicSnapshot } |
 
 export function leaveDemoRoom() {
   sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(GAME_KEY);
 }

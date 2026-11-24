@@ -1,6 +1,8 @@
 import { EditorPage } from './pages/EditorPage';
 import { JoinPage } from './pages/JoinPage';
 import { LobbyPage } from './pages/LobbyPage';
+import { PlayPage } from './pages/PlayPage';
+import { ResultsPage } from './pages/ResultsPage';
 
 export function App() {
   const route = window.location.pathname.replace(/\/$/, '');
@@ -21,7 +23,9 @@ export function App() {
       </header>
       {route === '/editor' && <EditorPage />}
       {route === '/lobby' && <LobbyPage />}
-      {route !== '/editor' && route !== '/lobby' && <JoinPage />}
+      {route === '/play' && <PlayPage />}
+      {route === '/results' && <ResultsPage />}
+      {!['/editor', '/lobby', '/play', '/results'].includes(route) && <JoinPage />}
     </div>
   );
 }

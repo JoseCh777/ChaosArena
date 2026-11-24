@@ -1,8 +1,12 @@
+import { useState } from 'react';
+import { openDemoGame, readDemoGame, writeDemoGame } from '../services/demoGame';
 import { PlayerList } from '../components/PlayerList';
 import { leaveDemoRoom, readDemoRoom } from '../services/demoRoom';
 
 export function LobbyPage() {
   const room = readDemoRoom();
+  const game = readDemoGame();
+  const [error, setError] = useState('');
 
   if (!room) {
     return (
@@ -21,7 +25,7 @@ export function LobbyPage() {
       <div className="entry-intro">
         <div className="arena-grid" aria-hidden="true" />
         <h1 id="lobby-title">Sala de <span>espera</span></h1>
-        <p>La partida comenzará cuando el anfitrión la inicie.</p>
+        <p>Practica con tres preguntas y consulta tus resultados al terminar.</p>
       </div>
       <section className="panel lobby-panel" aria-labelledby="players-title">
         <div className="lobby-heading">
@@ -29,6 +33,22 @@ export function LobbyPage() {
           <p>PIN <strong>{snapshot.pin}</strong></p>
         </div>
         <PlayerList players={snapshot.players} playerId={playerId} />
+        <div className="lobby-play">
+          {game && !game.finished ? (
+            <a className="button button-primary" href="/play">Continuar partida de prueba</a>
+          ) : (
+            <button type="button" className="button button-primary" onClick={() => {
+              try {
+                writeDemoGame(openDemoGame());
+                window.location.assign('/play');
+              } catch {
+                setError('El navegador no pudo guardar la partida de prueba.');
+              }
+            }}>Iniciar partida de prueba</button>
+          )}
+          {game?.finished && <a className="button button-text" href="/results">Ver resultados anteriores</a>}
+          {error && <p className="form-error" role="alert">{error}</p>}
+        </div>
         <button type="button" className="button button-text" onClick={() => {
           leaveDemoRoom();
           window.location.assign('/join');

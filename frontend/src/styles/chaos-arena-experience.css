@@ -1,17 +1,18 @@
 
-/* Una base tinta, superficies ciruela y menta para las acciones de la partida. */
+/* Marfil y lavanda en la interfaz. Ciruela para el texto y menta en los controles. */
 .arena {
-  --ink: #111016; --surface: #211f29; --surface-raised: #302d39; --paper: #f4f0f8;
-  --mint: #98f3d1; --text: var(--paper); --muted: #bbb6c5; --border: #3e3948;
-  --primary-soft: #c6bada; --secondary: var(--mint); background: var(--ink);
+  --ink: #241b34; --surface: #fffdfb; --surface-raised: #eee8f8; --paper: #fffdfb;
+  --mint: #a5ebd3; --text: var(--ink); --muted: #574c69; --border: #d8cfe4;
+  --primary-soft: #5c4082; --secondary: #296858; --background: #f7f1fa;
+  background: var(--background); color: var(--text); isolation: isolate;
 }
-.arena .arena-header { background: var(--ink); border-color: var(--border); }
+.arena .arena-header { background: var(--background); border-color: var(--border); }
 .arena .button { border-radius: .55rem; }
 .arena .button-primary { background: var(--mint); color: var(--ink); box-shadow: none; }
 .arena .button-primary:hover { background: #befbe4; }
-.arena .arena-header nav [aria-current="page"] { background: var(--surface-raised); color: var(--paper); border-color: transparent; }
+.arena .arena-header nav [aria-current="page"] { background: var(--surface-raised); color: var(--ink); border-color: transparent; }
 .arena :is(.panel,.host-deck,.host-show,.host-main-stage,.projection-round,.power-tray,.power-card,.duel-stage,.assembly-vote,.arena-recognitions li) {
-  border: 1px solid var(--border); border-radius: .95rem; background: var(--surface); box-shadow: none;
+  border: 1px solid var(--border); border-radius: .95rem; background: var(--surface); box-shadow: 0 .65rem 1.7rem #45276d0c;
 }
 .arena .entry-form::before,.arena .lobby-panel::before,.arena .entry-art :is(i,b),.arena .entry-art::before,.arena .entry-art::after,.arena .lobby-signal,.arena .round-digit { display: none; }
 .arena .entry-art { background: none; width: 5rem; height: 5rem; margin-bottom: 1.4rem; float: none; }
@@ -34,26 +35,26 @@
 .arena :is(.projection-round,.host-main-stage[data-phase="question"]) :is(.round-meta,.arena-round-moment span,.host-console header p,.button-text,.host-state,.arena-round-moment strong,.round-timer,.timer-label) { color: #524961; }
 .arena :is(.projection-round,.host-main-stage) h1 { font-style: normal; }
 .arena .play-view .game-option,.arena .assembly-vote .game-option,.arena .projection-options li {
-  --rail: var(--primary-soft); background: var(--surface-raised); color: var(--paper); border: 1px solid var(--border); border-radius: .65rem;
+  --rail: var(--primary-soft); background: var(--surface-raised); color: var(--ink); border: 1px solid var(--border); border-radius: .65rem;
 }
 .arena .game-option::after { display: none; }
-.arena .game-option .option-letter,.arena .projection-options b { background: transparent; color: #d2c8df; }
+.arena .game-option .option-letter,.arena .projection-options b { background: transparent; color: #60477b; }
 .arena .play-view .game-option[data-picked] { outline: 2px solid var(--primary-soft); }
-.arena .play-view .game-option[data-correct],.arena .projection-options li[data-correct] { background: #224639; border-color: var(--mint); }
-.arena .play-view .game-option[data-wrong] { background: #4b2937; border-color: #e8abb9; }
+.arena .play-view .game-option[data-correct],.arena .projection-options li[data-correct] { background: #c7efdf; border-color: #69a890; }
+.arena .play-view .game-option[data-wrong] { background: #f5d9e1; border-color: #c98099; }
 .arena .player-verdict,.arena .player-verdict[data-verdict] { background: var(--surface-raised); border: 0; }
 .arena .arena-podium-places { align-items: stretch; gap: .4rem; }
 .arena .arena-podium-place { background: var(--surface); border: 0; border-radius: .65rem; box-shadow: none; }
-.arena .arena-podium-place[data-rank="1"] { background: #dad1e6; color: var(--ink); box-shadow: none; }
+.arena .arena-podium-place[data-rank="1"] { background: #e1d3f3; color: var(--ink); box-shadow: none; }
 .arena .arena-podium-place[data-rank="1"] .arena-podium-score { color: #483b58; }
 .arena .arena-podium-medal { background: transparent; color: inherit; clip-path: none; font-size: clamp(1.5rem,4vw,3rem); letter-spacing: -.07em; }
 .arena .arena-podium-place[data-rank="1"] .arena-podium-medal { filter: none; }
 .arena .editor-header,.arena .host-console { border-color: var(--border); }
 .arena .field :is(select,textarea) { border-radius: .5rem; }
 .arena .arena-effect-lane .arena-media,.arena .chaos-modal,.arena .roulette-stage,.arena .assembly-disc {
-  background: var(--surface); border-color: var(--border); rotate: none; box-shadow: none;
+  background: var(--surface); color: var(--ink); border-color: var(--border); rotate: none; box-shadow: 0 .6rem 1.6rem #38254f15;
 }
-.arena .assembly-disc { background: #34303e; border-color: #756982; }
+.arena .assembly-disc { background: #cceddf; border-color: #8dbfae; }
 .arena .chaos-dial,.arena .dial-hub { background: var(--ink); box-shadow: none; }
 .arena .dial-frame { border-color: #6c617d; }
 .arena .dial-pointer { background: var(--paper); }
@@ -84,7 +85,45 @@
 .arena :is(.host-main-stage[data-phase="question"],.projection-round) .round-timer-label span:last-child { color: #43394e; }
 .arena .projection-round .host-answer-list li::marker,.arena .host-answer-list li::marker { color: #554462; }
 .arena .entry-form .form-error { color: #8a233f; }
-.arena .assembly-call,.arena .assembly-disc strong { color: var(--paper); }
+.arena .assembly-call,.arena .assembly-disc strong { color: var(--ink); }
 .arena input:is([type="checkbox"],[type="radio"]) { accent-color: var(--mint); }
 .arena .host-options-grid { align-items: start; }
 .arena .roulette-stage em { color: var(--primary-soft); }
+.arena .entry-intro { z-index: 0; }
+.arena .entry-intro::before,.arena .entry-intro::after {
+  content: ''; position: absolute; z-index: -1; pointer-events: none;
+  width: clamp(5rem, 14vw, 11rem); aspect-ratio: 1; border-radius: 30%;
+}
+.arena .entry-intro::before {
+  inset: -1.15rem .9rem auto auto; background: #e8daf5;
+  transform: rotate(-19deg);
+}
+.arena .entry-intro::after {
+  inset: auto 1.25rem -1.1rem auto; width: clamp(3rem, 8vw, 6rem);
+  background: #d1f0e3; transform: rotate(22deg);
+}
+.arena .entry-form,.arena .lobby-panel { position: relative; }
+.arena :is(.field input,.field textarea,.field select,.host-volume select,.power-card select) {
+  color: var(--ink); background: #f8f3fb; border-color: #cbbfda; color-scheme: light;
+}
+.arena :is(.room-code strong,.score-display,.host-state,.round-timer-label span:last-child) { color: var(--secondary); }
+.arena .round-timer-track { background: #dcd1e9; }
+.arena .round-timer-fill { background: #348074; }
+.arena .arena-podium h2,.arena .arena-podium-score,.arena .arena-podium-names span { color: var(--primary-soft); }
+.arena .arena-recognitions li > span { color: var(--primary-soft); }
+.arena .roulette-event-option:has(input:checked) { background: #ddf3e9; border-color: #97bfae; }
+.arena .roulette-event-help { color: var(--primary-soft); }
+.arena .roulette-event-tip { background: var(--ink); color: var(--paper); }
+.arena .roulette-progress,.arena .arena-effect-lane .arena-media-copy strong { color: var(--primary-soft); }
+.arena .chaos-modal::backdrop { background: #33224e88; }
+.arena .assembly-seat small { color: var(--paper); }
+.arena .player-verdict strong { color: #286052; }
+.arena .player-verdict[data-verdict="incorrect"] strong { color: #8a314e; }
+.arena .player-verdict[data-verdict="unanswered"] strong { color: #6e4d72; }
+.arena .arena-media-unlock { justify-self: end; pointer-events: auto; position: relative; z-index: 2; }
+.arena::before {
+  content: ''; position: fixed; z-index: -1; pointer-events: none;
+  inset: auto 0 7svh auto; width: min(28vw, 20rem); height: min(26vw, 17rem);
+  background: #eee4f8; border-radius: 55% 0 0 45% / 50%;
+}
+.arena :is(select,input,textarea) { color-scheme: light; }

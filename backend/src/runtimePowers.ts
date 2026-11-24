@@ -39,7 +39,7 @@ export class RuntimePowers {
   suppress(id: string, index: number) { this.get(id).suppressedAt = index + 1; }
   recordLoss(id: string, loss: number) { if (loss > 0) this.get(id).lastLoss = loss; }
 
-  firewall(id: string, index: number) { return (this.get(id).firewallUntil ?? -1) >= index; }
+  firewall(id: string, index: number) { return (this.get(id).firewallUntil ?? Number.NEGATIVE_INFINITY) >= index; }
   block(id: string, index: number) {
     const item = this.get(id);
     if (this.firewall(id, index)) { item.firewallUntil = undefined; return true; }

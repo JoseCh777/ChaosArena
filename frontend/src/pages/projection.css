@@ -27,3 +27,7 @@
   .projection-prompt { padding-top: 28px; min-height: auto; }
   .arena-nav .mode-label { min-height: 26px; }
 }
+
+.projection-brand { flex-wrap: wrap; }
+.host-close { padding-top: 12px; border-top: 1px solid var(--border); }
+.host-close p { margin: 0 0 12px; color: var(--muted); }

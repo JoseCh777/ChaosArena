@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { command, remember, sessionToken, useArena } from '../services/arena';
+import { command, forget, remember, sessionToken, useArena } from '../services/arena';
 import { decodeQuiz, DRAFT_KEY } from '../services/quizDraft';
 
 const phases = { lobby: 'Sala de espera', question: 'Pregunta abierta', reveal: 'Resultados de ronda', roulette: 'Ruleta de caos', vote: 'Votación secreta', finished: 'Partida terminada' };
@@ -10,6 +10,7 @@ export function HostPage() {
   const [hostKey, setHostKey] = useState('');
   const [error, setError] = useState('');
   const [voting, setVoting] = useState(true);
+  const [confirmClose, setConfirmClose] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function create(event: FormEvent<HTMLFormElement>) {
@@ -38,6 +39,21 @@ export function HostPage() {
       if (!reply.ok) setError(reply.error);
     } catch {
       setError('Guarda un cuestionario válido en el editor antes de iniciarlo.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function closeRoom() {
+    setBusy(true);
+    setError('');
+    try {
+      const reply = await command('closeRoom', {});
+      if (!reply.ok) setError(reply.error);
+      else {
+        forget();
+        location.assign('/host');
+      }
     } finally {
       setBusy(false);
     }
@@ -96,11 +112,19 @@ export function HostPage() {
       </div>
       {!online && <p role="status">{message}</p>}
       {error && <p className="form-error" role="alert">{error}</p>}
-      {startable && <label><input type="checkbox" checked={voting} onChange={event => setVoting(event.target.checked)} /> Activar votaciones</label>}
-      {startable ? <div className="host-actions">
+      {startable && !confirmClose && <label><input type="checkbox" checked={voting} onChange={event => setVoting(event.target.checked)} /> Activar votaciones</label>}
+      {startable && !confirmClose ? <div className="host-actions">
         <button className="button button-primary" disabled={!online || busy} onClick={() => start(false)}>Iniciar con preguntas de muestra</button>
         <button className="button button-text" disabled={!online || busy} onClick={() => start(true)}>Iniciar mi cuestionario</button>
-      </div> : <p role="status">Ronda {view.number} de {view.total} · {view.received} de {view.players.length} respuestas</p>}
+      </div> : !startable && <p role="status">Ronda {view.number} de {view.total} · {view.received} de {view.players.length} respuestas</p>}
+      {confirmClose ? <div className="host-close">
+        <p>Se desconectarán los jugadores y se descartará la partida. Al crear otra sala recibirás un PIN nuevo.</p>
+        <div className="host-actions">
+          <button type="button" className="button button-text" disabled={busy} onClick={() => setConfirmClose(false)}>Cancelar</button>
+          <button type="button" className="button button-primary" disabled={!online || busy} onClick={closeRoom}>Confirmar cierre</button>
+        </div>
+      </div> : <button type="button" className="button button-text" disabled={!online || busy}
+        onClick={() => setConfirmClose(true)}>Cerrar sala</button>}
     </section>
     <section className="panel host-roster">
       <h2>{view.summary ? 'Resultados de la sala' : 'Jugadores en sala'}</h2>

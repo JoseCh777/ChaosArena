@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 import { useSyncExternalStore } from 'react';
-import type { ArenaCommands, ArenaHostCommands, ArenaView, DisplayView, Reply } from '../../../shared/live';
+import type { ArenaCommands, ArenaHostCommands, ArenaRoomLifecycleCommands, ArenaView, DisplayView, Reply } from '../../../shared/live';
 
 const key = 'chaos-arena.live-session';
 export const sessionToken = () => sessionStorage.getItem(key);
@@ -9,7 +9,7 @@ export function forget() { sessionStorage.removeItem(key); }
 
 const url = import.meta.env.VITE_SOCKET_URL || window.location.origin;
 const socket = io(url.replace(/\/$/, '') + '/arena', { autoConnect: false });
-type State = { view?: ArenaView; display?: DisplayView; online: boolean; message: string };
+type State = { ended?: boolean; view?: ArenaView; display?: DisplayView; online: boolean; message: string };
 let state: State = { online: false, message: 'Conectando con la arena…' };
 const listeners = new Set<() => void>();
 function update(next: State) { state = next; listeners.forEach(listener => listener()); }
@@ -19,7 +19,7 @@ function subscribe(listener: () => void) {
 }
 export const useArena = () => useSyncExternalStore(subscribe, () => state);
 
-type Commands = ArenaCommands & ArenaHostCommands;
+type Commands = ArenaCommands & ArenaHostCommands & ArenaRoomLifecycleCommands;
 
 export async function command<K extends keyof Commands>(kind: K, payload: Commands[K]): Promise<Reply> {
   if (!socket.connected) socket.connect();
@@ -44,9 +44,9 @@ socket.on('display', (display: DisplayView) => {
   alignClock(display);
   update({ ...state, display, online: true, message: '' });
 });
-socket.on('removed', () => {
+socket.on('removed', (reason?: string) => {
   forget();
-  update({ online: false, message: 'El anfitrión te retiró de la sala.' });
+  update({ ended: true, online: false, message: reason ?? 'El anfitrión te retiró de la sala.' });
 });
 socket.on('disconnect', () => update({ ...state, online: false, message: 'Reconectando con la arena…' }));
 socket.on('connect_error', () => update({ ...state, online: false, message: 'Esperando al servidor…' }));

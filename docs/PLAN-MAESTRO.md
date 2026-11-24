@@ -45,7 +45,7 @@ Seleccionar uniformemente entre efectos elegibles en el servidor. Máximo un eve
 
 Votación de 20 segundos entre activos. Un voto por persona a otro activo u Omitir. Gana el candidato que supere a Omitir sin empate, con tres votos válidos como mínimo. Máximo una expulsión y al menos dos activos restantes. El expulsado pasa a fantasma y conserva evaluación y puntos. Los votos individuales permanecen secretos. El anfitrión puede desactivar votaciones.
 
-Clips locales autorizados de 2–5 segundos, uno a la vez y solo en el proyector. Audio habilitado mediante gesto del anfitrión, con mute y alternativa visual si falla la reproducción.
+La mesa del anfitrión es la salida audiovisual inicial. El equipo puede seleccionar el proyector como salida alternativa. El audio requiere una interacción en la ventana seleccionada. Ver [operación e inventario multimedia](MULTIMEDIA.md).
 
 ## Entrega y contingencia
 

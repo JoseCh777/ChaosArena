@@ -25,4 +25,4 @@ En `/host`, **Control de partida** muestra el reloj y las respuestas recibidas. 
 
 Durante los resultados, **Omitir sorteo de esta ronda** evita que se aplique un evento de ruleta. Una vez iniciado el giro, **Saltar animación de ruleta** conserva el efecto aplicado y continúa. **Cancelar votación** descarta los votos e impide una expulsión en esa asamblea.
 
-**Proyector en vivo** controla el sonido, volumen, videos y reacciones de la sala. Activa el audio con un clic en `/display`. **Seguir efectos aquí** permite reproducir también los efectos en la mesa del anfitrión. La vista previa local sirve para comprobar un sonido o un clip antes de proyectarlo.
+**Escenario audiovisual** controla el sonido, volumen, videos y reacciones. Selecciona la salida y activa el audio con un clic en esa ventana. **Modo presentación** proyecta la parte pública de la mesa y **Volver al anfitrión** recupera sus controles. Consulta [el inventario local y su operación](MULTIMEDIA.md).

@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { CLIP_CUES, DEFAULT_ROUND_SECONDS, ROUND_SECONDS_MAX, ROUND_SECONDS_MIN } from '@chaos-arena/shared/arena-settings.js';
 import type { ArenaSettings, ClipCue } from '../../../shared/live';
 import type { RuntimeEvent } from '../../../shared/runtime-chaos';
-import { eventLabels, rouletteTypes } from '../services/runtimeCatalog';
+import { eventDescriptions, eventLabels, rouletteTypes } from '../services/runtimeCatalog';
 
 const labels: Record<ClipCue, string> = {
   inicio: 'Inicio de la partida',
@@ -21,6 +22,7 @@ export function HostOptions({ settings, voting, disabled, onSettings, onVoting, 
   onRoulette: (enabled: boolean) => void;
   onRouletteEvents: (events: RuntimeEvent[]) => void;
 }) {
+  const [eventInfo, setEventInfo] = useState<RuntimeEvent>();
   return <details className="host-options">
     <summary>Ajustes de partida</summary>
     <div className="host-options-grid">
@@ -35,19 +37,35 @@ export function HostOptions({ settings, voting, disabled, onSettings, onVoting, 
             <option key={value} value={value}>{value} s{value === DEFAULT_ROUND_SECONDS ? ' (por defecto)' : ''}</option>)}
         </select>
       </div>
-      <label className="host-options-check"><input type="checkbox" checked={voting} disabled={disabled}
-        onChange={event => onVoting(event.target.checked)} /> Activar votaciones</label>
+      <div>
+        <label className="host-options-check"><input type="checkbox" checked={voting} disabled={disabled}
+          aria-describedby="assembly-hint" onChange={event => onVoting(event.target.checked)} /> Activar votaciones</label>
+        <p className="host-options-note" id="assembly-hint">Abre asambleas automáticas. Los jugadores activos votan en secreto y la persona expulsada pasa a modo fantasma.</p>
+      </div>
       <label className="host-options-check"><input type="checkbox" checked={roulette} disabled={disabled}
         onChange={event => onRoulette(event.target.checked)} /> Activar ruleta</label>
     </div>
-    <fieldset className="roulette-options" disabled={disabled || !roulette} aria-describedby="roulette-options-hint">
+    <fieldset className="roulette-options" aria-describedby="roulette-options-hint">
       <legend>Eventos de la ruleta · {rouletteEvents.length}/{rouletteTypes.length}</legend>
       <div className="roulette-event-grid">
-        {rouletteTypes.map(type => <label className="host-options-check" key={type}>
-          <input type="checkbox" checked={rouletteEvents.includes(type)} onChange={event =>
-            onRouletteEvents(event.target.checked ? [...rouletteEvents, type] : rouletteEvents.filter(item => item !== type))
-          } /> {eventLabels[type]}
-        </label>)}
+        {rouletteTypes.map(type => {
+          const infoId = `roulette-info-${type}`;
+          const open = eventInfo === type;
+          return <div className="roulette-event-option" key={type} data-info-open={open || undefined}
+            onKeyDown={event => {
+              if (event.key === 'Escape' && open) setEventInfo(undefined);
+            }}>
+            <label className="host-options-check">
+              <input type="checkbox" checked={rouletteEvents.includes(type)} disabled={disabled || !roulette}
+                aria-describedby={infoId} onChange={event =>
+                  onRouletteEvents(event.target.checked ? [...rouletteEvents, type] : rouletteEvents.filter(item => item !== type))
+                } /> {eventLabels[type]}
+            </label>
+            <button className="roulette-event-help" type="button" aria-label={`Qué hace ${eventLabels[type]}`}
+              aria-controls={infoId} aria-expanded={open} onClick={() => setEventInfo(open ? undefined : type)}>i</button>
+            <span className="roulette-event-tip" id={infoId} role="tooltip">{eventDescriptions[type]}</span>
+          </div>;
+        })}
       </div>
       <p id="roulette-options-hint" className="host-options-note" role="status">
         {roulette && rouletteEvents.length === 0

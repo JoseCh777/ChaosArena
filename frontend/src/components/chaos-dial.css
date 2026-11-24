@@ -50,3 +50,5 @@
   background: linear-gradient(90deg, #fff2cc 50%, #f0ad46 50%);
   clip-path: polygon(0 0, 100% 0, 100% 30%, 50% 100%, 0 30%);
 }
+.dial-sector { pointer-events: none; }
+.dial-sector span { pointer-events: auto; }

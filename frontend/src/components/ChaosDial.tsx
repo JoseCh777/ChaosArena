@@ -1,7 +1,7 @@
 import { ARENA_PACE } from '@chaos-arena/shared/arena-settings.js';
 import { useLayoutEffect, useRef } from 'react';
 import type { RuntimeEvent } from '../../../shared/runtime-chaos';
-import { eventLabels, rouletteTypes } from '../services/runtimeCatalog';
+import { eventDescriptions, eventLabels, rouletteTypes } from '../services/runtimeCatalog';
 import './chaos-dial.css';
 
 const sectors = {
@@ -52,7 +52,7 @@ export function ChaosDial({ type, events, spin, onRest, started }: {
         }}>
           {wheel.map((id, i) => (
             <div className="dial-sector" key={id} style={{ transform: `rotate(${i * step}deg)` }}>
-              <b>{sectors[id][0]}</b><span>{eventLabels[id]}</span>
+              <b>{sectors[id][0]}</b><span title={eventDescriptions[id]}>{eventLabels[id]}</span>
             </div>
           ))}
         </div>

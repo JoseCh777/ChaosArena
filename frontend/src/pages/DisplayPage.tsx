@@ -4,6 +4,7 @@ import { useArena } from '../services/arena';
 import { RoundTimer } from '../components/RoundTimer';
 import { Leaderboard } from '../components/Leaderboard';
 import { DemoRoulette } from '../components/DemoRoulette';
+import { ProjectionClip } from '../components/ProjectionClip';
 import { useProjectionAudio } from './useProjectionAudio';
 import './projection.css';
 
@@ -45,8 +46,10 @@ export function DisplayPage() {
   const round = display.round;
   const waiting = phase === 'lobby';
   const finished = phase === 'finished';
+  const clip = phase === 'vote' ? 'votacion' : finished ? 'podio' : phase === 'question' && display.number === 1 ? 'inicio' : undefined;
   return <main className={'projection ' + (waiting ? 'projection-lobby' : '')}>
     {header}
+    {clip && <ProjectionClip key={clip} cue={clip} />}
     {audio.error && <p role="status">{audio.error}</p>}
     {waiting ? <section className="projection-prompt">
       <div><p className="round-meta">Sala de espera</p><h1>Entra a la <em>arena</em></h1>
@@ -80,6 +83,6 @@ export function DisplayPage() {
       {display.solution?.explanation && <p>{display.solution.explanation}</p>}
       {phase === 'reveal' && <Leaderboard ranking={display.players} playerId="" />}
     </section>}
-    {phase === 'roulette' && display.event && <DemoRoulette event={display.event} />}
+    {phase === 'roulette' && display.event && <DemoRoulette event={display.event} preview={<ProjectionClip cue="ruleta" />} />}
   </main>;
 }

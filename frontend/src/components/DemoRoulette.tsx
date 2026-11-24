@@ -1,10 +1,10 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { LiveEvent } from '../../../shared/live';
 import { eventLabels } from '../services/demoEvents';
 import { ChaosDial } from './ChaosDial';
 import '../styles/roulette.css';
 
-export function DemoRoulette({ event }: { event: LiveEvent }) {
+export function DemoRoulette({ event, preview }: { event: LiveEvent; preview?: ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [rest, setRest] = useState(() => Date.now() >= event.started + 2450);
   const reveal = useCallback(() => setRest(true), []);
@@ -17,6 +17,7 @@ export function DemoRoulette({ event }: { event: LiveEvent }) {
     onCancel={e => e.preventDefault()} tabIndex={-1}>
     <div className="roulette-stage">
       <h2 id="roulette-title">Ruleta de <em>caos</em></h2>
+      {preview}
       <ChaosDial type={event.type} started={event.started} spin={!rest} onRest={reveal} />
     </div>
     <div className="roulette-outcome" role="status">

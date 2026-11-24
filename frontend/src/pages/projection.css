@@ -31,3 +31,9 @@
 .projection-brand { flex-wrap: wrap; }
 .host-close { padding-top: 12px; border-top: 1px solid var(--border); }
 .host-close p { margin: 0 0 12px; color: var(--muted); }
+.projection-clip { margin: 12px auto; width: min(100%, 510px); }
+.projection-clip video { display: block; width: 100%; height: auto; aspect-ratio: 704 / 200; border: 1px solid var(--track); border-radius: 8px; }
+.roulette-stage .projection-clip { width: min(64%, 210px); }
+@media (prefers-reduced-motion: reduce) {
+  .projection-clip { display: none; }
+}

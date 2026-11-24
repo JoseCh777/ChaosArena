@@ -31,6 +31,8 @@ El lockfile y la instalación se gestionan desde la raíz. Para teléfonos en re
 
 ### Ensayo en el aula
 
+Importa [el cuestionario de ensayo](docs/cuestionario-ensayo.json) desde `/editor` para practicar con 15 preguntas. El proyector puede mostrar clips al iniciar, al votar, durante la ruleta y al llegar al podio.
+
 Crea la sala en `/host`, configura las votaciones y elige el cuestionario antes de iniciar. Abre `/display` en la pantalla que vas a proyectar. El QR utiliza el origen desde el que abriste el proyector.
 
 Para probar con teléfonos en la misma red, arranca el backend con `npm run dev:backend` y el frontend en otra terminal con `npm run dev -w frontend -- --host`. Abre `/display` usando la URL Network que muestra Vite. Si usas una URL localhost, el QR solo sirve en el mismo equipo. Mantén el backend y el frontend encendidos durante el ensayo.

@@ -38,6 +38,7 @@ function alignClock(view: DisplayView & RuntimePublic) {
   if (view.duel) view.duel.deadline += offset;
   if (view.chaosEvent) view.chaosEvent.started += offset;
   if (view.reaction) view.reaction.started += offset;
+  if (view.showFact) view.showFact.started += offset;
   if (view.round) view.round.deadline += offset;
   if (view.voting) view.voting.deadline += offset;
   if (view.event) view.event.started += offset;

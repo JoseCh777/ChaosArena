@@ -319,6 +319,10 @@ export function attachArena(arena: Namespace, config: ArenaConfig = {}) {
           break;
         case 'usePower':
           if (!engine.usePower(player.id, data.power, data.target)) return fail('Ese poder no está disponible ahora.');
+          if (data.power === 'proxy' && engine.chaosView(player.id)?.shield) {
+            announce('shield', '¡Escudo activado!', `${player.nickname} · Protección contra un ataque dirigido`);
+            publish();
+          }
           break;
         case 'duelConsent':
           if (!engine.duelAction(player.id, 'consent', data.id, data.accepted)) return fail('Esta invitación ya no está disponible.');

@@ -1,4 +1,4 @@
-import type { RuntimeEvent } from '../../shared/runtime-chaos.js';
+import type { EventImpact, RuntimeEvent } from '../../shared/runtime-chaos.js';
 import { defaultEffects, type EventContext } from './events.js';
 import type { PlayerState } from './model.js';
 import { powers, type RuntimePowers } from './runtimePowers.js';
@@ -10,7 +10,7 @@ export interface RuntimeEventContext {
   powers: RuntimePowers;
   offerDuel: (players: [PlayerState, PlayerState]) => void;
 }
-type Outcome = { type: RuntimeEvent; targets: string[]; description: string };
+type Outcome = { type: RuntimeEvent; targets: string[]; description: string; impact?: EventImpact };
 type Effect = {
   type: RuntimeEvent;
   weight: number;
@@ -28,11 +28,11 @@ const effects: readonly Effect[] = [
     eligible: ({ base }) => base.activePlayers.some(p => p.score > 0),
     run: ({ base, index, powers }) => {
       const p = draw(base.activePlayers.filter(p => p.score > 0), base.rng);
-      if (powers.block(p.id, index)) return { targets: ids(p), description: `El escudo de ${p.nickname} bloqueó Agujero negro.` };
+      if (powers.block(p.id, index)) return { targets: ids(p), impact: 'blocked', description: `El escudo de ${p.nickname} bloqueó Agujero negro.` };
       const lost = Math.floor(p.score * .2);
       p.score -= lost;
       powers.recordLoss(p.id, lost);
-      return { targets: ids(p), description: `${p.nickname} pierde ${lost} puntos (20 % del saldo).` };
+      return { targets: ids(p), impact: lost > 0 ? 'loss' : undefined, description: `${p.nickname} pierde ${lost} puntos (20 % del saldo).` };
     },
   },
   {
@@ -47,7 +47,7 @@ const effects: readonly Effect[] = [
       const p = draw(base.activePlayers, base.rng);
       const blocked = powers.block(p.id, index);
       if (!blocked) powers.suppress(p.id, index);
-      return { targets: ids(p), description: blocked ? `El escudo de ${p.nickname} bloqueó Error 404.` :
+      return { targets: ids(p), impact: blocked ? 'blocked' : undefined, description: blocked ? `El escudo de ${p.nickname} bloqueó Error 404.` :
         `${p.nickname} conserva la base, pero pierde los bonos de rapidez y racha en la próxima pregunta.` };
     },
   },
@@ -57,7 +57,7 @@ const effects: readonly Effect[] = [
     run: ({ base, index, powers }) => {
       const p = draw(base.activePlayers, base.rng);
       powers.grantFirewall(p.id, index);
-      return { targets: ids(p), description: `${p.nickname} recibe un escudo durante las próximas dos rondas.` };
+      return { targets: ids(p), impact: 'shield', description: `${p.nickname} recibe un escudo durante las próximas dos rondas.` };
     },
   },
   {
@@ -68,12 +68,12 @@ const effects: readonly Effect[] = [
       const reward = base.hasNextQuestion ? draw(['points', 'shield', 'power'] as const, base.rng) : 'points';
       if (reward === 'shield') {
         inventory.grantFirewall(p.id, index);
-        return { targets: ids(p), description: `${p.nickname} recibe un escudo durante dos rondas.` };
+        return { targets: ids(p), impact: 'shield', description: `${p.nickname} recibe un escudo durante dos rondas.` };
       }
       if (reward === 'power' && inventory.grant(p.id, draw(powers, base.rng))) {
         return { targets: ids(p), description: `${p.nickname} recibe un poder en su inventario.` };
       }
-      return { targets: ids(p), description: `${p.nickname} gana ${inventory.rewardPoints(p)} puntos.` };
+      return { targets: ids(p), impact: 'reward', description: `${p.nickname} gana ${inventory.rewardPoints(p)} puntos.` };
     },
   },
   {

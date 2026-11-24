@@ -1,0 +1,40 @@
+.demo-roulette {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--background);
+}
+.demo-roulette h2 { margin: 0; font-size: 1rem; }
+.roulette-content { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-4); }
+.roulette-graphic { position: relative; flex: none; width: 116px; height: 116px; }
+.roulette-graphic::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: calc(50% - 7px);
+  border: 7px solid transparent;
+  border-top: 12px solid var(--text);
+}
+.roulette-wheel {
+  height: 100%;
+  border: 2px solid var(--border-control);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--surface) 0 14%, transparent 15%),
+    conic-gradient(from -45deg, var(--primary) 0 25%, var(--secondary) 25% 50%, var(--gold) 50% 75%, var(--danger) 75%);
+}
+.roulette-spun { animation: roulette-turn 850ms var(--ease-out) both; }
+@keyframes roulette-turn { from { transform: rotate(0deg); } }
+.roulette-options { display: grid; gap: var(--space-1); padding: 0; margin: 0; list-style: none; }
+.roulette-options li { display: flex; align-items: center; gap: var(--space-2); color: var(--muted); }
+.roulette-options li[aria-current] { color: var(--text); font-weight: 750; }
+.roulette-options li span { width: .65rem; height: .65rem; border-radius: var(--radius-pill); background: var(--primary); }
+.roulette-options [data-segment='1'] span { background: var(--secondary); }
+.roulette-options [data-segment='2'] span { background: var(--gold); }
+.roulette-options [data-segment='3'] span { background: var(--danger); }
+.roulette-result { margin: 0; line-height: 1.5; }
+.roulette-spin { justify-self: start; border-color: var(--border-control); }
+@media (prefers-reduced-motion: reduce) {
+  .roulette-spun { animation: none; }
+}

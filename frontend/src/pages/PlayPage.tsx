@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { DemoRoulette } from '../components/DemoRoulette';
 import { Leaderboard } from '../components/Leaderboard';
 import { QuestionCard, optionLetter } from '../components/QuestionCard';
 import { RoundTimer } from '../components/RoundTimer';
-import { advanceDemoGame, demoRound, demoRoundResult, gameQuestions, readDemoGame, settleDemoRound, writeDemoGame } from '../services/demoGame';
+import { addDemoEvent, advanceDemoGame, demoRound, demoRoundResult, gameQuestions, readDemoGame, settleDemoRound, writeDemoGame } from '../services/demoGame';
 import { readDemoRoom } from '../services/demoRoom';
 import '../styles/game.css';
 
@@ -104,6 +105,18 @@ export function PlayPage() {
               ))}
             </ol>
             {result.explanation && <p className="answer-explanation">{result.explanation}</p>}
+            {!finalRound && (
+              <DemoRoulette event={game.events?.find(event => event.afterRound === game.index)}
+                players={room.snapshot.players} onSpin={() => {
+                  try {
+                    const updated = addDemoEvent(readDemoGame() ?? game, room.snapshot.players.length);
+                    writeDemoGame(updated);
+                    setGame(updated);
+                  } catch {
+                    setStorageError(true);
+                  }
+                }} />
+            )}
             <button type="button" className="button button-primary" onClick={nextRound}>
               {finalRound ? 'Ver resultados finales' : 'Siguiente pregunta'}
             </button>

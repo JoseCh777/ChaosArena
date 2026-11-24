@@ -18,3 +18,11 @@ Se guardan hasta dos poderes y se usa uno por ronda. Proxy bloquea un ataque. De
 El duelo abre una confirmación de 10 segundos y, con ambos de acuerdo, una pregunta de 12 segundos. Después del resultado se retoma automáticamente el cuestionario. Las decisiones del juego actualizan los puntos competitivos y la evaluación académica sigue contando las respuestas del cuestionario, también para fantasmas.
 
 El proyector muestra reacciones de racha de cinco, acierto unánime, ningún acierto, expulsión y empate en el primer puesto. Si una racha coincide con un acierto unánime en la misma ronda, se muestra la racha. Las reacciones usan animación y texto. Los cuatro clips de fase se escogen en los ajustes de sala. El botón de sonido del proyector activa la música de espera y las señales de ruleta y podio.
+
+## Operación desde el anfitrión
+
+En `/host`, **Control de partida** muestra el reloj y las respuestas recibidas. Pausar congela el reloj en todos los dispositivos y bloquea los envíos hasta reanudar. Cerrar pregunta liquida las respuestas recibidas y deja las faltantes como omisiones. El anfitrión puede enviar su propia respuesta desde la misma mesa.
+
+Durante los resultados, **Omitir sorteo de esta ronda** evita que se aplique un evento de ruleta. Una vez iniciado el giro, **Saltar animación de ruleta** conserva el efecto aplicado y continúa. **Cancelar votación** descarta los votos e impide una expulsión en esa asamblea.
+
+**Proyector en vivo** controla el sonido, volumen, videos y reacciones de la sala. Activa el audio con un clic en `/display`. **Seguir efectos aquí** permite reproducir también los efectos en la mesa del anfitrión. La vista previa local sirve para comprobar un sonido o un clip antes de proyectarlo.

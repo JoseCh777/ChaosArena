@@ -6,7 +6,7 @@ services:
     buildCommand: npm ci --include=dev && npm run build -w backend
     startCommand: npm start -w backend
     healthCheckPath: /health
-    autoDeployTrigger: off
+    autoDeployTrigger: 'off'
     envVars:
       - key: NODE_ENV
         value: production

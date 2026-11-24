@@ -6,6 +6,8 @@ Quiz web multijugador para evaluar patrones de diseño. Jose desarrolla el front
 
 Abre `/host`, escribe tu apodo y crea la sala. El servidor genera un PIN de seis dígitos. Comparte ese PIN o el QR de `/display` y abre otros navegadores con apodos distintos. El anfitrión puede iniciar con las preguntas de muestra o con un cuestionario del editor.
 
+Antes de iniciar, abre **Ajustes de partida** desde `/host`. Elige 30 segundos por defecto, otro tiempo de 10 a 60 segundos para todas las preguntas o los tiempos del cuestionario. Puedes encender las votaciones y elegir un clip o ninguno para cada momento del proyector.
+
 El servidor revela la solución cuando todos han respondido. Si vence el tiempo con respuestas pendientes, cierra la ronda por tiempo. Al completar todos la pregunta, realiza un sorteo del 30 %. Si sale un evento, la ruleta se reproduce en todos los clientes y el servidor avanza automáticamente. El editor conserva su borrador en el navegador y la sala vive en la memoria del servidor.
 
 ## Desarrollo local

@@ -42,4 +42,6 @@ Actualizar las casillas con evidencia al integrar cada hito en develop. Cinco jo
 | --- | --- | --- | --- | --- |
 | 2026-11-23 | Base inicial de develop | TypeScript de los tres workspaces, build frontend y backend, HTTP health, Vite y conexión WebSocket Socket.IO | Correcto. Enlaces Markdown comprobados. Los flujos de juego corresponden a los hitos pendientes | Codex |
 
+| 2026-11-23 | feature/ajustes-de-sala | PIN vigente, cierre de sala, reloj y proyector | En Edge, dos sesiones y un proyector comprobaron un nuevo PIN tras cerrar, el reloj configurado, la reproducción del clip asignado y el modo visual al bloquear el video. Jose confirmó antes el ingreso de un teléfono por la red local. Queda la partida completa con teléfonos y proyector físicos. | Jose y Codex |
+
 La preparación inicial se verifica mediante instalación, typecheck, build, health check y conexión Socket.IO. Registrar las pruebas de partida cuando se implementen los flujos.
